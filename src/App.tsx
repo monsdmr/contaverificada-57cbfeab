@@ -34,7 +34,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Suspense fallback={<div className="min-h-screen bg-background" />}>
+          <Suspense fallback={<div className="min-h-screen bg-black" />}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/resgatar" element={<RedeemRewards />} />
