@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const PIXELS = [
   { id: "CUMCLS3C77UCJ3CPMCN0", tokenEnv: "TIKTOK_EVENTS_API_TOKEN" },
-  { id: "7595319367630471184", tokenEnv: "TIKTOK_EVENTS_API_TOKEN_2" },
+  { id: "D5JVV4RC77U2KB72KH8G", tokenEnv: "TIKTOK_EVENTS_API_TOKEN_2" },
 ];
 const TIKTOK_API_URL = "https://business-api.tiktok.com/open_api/v1.3/event/track/";
 
