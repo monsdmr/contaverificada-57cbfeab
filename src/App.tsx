@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useTikTokAttribution } from "@/hooks/useTikTokAttribution";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import FunnelSkeleton from "@/components/funnel/FunnelSkeleton";
 
 // Lazy-loaded routes
 const RedeemRewards = lazy(() => import("./pages/RedeemRewards"));
@@ -38,7 +39,11 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/resgatar" element={<RedeemRewards />} />
-              <Route path="/funil" element={<FunnelLayout />}>
+              <Route path="/funil" element={
+                <Suspense fallback={<FunnelSkeleton />}>
+                  <FunnelLayout />
+                </Suspense>
+              }>
                 <Route path="confirmar-identidade" element={<FunnelConfirmTaxPage />} />
                 <Route path="confirmar-taxa" element={<FunnelConfirmTaxPage />} />
                 <Route path="upsell-tenf" element={<FunnelUpsellTENFPage />} />

@@ -13,11 +13,16 @@ const MALE_NAMES = [
   "Gustavo", "Leandro", "Eduardo", "Matheus",
 ];
 
-// randomuser.me provides real human portrait photos organized by gender
-const getAvatarUrl = (isFemale: boolean, id: number) =>
-  isFemale
-    ? `https://randomuser.me/api/portraits/women/${id}.jpg`
-    : `https://randomuser.me/api/portraits/men/${id}.jpg`;
+// Local avatar paths (bundled, no external dependency)
+const FEMALE_AVATARS = [
+  "/avatars/f1.webp", "/avatars/f2.webp", "/avatars/f3.webp",
+  "/avatars/f4.webp", "/avatars/f5.webp", "/avatars/f6.webp",
+];
+
+const MALE_AVATARS = [
+  "/avatars/m1.webp", "/avatars/m2.webp", "/avatars/m3.webp",
+  "/avatars/m4.webp", "/avatars/m5.webp", "/avatars/m6.webp",
+];
 
 const CITIES = [
   "São Paulo", "Rio de Janeiro", "Belo Horizonte",
@@ -43,14 +48,12 @@ const FunnelWithdrawNotification = () => {
     city: string;
     amount: string;
     time: string;
-    avatarId: number;
-    isFemale: boolean;
+    avatar: string;
   } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const show = useCallback(() => {
-    // Cancel any pending hide to prevent stacking/overlap
     if (hideTimeout.current) {
       clearTimeout(hideTimeout.current);
       hideTimeout.current = null;
@@ -58,9 +61,9 @@ const FunnelWithdrawNotification = () => {
 
     const isFemale = Math.random() > 0.5;
     const name = isFemale ? randomItem(FEMALE_NAMES) : randomItem(MALE_NAMES);
-    const avatarId = Math.floor(Math.random() * 80);
+    const avatar = isFemale ? randomItem(FEMALE_AVATARS) : randomItem(MALE_AVATARS);
 
-    setNotification({ name, city: randomItem(CITIES), amount: randomItem(AMOUNTS), time: randomItem(TIMES), avatarId, isFemale });
+    setNotification({ name, city: randomItem(CITIES), amount: randomItem(AMOUNTS), time: randomItem(TIMES), avatar });
     setIsVisible(true);
 
     hideTimeout.current = setTimeout(() => {
@@ -91,7 +94,7 @@ const FunnelWithdrawNotification = () => {
     >
       <div className="flex items-center gap-2.5 rounded-2xl bg-white/95 backdrop-blur-xl px-2 py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 max-w-[290px]">
         <img
-          src={getAvatarUrl(notification.isFemale, notification.avatarId)}
+          src={notification.avatar}
           alt=""
           className="w-9 h-9 rounded-xl object-cover shrink-0"
         />
