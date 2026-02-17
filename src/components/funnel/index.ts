@@ -1,0 +1,11 @@
+export { default as FunnelConfirmTax } from './FunnelConfirmTax';
+export { default as FunnelUpsellTENF } from './FunnelUpsellTENF';
+export { default as FunnelUpsellTransacional } from './FunnelUpsellTransacional';
+export { default as FunnelUpsellAntiFraude } from './FunnelUpsellAntiFraude';
+export { default as FunnelUpsellBonusOculto } from './FunnelUpsellBonusOculto';
+export { default as FunnelUpsellAntiReversao } from './FunnelUpsellAntiReversao';
+export { default as FunnelUpsellSaqueImediato } from './FunnelUpsellSaqueImediato';
+export { default as FunnelUpsellAntiErros } from './FunnelUpsellAntiErros';
+export { default as FunnelUpsellSaldoDuplicado } from './FunnelUpsellSaldoDuplicado';
+export { default as FunnelPixPopup } from './FunnelPixPopup';
+export * from './types';
