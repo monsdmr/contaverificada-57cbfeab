@@ -37,6 +37,7 @@ const FunnelAntiErrosPaymentPage = lazy(() => import("./pages/funnel/FunnelAntiE
 const FunnelUpsellSaldoDuplicadoPage = lazy(() => import("./pages/funnel/FunnelUpsellSaldoDuplicadoPage"));
 const FunnelSaldoDuplicadoPaymentPage = lazy(() => import("./pages/funnel/FunnelSaldoDuplicadoPaymentPage"));
 const FunnelSuccessPage = lazy(() => import("./pages/funnel/FunnelSuccessPage"));
+const FunnelWithdrawProcessingPage = lazy(() => import("./pages/funnel/FunnelWithdrawProcessingPage"));
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const App = () => {
                 <Route path="pagamento-anti-erros" element={<FunnelAntiErrosPaymentPage />} />
                 <Route path="upsell-saldo-duplicado" element={<FunnelUpsellSaldoDuplicadoPage />} />
                 <Route path="pagamento-saldo-duplicado" element={<FunnelSaldoDuplicadoPaymentPage />} />
+                <Route path="processando-saque" element={<FunnelWithdrawProcessingPage />} />
                 <Route path="sucesso" element={<FunnelSuccessPage />} />
               </Route>
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
