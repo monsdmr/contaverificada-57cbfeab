@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     }
 
     const sigmaData = await sigmaResponse.json()
-    const sigmaStatus = sigmaData.status || sigmaData.transaction?.status
+    const sigmaStatus = sigmaData.payment_status || sigmaData.status || sigmaData.transaction?.status || sigmaData.transaction?.payment_status
 
     console.log(`[check-payment] SigmaPay status for ${transactionHash}: ${sigmaStatus}`)
 
