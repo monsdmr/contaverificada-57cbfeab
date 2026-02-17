@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import BalanceCard from "./BalanceCard";
 import CongratulationsCard from "./CongratulationsCard";
@@ -9,15 +9,50 @@ import PrizePopup from "./PrizePopup";
 import StickyBalanceBar from "./StickyBalanceBar";
 import CarnivalConfetti from "./CarnivalConfetti";
 
-const TikTokBonus = () => {
-  const navigate = useNavigate();
-  const [showPopup, setShowPopup] = useState(true);
+// Isolated countdown to avoid re-rendering the whole tree every second
+const CountdownBar = memo(() => {
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(15 * 60);
-  const [showStickyBar, setShowStickyBar] = useState(false);
 
-  const handleWithdraw = () => {
-    navigate("/resgatar");
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeftSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return {
+      hours: hours.toString().padStart(2, "0"),
+      minutes: minutes.toString().padStart(2, "0"),
+      seconds: secs.toString().padStart(2, "0"),
+    };
   };
+
+  const timeLeft = formatTime(timeLeftSeconds);
+  const isExpired = timeLeftSeconds === 0;
+
+  return (
+    <div className="flex items-center justify-center gap-2 py-2.5 bg-white border-b border-gray-100">
+      <span className="text-[13px] text-gray-500">{isExpired ? "Expirado" : "Expira em"}</span>
+      <div className="flex items-center gap-1">
+        <span className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-[13px] text-gray-500">{timeLeft.hours}</span>
+        <span className="text-gray-400">:</span>
+        <span className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-[13px] text-gray-500">{timeLeft.minutes}</span>
+        <span className="text-gray-400">:</span>
+        <span className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-[13px] text-gray-500">{timeLeft.seconds}</span>
+      </div>
+    </div>
+  );
+});
+CountdownBar.displayName = "CountdownBar";
+
+// Isolated sticky bar with its own timer
+const StickyBarWrapper = memo(({ onWithdraw }: { onWithdraw: () => void }) => {
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [timeLeftSeconds, setTimeLeftSeconds] = useState(15 * 60);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,8 +80,22 @@ const TikTokBonus = () => {
     };
   };
 
+  if (!showStickyBar) return null;
+
   const timeLeft = formatTime(timeLeftSeconds);
   const isExpired = timeLeftSeconds === 0;
+
+  return <StickyBalanceBar balance="R$ 2.834,72" onWithdraw={onWithdraw} timeLeft={timeLeft} isExpired={isExpired} />;
+});
+StickyBarWrapper.displayName = "StickyBarWrapper";
+
+const TikTokBonus = () => {
+  const navigate = useNavigate();
+  const [showPopup, setShowPopup] = useState(true);
+
+  const handleWithdraw = () => {
+    navigate("/resgatar");
+  };
 
   const checkInDays = [
     { day: "Dia 01", points: 50, completed: true },
@@ -66,16 +115,7 @@ const TikTokBonus = () => {
         <div className="absolute right-2 top-1/2 -translate-y-1/2 text-lg">🎭</div>
       </header>
 
-      <div className="flex items-center justify-center gap-2 py-2.5 bg-white border-b border-gray-100">
-        <span className="text-[13px] text-gray-500">{isExpired ? "Expirado" : "Expira em"}</span>
-        <div className="flex items-center gap-1">
-          <span className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-[13px] text-gray-500">{timeLeft.hours}</span>
-          <span className="text-gray-400">:</span>
-          <span className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-[13px] text-gray-500">{timeLeft.minutes}</span>
-          <span className="text-gray-400">:</span>
-          <span className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-[13px] text-gray-500">{timeLeft.seconds}</span>
-        </div>
-      </div>
+      <CountdownBar />
 
       <main className="px-3 py-3 space-y-3 max-w-md mx-auto pb-20">
         <BalanceCard balance="R$ 2.834,72" onWithdraw={handleWithdraw} />
@@ -96,9 +136,7 @@ const TikTokBonus = () => {
         <TaskItem title="Convide 1 amigo para se inscrever e ganhar" points="100.000 pontos - 200.000 pontos" />
       </main>
 
-      {showStickyBar && (
-        <StickyBalanceBar balance="R$ 2.834,72" onWithdraw={handleWithdraw} timeLeft={timeLeft} isExpired={isExpired} />
-      )}
+      <StickyBarWrapper onWithdraw={handleWithdraw} />
 
       <PrizePopup isOpen={showPopup} onClose={() => setShowPopup(false)} prizeValue="R$ 2.834,72" initialTime={599} />
     </div>
