@@ -140,6 +140,28 @@
   }
 }
 
+/* Reduce motion for users who prefer it OR slow devices */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .carnival-confetti { display: none !important; }
+  .backdrop-blur-sm, .backdrop-blur-xl { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
+
+/* GPU-friendly containment for heavy funnel sections */
+.funnel-page {
+  contain: layout style;
+  content-visibility: auto;
+}
+
+.funnel-popup {
+  contain: layout style paint;
+  will-change: opacity;
+}
+
 @layer components {
   .prize-card {
     background: linear-gradient(

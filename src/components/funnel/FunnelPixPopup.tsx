@@ -44,12 +44,12 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
   }, [pixData?.transaction_id]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 funnel-popup">
+      <div className="absolute inset-0 bg-black/60" />
       <div className="relative bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl z-10">
         
         <div className="sticky top-0 rounded-t-2xl overflow-hidden">
-          <div className={`flex items-center justify-center gap-1.5 py-2 px-3 text-white text-xs font-bold tracking-wide ${timeLeft <= 60 ? 'bg-red-700 animate-pulse' : timeLeft <= 120 ? 'bg-red-600 animate-pulse' : timeLeft <= 180 ? 'bg-red-500' : 'bg-orange-500'}`}>
+          <div className={`flex items-center justify-center gap-1.5 py-2 px-3 text-white text-xs font-bold tracking-wide ${timeLeft <= 60 ? 'bg-red-700' : timeLeft <= 120 ? 'bg-red-600' : timeLeft <= 180 ? 'bg-red-500' : 'bg-orange-500'}`}>
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
             <span>{timeLeft <= 60 ? `🚨 ÚLTIMO MINUTO! ${formatTime(timeLeft)} — PAGUE AGORA OU PERCA` : timeLeft <= 120 ? `⚠️ RESTAM ${formatTime(timeLeft)} — SEU PIX VAI EXPIRAR!` : timeLeft <= 180 ? `⏳ ATENÇÃO: Tempo quase esgotado — ${formatTime(timeLeft)}` : `⏳ Pague em ${formatTime(timeLeft)} ou o PIX será cancelado`}</span>
           </div>
@@ -86,7 +86,7 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
           </div>
 
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-center gap-2">
-            <div className="relative"><div className="w-2.5 h-2.5 bg-amber-500 rounded-full" /><div className="absolute inset-0 w-2.5 h-2.5 bg-amber-500 rounded-full animate-ping" /></div>
+            <div className="w-2.5 h-2.5 bg-amber-500 rounded-full" />
             <span className="text-amber-700 text-sm font-medium">Aguardando pagamento...</span>
           </div>
 

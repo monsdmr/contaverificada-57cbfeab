@@ -24,7 +24,7 @@ const FunnelPageTransition = ({ children, className }: FunnelPageTransitionProps
     exit="exit"
     variants={pageVariants}
     transition={pageTransition}
-    className={className}
+    className={`funnel-page ${className || ''}`}
   >
     {children}
   </motion.div>

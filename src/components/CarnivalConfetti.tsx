@@ -12,7 +12,7 @@ const CARNIVAL_COLORS = [
 const CarnivalConfetti = () => {
   const pieces = useMemo(
     () =>
-      Array.from({ length: 10 }, (_, i) => ({
+      Array.from({ length: 6 }, (_, i) => ({
         id: i,
         left: Math.random() * 100,
         color: CARNIVAL_COLORS[Math.floor(Math.random() * CARNIVAL_COLORS.length)],
