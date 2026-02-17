@@ -33,23 +33,48 @@ Deno.serve(async (req) => {
 
     // Amount in centavos for SigmaPay
     const amountCentavos = Math.round(amount * 100)
+    const cleanCpf = cpf?.replace(/\D/g, '') || '00000000000'
 
     console.log(`[generate-pix] Creating transaction: ${amountCentavos} centavos, type: ${payment_type}`)
 
-    // Create transaction on SigmaPay
-    const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions`, {
+    // Create transaction on SigmaPay with correct payload format
+    const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions?api_token=${SIGMA_API_TOKEN}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: JSON.stringify({
-        api_token: SIGMA_API_TOKEN,
         amount: amountCentavos,
+        offer_hash: 'zxw2p8esaw',
         payment_method: 'pix',
-        customer_name: name || 'Cliente',
-        customer_email: email || 'cliente@pagamento.com',
-        customer_document: cpf?.replace(/\D/g, ''),
+        customer: {
+          name: name || 'Cliente',
+          email: email || 'cliente@pagamento.com',
+          phone_number: phone || '11999999999',
+          document: cleanCpf,
+        },
+        cart: [
+          {
+            product_hash: '31atjri7nd',
+            title: payment_type || 'Pagamento',
+            cover: null,
+            price: amountCentavos,
+            quantity: 1,
+            operation_type: 1,
+            tangible: false,
+          }
+        ],
+        expire_in_days: 1,
+        transaction_origin: 'api',
+        tracking: {
+          src: ttclid || '',
+          utm_source: '',
+          utm_medium: '',
+          utm_campaign: '',
+          utm_term: '',
+          utm_content: '',
+        },
       }),
       signal: AbortSignal.timeout(60000),
     })
@@ -57,7 +82,7 @@ Deno.serve(async (req) => {
     const contentType = sigmaResponse.headers.get('content-type')
     if (!contentType?.includes('application/json')) {
       const textResponse = await sigmaResponse.text()
-      console.error('[generate-pix] SigmaPay returned non-JSON:', textResponse.substring(0, 300))
+      console.error('[generate-pix] SigmaPay returned non-JSON:', textResponse.substring(0, 500))
       throw new Error('SigmaPay returned invalid response format')
     }
 
@@ -91,7 +116,7 @@ Deno.serve(async (req) => {
       pix_url: pixUrl,
       customer_name: name,
       customer_email: email,
-      customer_cpf: cpf?.replace(/\D/g, ''),
+      customer_cpf: cleanCpf,
       ab_variant: ab_variant,
       ttclid: ttclid,
       page_url: page_url,
@@ -102,7 +127,6 @@ Deno.serve(async (req) => {
 
     if (dbError) {
       console.error('[generate-pix] Database error:', dbError)
-      // Don't fail the request - PIX was already generated
     }
 
     const responseData = {
