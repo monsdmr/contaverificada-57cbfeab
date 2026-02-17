@@ -73,7 +73,20 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     };
 
     check('initial');
-    const interval = window.setInterval(() => check('poll'), 2500);
+
+    // Exponential backoff: 2.5s → 5s → 10s → 15s (max)
+    let delay = 2500;
+    const maxDelay = 15000;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const scheduleNext = () => {
+      timeoutId = setTimeout(() => {
+        check('poll');
+        delay = Math.min(delay * 1.5, maxDelay);
+        if (!cancelled && !didConfirm) scheduleNext();
+      }, delay);
+    };
+    scheduleNext();
 
     const channel = supabase
       .channel(`payment-${contentId}-${transactionId}`)
@@ -91,7 +104,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
 
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
+      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
   }, [showPixPopup, pixData, contentId]);

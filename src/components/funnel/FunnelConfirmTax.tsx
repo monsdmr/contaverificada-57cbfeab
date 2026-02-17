@@ -36,7 +36,15 @@ const FunnelConfirmTax = ({
   balance, pixKey, pixKeyType = "E-mail", pixName, onGeneratePix, isGenerating,
   taxAmount = "R$ 34,71", taxAnchor = "R$ 89,90", taxDiscount = "61% OFF", leadCpf, leadName,
 }: FunnelConfirmTaxProps) => {
-  const [timeLeft, setTimeLeft] = useState(5 * 60);
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const stored = sessionStorage.getItem('funnel_countdown_start');
+    if (stored) {
+      const elapsed = Math.floor((Date.now() - parseInt(stored, 10)) / 1000);
+      return Math.max(0, 5 * 60 - elapsed);
+    }
+    sessionStorage.setItem('funnel_countdown_start', Date.now().toString());
+    return 5 * 60;
+  });
 
   useEffect(() => {
     if (timeLeft <= 0) return;
