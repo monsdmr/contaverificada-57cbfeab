@@ -96,10 +96,11 @@ Deno.serve(async (req) => {
     console.log('[generate-pix] SigmaPay response:', JSON.stringify(sigmaData))
 
     // Extract PIX data from SigmaPay response
-    const transactionHash = sigmaData.transaction_hash || sigmaData.hash || sigmaData.id || crypto.randomUUID()
-    const pixCode = sigmaData.pix_code || sigmaData.pix?.code || sigmaData.qr_code || ''
-    const pixQrBase64 = sigmaData.pix_qr_code_base64 || sigmaData.pix?.qr_code_base64 || ''
-    const pixUrl = sigmaData.pix_url || sigmaData.pix?.url || ''
+    // SigmaPay returns: pix.pix_qr_code (copia-e-cola), pix.pix_url (QR code base64 image)
+    const transactionHash = sigmaData.hash || sigmaData.transaction_hash || sigmaData.id || crypto.randomUUID()
+    const pixCode = sigmaData.pix?.pix_qr_code || sigmaData.pix?.code || sigmaData.pix_code || ''
+    const pixQrBase64 = sigmaData.pix?.pix_url || sigmaData.pix?.qr_code_base64 || sigmaData.pix_qr_code_base64 || ''
+    const pixUrl = sigmaData.pix?.pix_url || sigmaData.pix_url || ''
 
     // Generate a unique transaction_id for our system
     const transactionId = `sigma_${transactionHash}`
