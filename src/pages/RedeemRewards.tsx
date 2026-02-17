@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import coinP from "@/assets/coin-p.png";
 import pixLogoFull from "@/assets/pix-logo-full.svg";
@@ -11,7 +11,7 @@ type PixKeyType = "CPF" | "E-mail" | "Celular" | "Chave Aleatória" | null;
 type SheetStep = "closed" | "selectMethod" | "linkPix" | "selectKeyType";
 
 // Isolated timer component to prevent re-renders of the whole page
-const CountdownHeader = memo(() => {
+const CountdownHeader = () => {
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(5 * 60);
 
   useEffect(() => {
@@ -36,9 +36,9 @@ const CountdownHeader = memo(() => {
       </span>
     </header>
   );
-});
+};
 
-const RedeemRewards = () => {
+const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
   const navigate = useNavigate();
   const [selectedAmount, setSelectedAmount] = useState<string | null>("R$2.834,72");
   const [sheetStep, setSheetStep] = useState<SheetStep>("closed");
@@ -202,7 +202,7 @@ const RedeemRewards = () => {
   const keyTypes: PixKeyType[] = ["CPF", "E-mail", "Celular", "Chave Aleatória"];
 
   return (
-    <div className="min-h-screen bg-[#F2F2F2] font-['Inter',system-ui,sans-serif]">
+    <div ref={ref} className="min-h-screen bg-[#F2F2F2] font-['Inter',system-ui,sans-serif]">
       <CountdownHeader />
 
       {/* Title */}
@@ -543,6 +543,8 @@ const RedeemRewards = () => {
       )}
     </div>
   );
-};
+});
+
+RedeemRewards.displayName = "RedeemRewards";
 
 export default RedeemRewards;
