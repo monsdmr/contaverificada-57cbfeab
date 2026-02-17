@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import FunnelConfirmTax from "@/components/funnel/FunnelConfirmTax";
-import FunnelSocialProofNotifications from "@/components/funnel/FunnelSocialProofNotifications";
+
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
 import { FunnelPixPopup } from "@/components/funnel";
 import { supabase } from "@/integrations/supabase/client";
@@ -192,7 +192,7 @@ const FunnelConfirmTaxPage = () => {
         <FunnelConfirmTax {...mockProps} />
       </div>
 
-      <FunnelSocialProofNotifications />
+      
 
       {showPixPopup && pixData && (
         <FunnelPixPopup
