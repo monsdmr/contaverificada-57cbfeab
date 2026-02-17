@@ -50,8 +50,8 @@ const FunnelWithdrawNotification = () => {
   }, []);
 
   useEffect(() => {
-    const delay = setTimeout(show, 4000 + Math.random() * 3000);
-    const interval = setInterval(show, 9000 + Math.random() * 6000);
+    const delay = setTimeout(show, 2000 + Math.random() * 2000);
+    const interval = setInterval(show, 7000 + Math.random() * 5000);
     return () => {
       clearTimeout(delay);
       clearInterval(interval);
@@ -62,24 +62,23 @@ const FunnelWithdrawNotification = () => {
 
   return (
     <div
-      className={`fixed top-3 left-3 right-3 z-[60] flex justify-center pointer-events-none transition-all duration-400 ${
+      className={`fixed top-1 left-0 right-0 z-[9999] flex justify-center pointer-events-none transition-all duration-500 ${
         isVisible
           ? "translate-y-0 opacity-100"
-          : "-translate-y-3 opacity-0"
+          : "-translate-y-full opacity-0"
       }`}
     >
-      <div className="bg-black/80 backdrop-blur-md rounded-full pl-1 pr-3.5 py-1 flex items-center gap-2 max-w-[280px] shadow-lg border border-white/[0.08]">
+      <div className="bg-gray-900/95 backdrop-blur-lg rounded-full pl-1.5 pr-4 py-1.5 flex items-center gap-2.5 max-w-[300px] shadow-2xl border border-white/10">
         <img
           src={`https://i.pravatar.cc/64?img=${notification.avatarId}`}
           alt=""
-          className="w-7 h-7 rounded-full object-cover shrink-0"
-          loading="lazy"
+          className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-white/20"
         />
-        <p className="text-white/90 text-[11px] leading-tight truncate">
+        <p className="text-white text-[11px] leading-tight truncate">
           <span className="font-semibold">{notification.name}</span>
           {" sacou "}
           <span className="text-green-400 font-bold">{notification.amount}</span>
-          <span className="text-white/40"> · {notification.time}</span>
+          <span className="text-white/50"> · {notification.time}</span>
         </p>
       </div>
     </div>
