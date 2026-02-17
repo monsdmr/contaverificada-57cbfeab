@@ -86,10 +86,8 @@ const FunnelWithdrawNotification = () => {
 
   return (
     <div
-      className={`fixed top-2 left-0 right-0 z-[9999] flex justify-center pointer-events-none transition-all duration-500 ease-out ${
-        isVisible
-          ? "translate-y-0 opacity-100 scale-100"
-          : "-translate-y-2 opacity-0 scale-95"
+      className={`fixed top-2 left-0 right-0 z-[9999] flex justify-center pointer-events-none transition-opacity duration-300 ${
+        isVisible ? "opacity-100" : "opacity-0"
       }`}
     >
       <div className="flex items-center gap-2.5 rounded-2xl bg-white/95 backdrop-blur-xl px-2 py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 max-w-[290px]">
