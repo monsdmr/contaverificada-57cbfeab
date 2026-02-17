@@ -45,7 +45,7 @@ const FunnelUpsellSaldoDuplicadoPage = () => {
   }, [pixData]);
 
   const handleProcessingComplete = useCallback(() => {
-    navigate('/funil/sucesso', {
+    navigate('/funil/processando-saque', {
       state: { pixKey: leadPixKey, pixKeyType: leadPixKeyType },
     });
   }, [navigate, leadPixKey, leadPixKeyType]);
