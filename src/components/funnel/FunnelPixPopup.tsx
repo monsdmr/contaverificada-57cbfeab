@@ -5,7 +5,7 @@ import pixLogoFull from "@/assets/pix-logo-full.svg";
 import bacenLogo from "@/assets/bacen-logo.png";
 import govbrLogo from "@/assets/govbr-logo.webp";
 import receitaFederalLogo from "@/assets/receita-federal-logo.png";
-import PixPopupSocialProof from "./PixPopupSocialProof";
+
 import { PixPopupProps } from "./types";
 
 const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, showRefundMessage = false, onManualCheck, isCheckingPayment = false, checkError = null }: PixPopupProps) => {
@@ -47,7 +47,7 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div className="relative bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl z-10">
-        <PixPopupSocialProof />
+        
         <div className="sticky top-0 rounded-t-2xl overflow-hidden">
           <div className={`flex items-center justify-center gap-1.5 py-2 px-3 text-white text-xs font-bold tracking-wide ${timeLeft <= 60 ? 'bg-red-700 animate-pulse' : timeLeft <= 120 ? 'bg-red-600 animate-pulse' : timeLeft <= 180 ? 'bg-red-500' : 'bg-orange-500'}`}>
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
