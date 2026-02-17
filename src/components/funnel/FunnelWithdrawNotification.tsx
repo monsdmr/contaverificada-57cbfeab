@@ -4,109 +4,83 @@ const FIRST_NAMES = [
   "Maria", "Ana", "João", "Carlos", "Fernanda", "Lucas", "Juliana",
   "Pedro", "Camila", "Rafael", "Beatriz", "Thiago", "Larissa", "Bruno",
   "Amanda", "Felipe", "Gabriela", "Rodrigo", "Patricia", "Marcos",
-  "Aline", "Diego", "Vanessa", "André", "Renata", "Gustavo", "Letícia",
-  "Leandro", "Tatiana", "Eduardo", "Priscila", "Matheus", "Daniela",
 ];
 
 const CITIES = [
-  "São Paulo, SP", "Rio de Janeiro, RJ", "Belo Horizonte, MG",
-  "Curitiba, PR", "Salvador, BA", "Fortaleza, CE", "Recife, PE",
-  "Porto Alegre, RS", "Brasília, DF", "Goiânia, GO", "Manaus, AM",
-  "Belém, PA", "Campinas, SP", "Guarulhos, SP", "São Luís, MA",
-  "Maceió, AL", "Natal, RN", "Campo Grande, MS", "Florianópolis, SC",
+  "São Paulo", "Rio de Janeiro", "Belo Horizonte",
+  "Curitiba", "Salvador", "Fortaleza", "Recife",
+  "Porto Alegre", "Brasília", "Goiânia", "Manaus",
 ];
 
 const AMOUNTS = [
-  "R$ 1.247,00", "R$ 2.834,72", "R$ 890,50", "R$ 3.120,00",
-  "R$ 1.560,30", "R$ 2.100,00", "R$ 745,80", "R$ 4.200,00",
-  "R$ 1.890,00", "R$ 2.560,45", "R$ 980,00", "R$ 3.450,00",
-  "R$ 1.100,00", "R$ 2.780,90", "R$ 670,00", "R$ 5.100,00",
+  "R$ 1.247", "R$ 2.834", "R$ 890", "R$ 3.120",
+  "R$ 1.560", "R$ 2.100", "R$ 745", "R$ 4.200",
+  "R$ 1.890", "R$ 2.560", "R$ 980", "R$ 3.450",
 ];
 
-const TIMES = [
-  "agora", "1 min atrás", "2 min atrás", "3 min atrás", "5 min atrás",
-  "há poucos segundos", "30s atrás",
-];
+const TIMES = ["agora", "1 min", "2 min", "3 min", "5 min"];
 
-const getAvatarUrl = (id: number) => `https://i.pravatar.cc/80?img=${id}`;
+// Real-looking avatar IDs from pravatar (curated for quality)
+const AVATAR_IDS = [1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50];
 
 function randomItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-interface Notification {
-  id: number;
-  name: string;
-  city: string;
-  amount: string;
-  time: string;
-  avatarId: number;
-}
-
 const FunnelWithdrawNotification = () => {
-  const [notification, setNotification] = useState<Notification | null>(null);
+  const [notification, setNotification] = useState<{
+    name: string;
+    city: string;
+    amount: string;
+    time: string;
+    avatarId: number;
+  } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  const generateNotification = useCallback((): Notification => ({
-    id: Date.now(),
-    name: randomItem(FIRST_NAMES),
-    city: randomItem(CITIES),
-    amount: randomItem(AMOUNTS),
-    time: randomItem(TIMES),
-    avatarId: Math.floor(Math.random() * 70) + 1,
-  }), []);
+  const show = useCallback(() => {
+    setNotification({
+      name: randomItem(FIRST_NAMES),
+      city: randomItem(CITIES),
+      amount: randomItem(AMOUNTS),
+      time: randomItem(TIMES),
+      avatarId: randomItem(AVATAR_IDS),
+    });
+    setIsVisible(true);
+    setTimeout(() => setIsVisible(false), 3500);
+  }, []);
 
   useEffect(() => {
-    const initialDelay = 3000 + Math.random() * 3000;
-
-    const showNotification = () => {
-      const notif = generateNotification();
-      setNotification(notif);
-      setIsVisible(true);
-      setTimeout(() => {
-        setIsVisible(false);
-      }, 4000);
+    const delay = setTimeout(show, 4000 + Math.random() * 3000);
+    const interval = setInterval(show, 9000 + Math.random() * 6000);
+    return () => {
+      clearTimeout(delay);
+      clearInterval(interval);
     };
-
-    const initialTimer = setTimeout(() => {
-      showNotification();
-      const interval = setInterval(() => {
-        showNotification();
-      }, 8000 + Math.random() * 7000);
-      return () => clearInterval(interval);
-    }, initialDelay);
-
-    return () => clearTimeout(initialTimer);
-  }, [generateNotification]);
+  }, [show]);
 
   if (!notification) return null;
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-[70] max-w-[280px] transition-all duration-500 ease-in-out pointer-events-none ${
+      className={`fixed top-3 left-3 right-3 z-[60] flex justify-center pointer-events-none transition-all duration-400 ${
         isVisible
           ? "translate-y-0 opacity-100"
-          : "translate-y-4 opacity-0"
+          : "-translate-y-3 opacity-0"
       }`}
     >
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-3 flex items-center gap-3">
+      <div className="bg-black/80 backdrop-blur-md rounded-full pl-1 pr-3.5 py-1 flex items-center gap-2 max-w-[280px] shadow-lg border border-white/[0.08]">
         <img
-          src={getAvatarUrl(notification.avatarId)}
+          src={`https://i.pravatar.cc/64?img=${notification.avatarId}`}
           alt=""
-          className="w-10 h-10 rounded-full object-cover shrink-0"
+          className="w-7 h-7 rounded-full object-cover shrink-0"
           loading="lazy"
         />
-        <div className="min-w-0">
-          <p className="text-gray-800 text-xs font-semibold truncate">
-            {notification.name} sacou {notification.amount}
-          </p>
-          <p className="text-gray-400 text-[10px] truncate">
-            {notification.city} · {notification.time}
-          </p>
-        </div>
-        <div className="shrink-0">
-          <span className="text-green-500 text-lg">✓</span>
-        </div>
+        <p className="text-white/90 text-[11px] leading-tight truncate">
+          <span className="font-semibold">{notification.name}</span>
+          {" sacou "}
+          <span className="text-green-400 font-bold">{notification.amount}</span>
+          <span className="text-white/40"> · {notification.time}</span>
+        </p>
       </div>
     </div>
   );
