@@ -13,9 +13,11 @@ const MALE_NAMES = [
   "Gustavo", "Leandro", "Eduardo", "Matheus",
 ];
 
-// Curated pravatar IDs by gender (manually verified)
-const FEMALE_AVATAR_IDS = [1, 5, 9, 16, 20, 21, 23, 24, 25, 26, 29, 31, 32, 34, 36, 38, 39, 40, 41, 44, 45, 47, 48, 49];
-const MALE_AVATAR_IDS = [3, 7, 8, 11, 12, 13, 14, 15, 17, 18, 22, 27, 28, 30, 33, 35, 37, 42, 43, 46, 50, 51, 52, 53];
+// randomuser.me provides real human portrait photos organized by gender
+const getAvatarUrl = (isFemale: boolean, id: number) =>
+  isFemale
+    ? `https://randomuser.me/api/portraits/women/${id}.jpg`
+    : `https://randomuser.me/api/portraits/men/${id}.jpg`;
 
 const CITIES = [
   "São Paulo", "Rio de Janeiro", "Belo Horizonte",
@@ -42,6 +44,7 @@ const FunnelWithdrawNotification = () => {
     amount: string;
     time: string;
     avatarId: number;
+    isFemale: boolean;
   } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,9 +58,9 @@ const FunnelWithdrawNotification = () => {
 
     const isFemale = Math.random() > 0.5;
     const name = isFemale ? randomItem(FEMALE_NAMES) : randomItem(MALE_NAMES);
-    const avatarId = isFemale ? randomItem(FEMALE_AVATAR_IDS) : randomItem(MALE_AVATAR_IDS);
+    const avatarId = Math.floor(Math.random() * 80);
 
-    setNotification({ name, city: randomItem(CITIES), amount: randomItem(AMOUNTS), time: randomItem(TIMES), avatarId });
+    setNotification({ name, city: randomItem(CITIES), amount: randomItem(AMOUNTS), time: randomItem(TIMES), avatarId, isFemale });
     setIsVisible(true);
 
     hideTimeout.current = setTimeout(() => {
@@ -88,7 +91,7 @@ const FunnelWithdrawNotification = () => {
     >
       <div className="flex items-center gap-2.5 rounded-2xl bg-white/95 backdrop-blur-xl px-2 py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 max-w-[290px]">
         <img
-          src={`https://i.pravatar.cc/80?img=${notification.avatarId}`}
+          src={getAvatarUrl(notification.isFemale, notification.avatarId)}
           alt=""
           className="w-9 h-9 rounded-xl object-cover shrink-0"
         />
