@@ -193,9 +193,9 @@ const RedeemRewards = () => {
   return (
     <div className="min-h-screen bg-[#F2F2F2] font-['Inter',system-ui,sans-serif]">
       {/* Header with countdown */}
-      <header className="bg-[#F2F2F2] py-2.5 text-center border-b border-gray-200">
-        <span className="text-gray-800 text-xs font-bold tracking-wide">
-          {isExpired ? "SEU SALDO EXPIROU" : `O SEU SALDO EXPIRA EM: ${formatTime(timeLeftSeconds)}`}
+      <header className="bg-red-600 py-2.5 text-center border-b border-red-700">
+        <span className="text-white text-xs font-bold tracking-wide uppercase animate-pulse">
+          {isExpired ? "⚠️ SEU SALDO EXPIROU" : `⚠️ O SEU SALDO EXPIRA EM: ${formatTime(timeLeftSeconds)}`}
         </span>
       </header>
 
