@@ -84,7 +84,7 @@ export function trackPurchasePixelOnce(input: {
 
   // Server
   trackServerEvent({
-    event: "CompletePayment",
+    event: "Purchase",
     eventId: `purchase_${transactionId}`,
     value,
     contentId,
