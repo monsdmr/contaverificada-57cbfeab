@@ -1,213 +1,73 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import FunnelUpsellTENF from "@/components/funnel/FunnelUpsellTENF";
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
 import { FunnelPixPopup } from "@/components/funnel";
-import { supabase } from "@/integrations/supabase/client";
-import { trackPurchasePixelOnce } from "@/lib/tiktokPixel";
-import { usePaymentCheck } from "@/hooks/usePaymentCheck";
-import { usePixGeneration } from "@/hooks/usePixGeneration";
-import { useLeadData } from "@/hooks/useLeadData";
-import { generateRandomEmail } from "@/lib/generateRandomEmail";
+import { usePaymentFlow } from "@/hooks/usePaymentFlow";
 import { getTenfABVariant } from "@/lib/abTestTenf";
 
-interface LocationState {
-  pixKey?: string;
-  pixKeyType?: string;
-}
+interface LocationState { pixKey?: string; pixKeyType?: string; }
 
 const FunnelUpsellTENFPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
-
   const variant = useMemo(() => getTenfABVariant(), []);
-
-  const [showPixPopup, setShowPixPopup] = useState(false);
-  const [pixCopied, setPixCopied] = useState(false);
-  const [showProcessing, setShowProcessing] = useState(false);
 
   const leadPixKey = state?.pixKey || "";
   const leadPixKeyType = state?.pixKeyType || "E-mail";
 
-  const { generatePix, isGenerating, pixData } = usePixGeneration();
-  const { leadCpf, leadName } = useLeadData();
-
-  const handlePaymentConfirmed = useCallback(async () => {
-    console.log('TENF: Manual payment confirmed. Showing processing...');
-    if (pixData?.transaction_id && pixData?.amount) {
-      trackPurchasePixelOnce({
-        transactionId: pixData.transaction_id,
-        value: pixData.amount,
-        contentId: 'upsell_tenf',
-      });
-    }
-    setShowPixPopup(false);
-    setShowProcessing(true);
-  }, [pixData]);
-
   const handleProcessingComplete = useCallback(() => {
-    navigate('/funil/upsell-transacional', {
-      state: { pixKey: leadPixKey, pixKeyType: leadPixKeyType },
-    });
+    navigate('/funil/upsell-transacional', { state: { pixKey: leadPixKey, pixKeyType: leadPixKeyType } });
   }, [navigate, leadPixKey, leadPixKeyType]);
 
-  const { isChecking, checkError, checkPayment } = usePaymentCheck({
-    transactionId: pixData?.transaction_id,
-    onPaymentConfirmed: handlePaymentConfirmed,
+  const flow = usePaymentFlow({
+    contentId: 'upsell_tenf',
+    paymentType: 'upsell_tenf',
+    amount: variant.amount,
+    onProcessingComplete: handleProcessingComplete,
   });
 
-  useEffect(() => {
-    if (!showPixPopup || !pixData?.transaction_id) return;
-
-    let cancelled = false;
-    let didNavigate = false;
-
-    const transactionId = pixData.transaction_id;
-    const amount = pixData.amount;
-
-    const goNext = async (source: string) => {
-      if (didNavigate) return;
-      didNavigate = true;
-      console.log(`TENF: Payment confirmed (${source}). Showing processing...`);
-
-      if (transactionId && amount) {
-        trackPurchasePixelOnce({
-          transactionId,
-          value: amount,
-          contentId: 'upsell_tenf',
-        });
-      }
-
-      setShowPixPopup(false);
-      setShowProcessing(true);
-    };
-
-    const checkPaymentStatus = async (source: string) => {
-      if (cancelled || didNavigate) return;
-      try {
-        const { data: apiResult, error: apiError } = await supabase.functions.invoke('check-payment', {
-          body: { transaction_id: transactionId }
-        });
-
-        if (apiError) {
-          console.warn('TENF: API check error:', source, apiError);
-          return;
-        }
-
-        if (apiResult?.status === 'paid') {
-          goNext(source);
-        }
-      } catch (err) {
-        console.warn('TENF: Error checking payment:', source, err);
-      }
-    };
-
-    checkPaymentStatus('initial');
-
-    const interval = window.setInterval(() => checkPaymentStatus('poll'), 2500);
-
-    const channel = supabase
-      .channel(`payment-status-tenf-${transactionId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'pix_payments',
-        filter: `transaction_id=eq.${transactionId}`
-      }, (payload) => {
-        if (payload.new?.status === 'paid' || payload.new?.status === 'approved') {
-          checkPaymentStatus('realtime');
-        }
-      })
-      .subscribe();
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-      supabase.removeChannel(channel);
-    };
-  }, [showPixPopup, pixData]);
-
-  const handleGeneratePix = async () => {
-    const emailToSend = leadPixKeyType === "E-mail" && leadPixKey
-      ? leadPixKey
-      : generateRandomEmail(leadName || undefined);
-
-    const result = await generatePix({
-      amount: variant.amount,
-      name: leadName || undefined,
-      email: emailToSend,
-      cpf: leadCpf || undefined,
-      payment_type: 'upsell_tenf',
-      ab_variant: variant.id,
-    });
-
-    if (result) {
-      setShowPixPopup(true);
-    }
-  };
-
-  const handleCopyPixCode = () => {
-    if (pixData?.pix_code) {
-      navigator.clipboard.writeText(pixData.pix_code);
-      setPixCopied(true);
-      setTimeout(() => setPixCopied(false), 2000);
-    }
-  };
-
-  const mockProps = {
-    balance: "R$ 2.834,72",
-    onGeneratePix: handleGeneratePix,
-    isGenerating,
-    leadCpf,
-    leadName,
-    price: variant.formattedAmount,
-    anchorPrice: variant.anchorAmount,
-    discountLabel: variant.discountPercent,
-  };
-
-  if (showProcessing) {
+  if (flow.showProcessing) {
     return <FunnelProcessingScreen onComplete={handleProcessingComplete} />;
   }
 
   return (
     <div className="min-h-screen bg-black/50 flex flex-col items-center justify-end pb-0">
       <div className="w-full max-w-md">
-
         <div className="flex justify-between px-4 mb-2">
-          <Link
-            to="/funil/confirmar-identidade"
-            state={{ pixKey: leadPixKey, pixKeyType: leadPixKeyType }}
-            className="flex items-center gap-1 text-white text-sm bg-black/30 px-3 py-1 rounded-full"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Anterior
+          <Link to="/funil/confirmar-identidade" state={{ pixKey: leadPixKey, pixKeyType: leadPixKeyType }} className="flex items-center gap-1 text-white text-sm bg-black/30 px-3 py-1 rounded-full">
+            <ArrowLeft className="w-4 h-4" /> Anterior
           </Link>
-          <Link
-            to="/funil/upsell-transacional"
-            state={{ pixKey: leadPixKey, pixKeyType: leadPixKeyType }}
-            className="flex items-center gap-1 text-white text-sm bg-black/30 px-3 py-1 rounded-full"
-          >
-            Próximo
-            <ArrowRight className="w-4 h-4" />
+          <Link to="/funil/upsell-transacional" state={{ pixKey: leadPixKey, pixKeyType: leadPixKeyType }} className="flex items-center gap-1 text-white text-sm bg-black/30 px-3 py-1 rounded-full">
+            Próximo <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
-        <FunnelUpsellTENF {...mockProps} />
+        <FunnelUpsellTENF
+          balance="R$ 2.834,72"
+          onGeneratePix={() => flow.handleGeneratePix(leadPixKey, leadPixKeyType)}
+          isGenerating={flow.isGenerating}
+          leadCpf={flow.leadCpf}
+          leadName={flow.leadName}
+          price={variant.formattedAmount}
+          anchorPrice={variant.anchorAmount}
+          discountLabel={variant.discountPercent}
+        />
       </div>
 
-      {showPixPopup && pixData && (
+      {flow.showPixPopup && flow.pixData && (
         <FunnelPixPopup
-          pixData={pixData}
-          onClose={() => setShowPixPopup(false)}
-          onCopy={handleCopyPixCode}
-          isCopied={pixCopied}
+          pixData={flow.pixData}
+          onClose={() => flow.setShowPixPopup(false)}
+          onCopy={flow.handleCopyPixCode}
+          isCopied={flow.pixCopied}
           title="Ativação TENF"
           amount={variant.formattedAmount}
-          showRefundMessage={true}
-          onManualCheck={checkPayment}
-          isCheckingPayment={isChecking}
-          checkError={checkError}
+          showRefundMessage
+          onManualCheck={flow.checkPayment}
+          isCheckingPayment={flow.isChecking}
+          checkError={flow.checkError}
         />
       )}
     </div>
