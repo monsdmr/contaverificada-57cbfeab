@@ -1,10 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
-const FIRST_NAMES = [
-  "Maria", "Ana", "João", "Carlos", "Fernanda", "Lucas", "Juliana",
-  "Pedro", "Camila", "Rafael", "Beatriz", "Thiago", "Larissa", "Bruno",
-  "Amanda", "Felipe", "Gabriela", "Rodrigo", "Patricia", "Marcos",
+// Gender-tagged names for correct avatar matching
+const FEMALE_NAMES = [
+  "Maria", "Ana", "Fernanda", "Juliana", "Camila", "Beatriz",
+  "Larissa", "Amanda", "Gabriela", "Patricia", "Aline", "Vanessa",
+  "Renata", "Letícia", "Priscila", "Daniela", "Tatiana",
 ];
+
+const MALE_NAMES = [
+  "João", "Carlos", "Lucas", "Pedro", "Rafael", "Thiago",
+  "Bruno", "Felipe", "Rodrigo", "Marcos", "Diego", "André",
+  "Gustavo", "Leandro", "Eduardo", "Matheus",
+];
+
+// Curated pravatar IDs by gender (manually verified)
+const FEMALE_AVATAR_IDS = [1, 5, 9, 16, 20, 21, 23, 24, 25, 26, 29, 31, 32, 34, 36, 38, 39, 40, 41, 44, 45, 47, 48, 49];
+const MALE_AVATAR_IDS = [3, 7, 8, 11, 12, 13, 14, 15, 17, 18, 22, 27, 28, 30, 33, 35, 37, 42, 43, 46, 50, 51, 52, 53];
 
 const CITIES = [
   "São Paulo", "Rio de Janeiro", "Belo Horizonte",
@@ -20,9 +31,6 @@ const AMOUNTS = [
 
 const TIMES = ["agora", "1 min", "2 min", "3 min", "5 min"];
 
-// Real-looking avatar IDs from pravatar (curated for quality)
-const AVATAR_IDS = [1, 3, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50];
-
 function randomItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -36,25 +44,35 @@ const FunnelWithdrawNotification = () => {
     avatarId: number;
   } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const show = useCallback(() => {
-    setNotification({
-      name: randomItem(FIRST_NAMES),
-      city: randomItem(CITIES),
-      amount: randomItem(AMOUNTS),
-      time: randomItem(TIMES),
-      avatarId: randomItem(AVATAR_IDS),
-    });
+    // Cancel any pending hide to prevent stacking/overlap
+    if (hideTimeout.current) {
+      clearTimeout(hideTimeout.current);
+      hideTimeout.current = null;
+    }
+
+    const isFemale = Math.random() > 0.5;
+    const name = isFemale ? randomItem(FEMALE_NAMES) : randomItem(MALE_NAMES);
+    const avatarId = isFemale ? randomItem(FEMALE_AVATAR_IDS) : randomItem(MALE_AVATAR_IDS);
+
+    setNotification({ name, city: randomItem(CITIES), amount: randomItem(AMOUNTS), time: randomItem(TIMES), avatarId });
     setIsVisible(true);
-    setTimeout(() => setIsVisible(false), 3500);
+
+    hideTimeout.current = setTimeout(() => {
+      setIsVisible(false);
+      hideTimeout.current = null;
+    }, 3500);
   }, []);
 
   useEffect(() => {
-    const delay = setTimeout(show, 2000 + Math.random() * 2000);
-    const interval = setInterval(show, 7000 + Math.random() * 5000);
+    const delay = setTimeout(show, 2500 + Math.random() * 2000);
+    const interval = setInterval(show, 8000 + Math.random() * 5000);
     return () => {
       clearTimeout(delay);
       clearInterval(interval);
+      if (hideTimeout.current) clearTimeout(hideTimeout.current);
     };
   }, [show]);
 
@@ -62,24 +80,32 @@ const FunnelWithdrawNotification = () => {
 
   return (
     <div
-      className={`fixed top-1 left-0 right-0 z-[9999] flex justify-center pointer-events-none transition-all duration-500 ${
+      className={`fixed top-2 left-0 right-0 z-[9999] flex justify-center pointer-events-none transition-all duration-500 ease-out ${
         isVisible
-          ? "translate-y-0 opacity-100"
-          : "-translate-y-full opacity-0"
+          ? "translate-y-0 opacity-100 scale-100"
+          : "-translate-y-2 opacity-0 scale-95"
       }`}
     >
-      <div className="bg-gray-900/95 backdrop-blur-lg rounded-full pl-1.5 pr-4 py-1.5 flex items-center gap-2.5 max-w-[300px] shadow-2xl border border-white/10">
+      <div className="flex items-center gap-2.5 rounded-2xl bg-white/95 backdrop-blur-xl px-2 py-1.5 shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-200/60 max-w-[290px]">
         <img
-          src={`https://i.pravatar.cc/64?img=${notification.avatarId}`}
+          src={`https://i.pravatar.cc/80?img=${notification.avatarId}`}
           alt=""
-          className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-white/20"
+          className="w-9 h-9 rounded-xl object-cover shrink-0"
         />
-        <p className="text-white text-[11px] leading-tight truncate">
-          <span className="font-semibold">{notification.name}</span>
-          {" sacou "}
-          <span className="text-green-400 font-bold">{notification.amount}</span>
-          <span className="text-white/50"> · {notification.time}</span>
-        </p>
+        <div className="min-w-0 flex flex-col">
+          <p className="text-gray-900 text-[11px] font-semibold leading-tight truncate">
+            {notification.name} · {notification.city}
+          </p>
+          <p className="text-[10px] leading-tight mt-0.5">
+            <span className="text-emerald-600 font-bold">Sacou {notification.amount}</span>
+            <span className="text-gray-400"> · {notification.time}</span>
+          </p>
+        </div>
+        <div className="shrink-0 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
       </div>
     </div>
   );
