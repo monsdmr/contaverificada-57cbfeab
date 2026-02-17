@@ -4,6 +4,7 @@ import { CheckCircle2, Loader2, Shield, Wifi, CreditCard, UserCheck, BanknoteIco
 import tiktokIcon from "@/assets/tiktok-icon.png";
 import bacenLogo from "@/assets/bacen-logo.png";
 import pixLogoFull from "@/assets/pix-logo-full.svg";
+import coinP from "@/assets/coin-p.png";
 
 interface LocationState {
   pixKey?: string;
@@ -26,9 +27,9 @@ const FunnelWithdrawProcessingPage = () => {
   const state = location.state as LocationState | null;
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState(0);
   const hasStarted = useRef(false);
 
-  // Step progression
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
@@ -40,19 +41,20 @@ const FunnelWithdrawProcessingPage = () => {
         setCurrentStep(stepIndex);
         const duration = steps[stepIndex].duration;
         stepIndex++;
-        setTimeout(advanceStep, duration);
+        setTimeout(() => {
+          setCompletedSteps(stepIndex);
+          advanceStep();
+        }, duration);
       } else {
-        // All steps done, navigate to success
         setTimeout(() => {
           navigate("/funil/sucesso", { state, replace: true });
-        }, 800);
+        }, 1200);
       }
     };
 
     advanceStep();
   }, [navigate, state]);
 
-  // Smooth progress bar
   useEffect(() => {
     const totalDuration = steps.reduce((sum, s) => sum + s.duration, 0);
     const startTime = Date.now();
@@ -67,83 +69,117 @@ const FunnelWithdrawProcessingPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const isComplete = progress >= 100;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col">
-      {/* Header */}
-      <header className="bg-gray-900 py-3.5 px-4 flex items-center justify-center gap-2">
+    <div className="min-h-screen bg-black flex flex-col font-['Inter',system-ui,sans-serif]">
+      {/* Header - TikTok style */}
+      <header className="py-4 px-4 flex items-center justify-center gap-2.5 border-b border-white/10">
         <img src={tiktokIcon} alt="TikTok" className="h-7" />
-        <span className="text-white font-bold text-base tracking-tight">Processamento de Saque</span>
+        <span className="text-white font-bold text-[15px] tracking-tight">TikTok Recompensas</span>
       </header>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
-        {/* Animated icon */}
-        <div className="relative w-20 h-20 mb-6">
-          <div className="absolute inset-0 rounded-full bg-emerald-100 animate-ping opacity-30" style={{ animationDuration: "2s" }} />
-          <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-200">
-            {progress < 100 ? (
-              <Loader2 className="w-10 h-10 text-white animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-10 h-10 text-white" />
-            )}
+      <div className="flex-1 flex flex-col items-center px-5 pt-8 pb-6">
+        {/* Coin animation */}
+        <div className="relative w-24 h-24 mb-5">
+          {/* Glow ring */}
+          <div
+            className="absolute inset-0 rounded-full opacity-40"
+            style={{
+              background: "radial-gradient(circle, hsl(349 80% 58% / 0.3) 0%, transparent 70%)",
+              animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            }}
+          />
+          {/* Spinning ring */}
+          <div
+            className="absolute inset-0 rounded-full border-2 border-transparent"
+            style={{
+              borderTopColor: "hsl(349 80% 58%)",
+              borderRightColor: "hsl(349 80% 58% / 0.3)",
+              animation: isComplete ? "none" : "spin 1.2s linear infinite",
+            }}
+          />
+          {/* Coin */}
+          <div className="absolute inset-2 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center border border-white/10 shadow-xl">
+            <img src={coinP} alt="" className="w-12 h-12 object-contain" />
           </div>
+          {/* Check overlay when done */}
+          {isComplete && (
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-2 border-black animate-scale-in">
+              <CheckCircle2 className="w-5 h-5 text-white" />
+            </div>
+          )}
         </div>
 
-        <h1 className="text-xl font-black text-gray-900 mb-1 text-center">
-          Processando seu saque
+        <h1 className="text-lg font-bold text-white mb-0.5 text-center">
+          {isComplete ? "Saque processado!" : "Processando seu saque"}
         </h1>
-        <p className="text-emerald-600 text-2xl font-extrabold mb-2">R$ 2.834,72</p>
-        <p className="text-gray-400 text-xs mb-6 text-center">
-          Aguarde enquanto processamos sua solicitação
+        <p className="text-primary text-2xl font-extrabold mb-1 tracking-tight">R$ 2.834,72</p>
+        <p className="text-white/40 text-xs mb-6 text-center">
+          {isComplete ? "Redirecionando..." : "Aguarde, não feche esta página"}
         </p>
 
-        {/* Progress bar */}
-        <div className="w-full max-w-xs mb-8">
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        {/* Progress bar - TikTok red */}
+        <div className="w-full max-w-xs mb-7">
+          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-100 ease-linear"
-              style={{ width: `${progress}%` }}
+              className="h-full rounded-full transition-all duration-100 ease-linear"
+              style={{
+                width: `${progress}%`,
+                background: "linear-gradient(90deg, hsl(349 80% 58%), hsl(349 99% 68%))",
+              }}
             />
           </div>
-          <p className="text-right text-[11px] text-gray-400 mt-1 font-mono">{Math.round(progress)}%</p>
+          <div className="flex justify-between mt-1.5">
+            <span className="text-[10px] text-white/30">{completedSteps}/{steps.length} etapas</span>
+            <span className="text-[10px] text-white/30 font-mono">{Math.round(progress)}%</span>
+          </div>
         </div>
 
-        {/* Steps */}
-        <div className="w-full max-w-xs space-y-3">
+        {/* Steps list */}
+        <div className="w-full max-w-xs space-y-2.5">
           {steps.map((s, i) => {
             const Icon = s.icon;
-            const isDone = i < currentStep;
-            const isActive = i === currentStep;
+            const isDone = i < completedSteps;
+            const isActive = i === currentStep && !isComplete;
             const isPending = i > currentStep;
 
             return (
               <div
                 key={i}
-                className={`flex items-center gap-3 transition-all duration-500 ${
-                  isPending ? "opacity-30" : "opacity-100"
+                className={`flex items-center gap-3 py-2 px-3 rounded-xl transition-all duration-500 ${
+                  isActive
+                    ? "bg-white/[0.06] border border-white/10"
+                    : isDone
+                    ? "bg-transparent"
+                    : "bg-transparent opacity-30"
                 }`}
+                style={{
+                  animationDelay: `${i * 100}ms`,
+                }}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
                   isDone
-                    ? "bg-emerald-100"
+                    ? "bg-green-500/20"
                     : isActive
-                    ? "bg-emerald-50 ring-2 ring-emerald-300"
-                    : "bg-gray-100"
+                    ? "bg-primary/20"
+                    : "bg-white/5"
                 }`}>
                   {isDone ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
                   ) : isActive ? (
-                    <Loader2 className="w-4 h-4 text-emerald-500 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
                   ) : (
-                    <Icon className="w-4 h-4 text-gray-300" />
+                    <Icon className="w-3.5 h-3.5 text-white/20" />
                   )}
                 </div>
-                <span className={`text-sm transition-all duration-300 ${
+                <span className={`text-[13px] transition-all duration-300 ${
                   isDone
-                    ? "text-emerald-700 font-semibold"
+                    ? "text-green-400/80 font-medium"
                     : isActive
-                    ? "text-gray-800 font-medium"
-                    : "text-gray-400"
+                    ? "text-white font-medium"
+                    : "text-white/30"
                 }`}>
                   {s.text}
                 </span>
@@ -152,26 +188,27 @@ const FunnelWithdrawProcessingPage = () => {
           })}
         </div>
 
-        {/* Trust section */}
-        <div className="mt-8 flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <img src={bacenLogo} alt="BACEN" className="w-4 h-4 object-contain opacity-50" />
-            <span className="text-[10px] text-gray-400">BACEN</span>
+        {/* Trust badges */}
+        <div className="mt-auto pt-8 flex flex-col items-center gap-3">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <img src={bacenLogo} alt="BACEN" className="w-4 h-4 object-contain opacity-40" />
+              <span className="text-[10px] text-white/30">BACEN</span>
+            </div>
+            <div className="w-px h-3 bg-white/10" />
+            <div className="flex items-center gap-1.5">
+              <img src={pixLogoFull} alt="PIX" className="h-3 opacity-30" />
+            </div>
+            <div className="w-px h-3 bg-white/10" />
+            <div className="flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5 text-white/20" />
+              <span className="text-[10px] text-white/30">Criptografado</span>
+            </div>
           </div>
-          <div className="w-px h-3 bg-gray-200" />
-          <div className="flex items-center gap-1.5">
-            <img src={pixLogoFull} alt="PIX" className="h-3 opacity-50" />
-          </div>
-          <div className="w-px h-3 bg-gray-200" />
-          <div className="flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-gray-300" />
-            <span className="text-[10px] text-gray-400">SSL</span>
-          </div>
+          <p className="text-[10px] text-white/15 text-center">
+            Transação protegida por protocolos de segurança do Banco Central
+          </p>
         </div>
-
-        <p className="text-[10px] text-gray-300 mt-3 text-center">
-          Não feche esta página durante o processamento
-        </p>
       </div>
     </div>
   );
