@@ -10,10 +10,11 @@ import NotFound from "./pages/NotFound";
 
 // Lazy-loaded routes
 const RedeemRewards = lazy(() => import("./pages/RedeemRewards"));
-const ABDashboard = lazy(() => import("./pages/ABDashboard"));
-const UpsellDashboard = lazy(() => import("./pages/UpsellDashboard"));
-const TenfABDashboard = lazy(() => import("./pages/TenfABDashboard"));
-const FunnelAnalytics = lazy(() => import("./pages/FunnelAnalytics"));
+// Dashboard pages not yet implemented
+// const ABDashboard = lazy(() => import("./pages/ABDashboard"));
+// const UpsellDashboard = lazy(() => import("./pages/UpsellDashboard"));
+// const TenfABDashboard = lazy(() => import("./pages/TenfABDashboard"));
+// const FunnelAnalytics = lazy(() => import("./pages/FunnelAnalytics"));
 const FunnelLayout = lazy(() => import("@/components/funnel/FunnelLayout"));
 
 const FunnelIndex = lazy(() => import("./pages/funnel/FunnelIndex"));
