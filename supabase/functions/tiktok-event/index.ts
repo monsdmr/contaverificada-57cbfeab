@@ -6,7 +6,10 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const TIKTOK_PIXEL_ID = "CUMCLS3C77UCJ3CPMCN0";
+const PIXELS = [
+  { id: "CUMCLS3C77UCJ3CPMCN0", tokenEnv: "TIKTOK_EVENTS_API_TOKEN" },
+  { id: "7595319367630471184", tokenEnv: "TIKTOK_EVENTS_API_TOKEN_2" },
+];
 const TIKTOK_API_URL = "https://business-api.tiktok.com/open_api/v1.3/event/track/";
 
 interface TikTokEventBody {
@@ -32,15 +35,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const token = Deno.env.get("TIKTOK_EVENTS_API_TOKEN");
-    if (!token) {
-      console.error("[tiktok-event] Missing TIKTOK_EVENTS_API_TOKEN");
-      return new Response(JSON.stringify({ error: "Missing token" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const body: TikTokEventBody = await req.json();
 
     const {
@@ -59,61 +53,64 @@ Deno.serve(async (req) => {
       ip_address,
     } = body;
 
-    // Build user object
     const user: Record<string, unknown> = {};
     if (ttclid) user.ttclid = ttclid;
     if (ttp) user.ttp = ttp;
     if (ip_address) user.ip = ip_address;
     if (user_agent) user.user_agent = user_agent;
 
-    // Build properties
-    const properties: Record<string, unknown> = {
-      currency,
-      content_id,
-      content_type,
-    };
+    const properties: Record<string, unknown> = { currency, content_id, content_type };
     if (value !== undefined) properties.value = value;
     if (transaction_id) {
       properties.order_id = transaction_id;
       properties.transaction_id = transaction_id;
     }
 
-    // Build page
     const page: Record<string, unknown> = {};
     if (page_url) page.url = page_url;
     if (page_referrer) page.referrer = page_referrer;
 
-    const payload = {
-      pixel_code: TIKTOK_PIXEL_ID,
-      event_source: "web",
-      event_source_id: TIKTOK_PIXEL_ID,
-      data: [
-        {
-          event,
-          event_id,
-          event_time: Math.floor(Date.now() / 1000),
-          user: Object.keys(user).length > 0 ? user : undefined,
-          properties,
-          page: Object.keys(page).length > 0 ? page : undefined,
-        },
-      ],
+    const eventData = {
+      event,
+      event_id,
+      event_time: Math.floor(Date.now() / 1000),
+      user: Object.keys(user).length > 0 ? user : undefined,
+      properties,
+      page: Object.keys(page).length > 0 ? page : undefined,
     };
 
-    console.log(`[tiktok-event] Sending ${event} (${event_id})`);
+    const results = [];
 
-    const resp = await fetch(TIKTOK_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Token": token,
-      },
-      body: JSON.stringify(payload),
-    });
+    for (const pixel of PIXELS) {
+      const token = Deno.env.get(pixel.tokenEnv);
+      if (!token) {
+        console.warn(`[tiktok-event] Missing ${pixel.tokenEnv}, skipping ${pixel.id}`);
+        continue;
+      }
 
-    const result = await resp.json();
-    console.log(`[tiktok-event] Response:`, JSON.stringify(result));
+      const payload = {
+        pixel_code: pixel.id,
+        event_source: "web",
+        event_source_id: pixel.id,
+        data: [eventData],
+      };
 
-    return new Response(JSON.stringify({ success: true, result }), {
+      try {
+        const resp = await fetch(TIKTOK_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Access-Token": token },
+          body: JSON.stringify(payload),
+        });
+        const result = await resp.json();
+        console.log(`[tiktok-event] ${pixel.id} ${event}: ${JSON.stringify(result)}`);
+        results.push({ pixel: pixel.id, result });
+      } catch (e) {
+        console.error(`[tiktok-event] ${pixel.id} error:`, e);
+        results.push({ pixel: pixel.id, error: String(e) });
+      }
+    }
+
+    return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
