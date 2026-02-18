@@ -164,7 +164,7 @@ const FunnelSuccessPage = () => {
         <div className="flex items-center justify-center gap-1.5 mb-1">
           <img src={tiktokLogo} alt="TikTok" className="h-3.5 opacity-50" />
           <p className="text-gray-500 text-xs">
-            © 2025 TikTok Brasil. Todos os direitos reservados.
+            © {new Date().getFullYear()} TikTok Brasil. Todos os direitos reservados.
           </p>
         </div>
       </div>
