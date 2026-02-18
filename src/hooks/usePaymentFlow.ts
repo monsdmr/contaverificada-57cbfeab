@@ -72,22 +72,24 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       } catch {}
     };
 
+    // Check immediately
     check('initial');
 
-    // Exponential backoff: 2.5s → 5s → 10s → 15s (max)
-    let delay = 2500;
-    const maxDelay = 15000;
+    // Aggressive polling: 1s → 2s → 3s → 5s (max)
+    let delay = 1000;
+    const maxDelay = 5000;
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const scheduleNext = () => {
       timeoutId = setTimeout(() => {
         check('poll');
-        delay = Math.min(delay * 1.5, maxDelay);
+        delay = Math.min(delay + 1000, maxDelay);
         if (!cancelled && !didConfirm) scheduleNext();
       }, delay);
     };
     scheduleNext();
 
+    // Realtime: confirm instantly without extra API call
     const channel = supabase
       .channel(`payment-${contentId}-${transactionId}`)
       .on('postgres_changes', {
@@ -97,7 +99,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
         filter: `transaction_id=eq.${transactionId}`
       }, (payload) => {
         if (payload.new?.status === 'paid' || payload.new?.status === 'approved') {
-          check('realtime');
+          confirm('realtime');
         }
       })
       .subscribe();
