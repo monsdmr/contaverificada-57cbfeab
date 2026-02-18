@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useTikTokAttribution } from "@/hooks/useTikTokAttribution";
-import Index from "./pages/Index";
+const Index = lazy(() => import("./pages/Index"));
 import NotFound from "./pages/NotFound";
 import FunnelSkeleton from "@/components/funnel/FunnelSkeleton";
 
@@ -37,7 +37,7 @@ const App = () => {
         <BrowserRouter>
           <Suspense fallback={null}>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Suspense fallback={null}><Index /></Suspense>} />
               <Route path="/resgatar" element={<RedeemRewards />} />
               <Route path="/funil" element={
                 <Suspense fallback={<FunnelSkeleton />}>
