@@ -6,6 +6,7 @@ const corsHeaders = {
 }
 
 const SIGMA_API_URL = 'https://api.sigmapay.com.br/api/public/v1'
+const SKALE_API_URL = 'https://api.conta.skalepay.com.br/v1'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -14,10 +15,7 @@ Deno.serve(async (req) => {
 
   try {
     const SIGMA_API_TOKEN = Deno.env.get('SIGMA_API_TOKEN')
-    if (!SIGMA_API_TOKEN) {
-      throw new Error('SIGMA_API_TOKEN not configured')
-    }
-
+    const SKALE_PAY_SECRET_KEY = Deno.env.get('SKALE_PAY_SECRET_KEY')
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -57,7 +55,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Check with SigmaPay API
     const transactionHash = localPayment.transaction_hash
     if (!transactionHash) {
       return new Response(
@@ -66,40 +63,64 @@ Deno.serve(async (req) => {
       )
     }
 
-    const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions/${transactionHash}?api_token=${SIGMA_API_TOKEN}`, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(30000),
-    })
+    // Detect provider from transaction_id prefix
+    const isSkale = transaction_id.startsWith('skale_')
 
-    if (!sigmaResponse.ok) {
-      const errorText = await sigmaResponse.text()
-      console.warn(`[check-payment] SigmaPay check failed [${sigmaResponse.status}]:`, errorText.substring(0, 200))
-      // Return local status if API check fails
-      return new Response(
-        JSON.stringify({ status: localPayment.status, transaction_id }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    let remoteStatus: string | null = null
+
+    if (isSkale && SKALE_PAY_SECRET_KEY) {
+      // Check with SkalePay
+      try {
+        const basicAuth = btoa(`${SKALE_PAY_SECRET_KEY}:x`)
+        const skaleResponse = await fetch(`${SKALE_API_URL}/transactions/${transactionHash}`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json', 'Authorization': `Basic ${basicAuth}` },
+          signal: AbortSignal.timeout(30000),
+        })
+
+        if (skaleResponse.ok) {
+          const skaleData = await skaleResponse.json()
+          remoteStatus = skaleData.status || skaleData.payment_status || null
+          console.log(`[check-payment][skale] Status for ${transactionHash}: ${remoteStatus}`)
+        } else {
+          const errorText = await skaleResponse.text()
+          console.warn(`[check-payment][skale] Check failed [${skaleResponse.status}]:`, errorText.substring(0, 200))
+        }
+      } catch (e) {
+        console.warn('[check-payment][skale] Error:', e instanceof Error ? e.message : e)
+      }
+    } else if (!isSkale && SIGMA_API_TOKEN) {
+      // Check with SigmaPay
+      try {
+        const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions/${transactionHash}?api_token=${SIGMA_API_TOKEN}`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(30000),
+        })
+
+        if (sigmaResponse.ok) {
+          const sigmaData = await sigmaResponse.json()
+          remoteStatus = sigmaData.payment_status || sigmaData.status || sigmaData.transaction?.status || sigmaData.transaction?.payment_status || null
+          console.log(`[check-payment][sigma] Status for ${transactionHash}: ${remoteStatus}`)
+        } else {
+          const errorText = await sigmaResponse.text()
+          console.warn(`[check-payment][sigma] Check failed [${sigmaResponse.status}]:`, errorText.substring(0, 200))
+        }
+      } catch (e) {
+        console.warn('[check-payment][sigma] Error:', e instanceof Error ? e.message : e)
+      }
     }
 
-    const sigmaData = await sigmaResponse.json()
-    const sigmaStatus = sigmaData.payment_status || sigmaData.status || sigmaData.transaction?.status || sigmaData.transaction?.payment_status
+    // Normalize paid statuses
+    const isPaid = remoteStatus && ['paid', 'approved', 'PAID', 'APPROVED'].includes(remoteStatus)
 
-    console.log(`[check-payment] SigmaPay status for ${transactionHash}: ${sigmaStatus}`)
-
-    // Update local status if changed
-    if (sigmaStatus === 'paid' || sigmaStatus === 'approved') {
+    if (isPaid) {
       const { error: updateError } = await supabase
         .from('pix_payments')
-        .update({
-          status: 'paid',
-          paid_at: new Date().toISOString(),
-        })
+        .update({ status: 'paid', paid_at: new Date().toISOString() })
         .eq('transaction_id', transaction_id)
 
-      if (updateError) {
-        console.error('[check-payment] Update error:', updateError)
-      }
+      if (updateError) console.error('[check-payment] Update error:', updateError)
 
       return new Response(
         JSON.stringify({ status: 'paid', transaction_id }),
@@ -108,10 +129,9 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ status: sigmaStatus || localPayment.status, transaction_id }),
+      JSON.stringify({ status: remoteStatus || localPayment.status, transaction_id }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-
   } catch (error) {
     console.error('[check-payment] Error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
