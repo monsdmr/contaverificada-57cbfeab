@@ -5,9 +5,8 @@ const FunnelExitIntent = () => {
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const handleBack = useCallback((e: PopStateEvent) => {
+  const handleBack = useCallback(() => {
     if (dismissed) return;
-    e.preventDefault();
     window.history.pushState(null, "", window.location.href);
     setShow(true);
   }, [dismissed]);

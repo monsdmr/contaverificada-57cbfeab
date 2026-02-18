@@ -10,18 +10,23 @@ import { PixPopupProps } from "./types";
 
 const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, showRefundMessage = false, onManualCheck, isCheckingPayment = false, checkError = null }: PixPopupProps) => {
   const [timeLeft, setTimeLeft] = useState(300);
-  const [showUrgency, setShowUrgency] = useState(true);
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
+    setTimeLeft(300);
+    setIsExpired(false);
     const timer = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(timer); return 0; }
-        if (prev <= 300 && !showUrgency) setShowUrgency(true);
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsExpired(true);
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [pixData?.transaction_id]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -49,9 +54,9 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
       <div className="relative bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl z-10">
         
         <div className="sticky top-0 rounded-t-2xl overflow-hidden">
-          <div className={`flex items-center justify-center gap-1.5 py-2 px-3 text-white text-xs font-bold tracking-wide ${timeLeft <= 60 ? 'bg-red-700' : timeLeft <= 120 ? 'bg-red-600' : timeLeft <= 180 ? 'bg-red-500' : 'bg-orange-500'}`}>
+          <div className={`flex items-center justify-center gap-1.5 py-2 px-3 text-white text-xs font-bold tracking-wide ${isExpired ? 'bg-gray-700' : timeLeft <= 60 ? 'bg-red-700' : timeLeft <= 120 ? 'bg-red-600' : timeLeft <= 180 ? 'bg-red-500' : 'bg-orange-500'}`}>
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-            <span>{timeLeft <= 60 ? `🚨 ÚLTIMO MINUTO! ${formatTime(timeLeft)} — PAGUE AGORA OU PERCA` : timeLeft <= 120 ? `⚠️ RESTAM ${formatTime(timeLeft)} — SEU PIX VAI EXPIRAR!` : timeLeft <= 180 ? `⏳ ATENÇÃO: Tempo quase esgotado — ${formatTime(timeLeft)}` : `⏳ Pague em ${formatTime(timeLeft)} ou o PIX será cancelado`}</span>
+            <span>{isExpired ? '⛔ PIX EXPIRADO — Gere um novo código' : timeLeft <= 60 ? `🚨 ÚLTIMO MINUTO! ${formatTime(timeLeft)} — PAGUE AGORA OU PERCA` : timeLeft <= 120 ? `⚠️ RESTAM ${formatTime(timeLeft)} — SEU PIX VAI EXPIRAR!` : timeLeft <= 180 ? `⏳ ATENÇÃO: Tempo quase esgotado — ${formatTime(timeLeft)}` : `⏳ Pague em ${formatTime(timeLeft)} ou o PIX será cancelado`}</span>
           </div>
           <div className="bg-white flex items-center justify-between py-2 px-4 border-b border-gray-100">
             <img src={pixLogoFull} alt="PIX" className="h-5" />
@@ -85,9 +90,9 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
             <p className="text-gray-400 text-sm">{title}</p>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-center gap-2">
-            <div className="w-2.5 h-2.5 bg-amber-500 rounded-full" />
-            <span className="text-amber-700 text-sm font-medium">Aguardando pagamento...</span>
+          <div className={`${isExpired ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'} border rounded-xl p-3 flex items-center justify-center gap-2`}>
+            <div className={`w-2.5 h-2.5 ${isExpired ? 'bg-red-500' : 'bg-amber-500 animate-pulse'} rounded-full`} />
+            <span className={`${isExpired ? 'text-red-700' : 'text-amber-700'} text-sm font-medium`}>{isExpired ? 'PIX expirado. Feche e gere novamente.' : 'Aguardando pagamento...'}</span>
           </div>
 
           <div className="bg-gray-50 rounded-xl p-3">
@@ -95,11 +100,11 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
             <p className="text-gray-600 text-[10px] break-all font-mono leading-relaxed">{pixData?.pix_code || 'Código não disponível'}</p>
           </div>
 
-          <button onClick={onCopy} className="w-full py-3.5 rounded-xl bg-[#E8505B] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
-            <Copy className="w-4 h-4" />{isCopied ? 'Código copiado!' : 'Copiar código PIX'}
+          <button onClick={onCopy} disabled={isExpired} className={`w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${isExpired ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#E8505B] hover:brightness-105'}`}>
+            <Copy className="w-4 h-4" />{isExpired ? 'PIX expirado' : isCopied ? 'Código copiado!' : 'Copiar código PIX'}
           </button>
 
-          {onManualCheck && (
+          {onManualCheck && !isExpired && (
             <button onClick={onManualCheck} disabled={isCheckingPayment} className="w-full py-3.5 rounded-xl bg-[#2A9D5C] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70">
               {isCheckingPayment ? (<><Loader2 className="w-4 h-4 animate-spin" />Verificando pagamento...</>) : (<><CheckCircle2 className="w-4 h-4" />Já paguei</>)}
             </button>
