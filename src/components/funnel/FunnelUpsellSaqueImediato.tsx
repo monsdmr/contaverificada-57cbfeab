@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Loader2, Check, ChevronDown, ChevronUp, Clock } from "lucide-react";
-import tiktokLogo from "@/assets/tiktok-logo.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";

@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Check, Loader2, Shield, ChevronRight, AlertCircle } from "lucide-react";
 import serasaBanner from "@/assets/serasa-limpa-nome.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
@@ -8,9 +7,6 @@ import testimonial3 from "@/assets/testimonial-3.jpg";
 interface FunnelUpsellTransacionalProps { balance: string; pixName: string; pixKey: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; }
 
 const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellTransacionalProps) => {
-  const [recentUser, setRecentUser] = useState("");
-  const recentNames = ["Juliana A.", "Pedro S.", "Mariana C.", "Diego L.", "Tatiana B.", "Felipe R.", "Aline M.", "Gustavo H.", "Sandra P.", "Thiago F."];
-  useEffect(() => { const pick = () => setRecentUser(recentNames[Math.floor(Math.random() * recentNames.length)]); pick(); const interval = setInterval(pick, 11000); return () => clearInterval(interval); }, []);
 
   return (
     <div className="fixed inset-0 z-[80] bg-[#F5F0F6] overflow-y-auto">
