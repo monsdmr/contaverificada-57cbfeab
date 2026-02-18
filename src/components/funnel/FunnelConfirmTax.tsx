@@ -168,12 +168,6 @@ const FunnelConfirmTax = ({
         </div>
       </main>
 
-      <style>{`
-        @keyframes ctaPulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(232, 80, 91, 0.3); }
-          50% { transform: scale(1.02); box-shadow: 0 6px 25px rgba(232, 80, 91, 0.5); }
-        }
-      `}</style>
     </div>
   );
 };
