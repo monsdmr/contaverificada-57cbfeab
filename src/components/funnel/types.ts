@@ -1,16 +1,3 @@
-export type FunnelStep =
-  | "main"
-  | "selectMethod"
-  | "linkPix"
-  | "selectKeyType"
-  | "loading"
-  | "confirmTax"
-  | "pixPayment"
-  | "upsellTENF"
-  | "upsellTENFPayment"
-  | "upsellTransacional"
-  | "upsellTransacionalPayment";
-
 export type PixKeyType = "CPF" | "E-mail" | "Celular" | "Chave Aleatória" | null;
 
 export interface PixPaymentData {
@@ -20,15 +7,6 @@ export interface PixPaymentData {
   pix_url?: string;
   amount: number;
   status: string;
-}
-
-export interface FunnelStepProps {
-  balance: string;
-  pixKey: string;
-  pixKeyType: PixKeyType;
-  pixName: string;
-  onGeneratePix: () => void;
-  isGenerating: boolean;
 }
 
 export interface PixPopupProps {
