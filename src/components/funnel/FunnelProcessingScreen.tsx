@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Loader2, CheckCircle2, Shield, Banknote, RefreshCw, BarChart3, Fingerprint } from "lucide-react";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 
@@ -61,7 +62,7 @@ const FunnelProcessingScreen = ({ onComplete, balance = "R$ 2.834,72" }: FunnelP
 
   const isComplete = progress >= 100;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[200] bg-white flex flex-col items-center font-['Inter',system-ui,sans-serif]">
       {/* Header */}
       <header className="w-full py-3.5 px-4 flex items-center justify-center gap-2 border-b border-gray-100">
@@ -72,9 +73,7 @@ const FunnelProcessingScreen = ({ onComplete, balance = "R$ 2.834,72" }: FunnelP
       <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-8">
         {/* Animated circle */}
         <div className="relative w-20 h-20 mb-5">
-          <div
-            className="absolute inset-0 rounded-full border-[3px] border-gray-100"
-          />
+          <div className="absolute inset-0 rounded-full border-[3px] border-gray-100" />
           <div
             className="absolute inset-0 rounded-full border-[3px] border-transparent"
             style={{
@@ -167,7 +166,8 @@ const FunnelProcessingScreen = ({ onComplete, balance = "R$ 2.834,72" }: FunnelP
         <Shield className="w-3 h-3 text-gray-300" />
         <span className="text-gray-400 text-[10px]">Ambiente seguro • Dados criptografados</span>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
