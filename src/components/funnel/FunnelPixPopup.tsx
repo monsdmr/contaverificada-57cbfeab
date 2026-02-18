@@ -95,7 +95,7 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
             <p className="text-gray-600 text-[10px] break-all font-mono leading-relaxed">{pixData?.pix_code || 'Código não disponível'}</p>
           </div>
 
-          <button onClick={() => { onCopy(); if (navigator.vibrate) navigator.vibrate(50); }} className="w-full py-3.5 rounded-xl bg-[#E8505B] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+          <button onClick={onCopy} className="w-full py-3.5 rounded-xl bg-[#E8505B] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
             <Copy className="w-4 h-4" />{isCopied ? 'Código copiado!' : 'Copiar código PIX'}
           </button>
 
