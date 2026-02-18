@@ -74,10 +74,15 @@ async function generateWithSkale(params: {
       'Authorization': `Basic ${basicAuth}`,
     },
     body: JSON.stringify({
-      payment_method: 'PIX',
+      paymentMethod: 'pix',
       amount: amountCentavos,
-      currency: 'BRL',
-      customer: { name: name || 'Cliente', email: email || 'cliente@pagamento.com', document: cleanCpf },
+      customer: { name: name || 'Cliente', email: email || 'cliente@pagamento.com', phone: phone || '11999999999', document: { type: cleanCpf.length <= 11 ? 'cpf' : 'cnpj', number: cleanCpf } },
+      items: [{
+        title: params.paymentType || 'Pagamento',
+        unitPrice: amountCentavos,
+        quantity: 1,
+        tangible: false,
+      }],
       postBackUrl: webhookUrl,
     }),
     signal: AbortSignal.timeout(60000),
@@ -98,10 +103,10 @@ async function generateWithSkale(params: {
 
   console.log('[generate-pix][skale] Response:', JSON.stringify(skaleData))
 
-  const transactionHash = skaleData.transaction_id || skaleData.id || skaleData.hash || crypto.randomUUID()
-  const pixCode = skaleData.pix?.copy_and_paste || skaleData.pix?.qr_code || skaleData.pix?.pix_qr_code || skaleData.pix_code || ''
-  const pixQrBase64 = skaleData.pix?.qr_code_base64 || skaleData.pix?.pix_url || skaleData.pix_qr_code_base64 || ''
-  const pixUrl = skaleData.pix?.qr_code_url || skaleData.pix?.pix_url || skaleData.pix_url || ''
+  const transactionHash = String(skaleData.id || skaleData.transaction_id || skaleData.hash || crypto.randomUUID())
+  const pixCode = skaleData.pix?.qrcode || skaleData.pix?.copy_and_paste || skaleData.pix?.qr_code || ''
+  const pixQrBase64 = '' // Skale doesn't return base64, QR will be generated client-side from pixCode
+  const pixUrl = skaleData.secureUrl || ''
 
   if (!pixCode) throw new Error('SkalePay: pix_code missing in response')
 
