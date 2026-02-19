@@ -31,7 +31,7 @@ const FunnelUpsellBonusOculto = ({ balance, onGeneratePix, isGenerating, leadCpf
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem liberou, recebeu</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Mariana S." location="Recife, PE" text="Nem sabia que tinha esse bônus! Paguei a taxa e em menos de 1 minuto caiu tudo junto no meu PIX." amount="R$ 384,20" /><TestimonialCard img={testimonial2} name="Carlos A." location="Belo Horizonte, MG" text="Fiquei desconfiado no começo, mas a taxa voltou rapidinho e o bônus caiu junto com o saldo." amount="R$ 384,20" /><TestimonialCard img={testimonial3} name="Juliana R." location="Curitiba, PR" text="Já tinha feito o saque e apareceu esse bônus extra. Liberei na hora e recebi tudo certinho." amount="R$ 384,20" /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Sistema de conciliação auditado pelo Banco Central</p></div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, LIBERAR BÔNUS DE R$ 384,20` : "Liberar Bônus de R$ 384,20"} bgColor="bg-[#FE2C55]" shadowColor="shadow-red-200" />
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="LIBERAR BÔNUS DE R$ 384,20" bgColor="bg-[#FE2C55]" shadowColor="shadow-red-200" />
     </div>
   );
 };
