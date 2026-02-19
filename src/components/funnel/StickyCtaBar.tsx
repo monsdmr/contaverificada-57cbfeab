@@ -1,4 +1,4 @@
-import { Loader2, ChevronRight } from "lucide-react";
+import { Loader2, ChevronRight, Shield } from "lucide-react";
 
 interface StickyCtaBarProps {
   onClick: () => void;
@@ -38,6 +38,10 @@ const StickyCtaBar = ({
             </>
           )}
         </button>
+        <p className="flex items-center justify-center gap-1 mt-1.5 text-gray-300 text-[10px]">
+          <Shield className="w-3 h-3" />
+          Pagamento seguro via PIX • Reembolso garantido
+        </p>
       </div>
     </div>
   );
