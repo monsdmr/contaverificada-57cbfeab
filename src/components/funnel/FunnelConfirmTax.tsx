@@ -67,7 +67,7 @@ const FunnelConfirmTax = ({
   const firstName = leadName ? leadName.split(" ")[0] : "";
 
   return (
-    <div className="fixed inset-0 z-[80] bg-[#F8F8F8] overflow-y-auto">
+    <div className="fixed inset-0 z-[80] bg-[#F8F8F8] overflow-y-auto pt-6">
       <div className="py-4 flex justify-center bg-white">
         <img src={tiktokLogo} alt="TikTok" className="h-6 w-auto" />
       </div>

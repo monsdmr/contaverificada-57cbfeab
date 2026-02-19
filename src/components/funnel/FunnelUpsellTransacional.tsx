@@ -10,7 +10,7 @@ interface FunnelUpsellTransacionalProps { balance: string; pixName: string; pixK
 const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellTransacionalProps) => {
 
   return (
-    <div className="fixed inset-0 z-[80] bg-[#F5F0F6] overflow-y-auto">
+    <div className="fixed inset-0 z-[80] bg-[#F5F0F6] overflow-y-auto pt-6">
       <div className="bg-[#ED1164] pt-3 pb-4 px-4"><div className="flex items-center justify-center mb-4"><img src={serasaBanner} alt="Serasa Limpa Nome" className="h-20 object-contain" /></div></div>
       <main className="px-4 -mt-6 space-y-3 max-w-md mx-auto pb-24">
         <div className="bg-white rounded-2xl p-4 shadow-sm">
