@@ -18,7 +18,7 @@ const StickyCtaBar = ({
   shadowColor = "shadow-emerald-500/30",
 }: StickyCtaBarProps) => {
   return (
-    <div className="sticky bottom-0 left-0 right-0 z-[90] bg-gradient-to-t from-white via-white to-white/0 pt-4 pb-3 px-4">
+    <div className="fixed bottom-0 left-0 right-0 z-[90] bg-gradient-to-t from-white via-white to-white/0 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] px-4">
       <div className="max-w-md mx-auto">
         <button
           onClick={onClick}
