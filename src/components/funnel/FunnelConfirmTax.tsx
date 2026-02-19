@@ -109,9 +109,6 @@ const FunnelConfirmTax = ({
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border-2 border-[#E8505B]/30">
-          <div className="flex items-center justify-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#4CAF50]" /><span className="text-[#4CAF50] text-xs font-medium">Reembolso automático em 1 minuto</span></div>
-        </div>
 
         <div className="bg-white rounded-xl p-4 border border-gray-100">
           <p className="text-gray-500 text-[10px] font-medium tracking-wide mb-3">PERGUNTAS FREQUENTES</p>
