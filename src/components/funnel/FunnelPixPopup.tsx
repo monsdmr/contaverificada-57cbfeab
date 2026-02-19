@@ -84,10 +84,6 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
 
           {checkError && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center"><span className="text-red-600 text-sm">{checkError}</span></div>}
 
-          {showRefundMessage && (
-            <div className="flex items-center justify-center gap-2 pt-2 pb-1"><Clock className="w-4 h-4 text-[#4CAF50]" /><span className="text-[#4CAF50] text-xs font-medium">Reembolso automático em 1 minuto</span></div>
-          )}
-
           <div className="flex items-center justify-center gap-4 pt-2 border-t border-gray-100">
             <img src={bacenLogo} alt="BACEN" className="h-8 object-contain" />
             <img src={govbrLogo} alt="gov.br" className="h-5 object-contain" />
