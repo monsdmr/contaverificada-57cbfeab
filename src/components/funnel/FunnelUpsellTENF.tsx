@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Loader2, ChevronRight, Shield, AlertTriangle, Lock, Zap, CheckCircle2 } from "lucide-react";
+import { useState, useEffect, ReactNode } from "react";
+import { Loader2, ChevronRight, Shield, AlertTriangle, Lock, Zap, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
@@ -7,6 +7,7 @@ import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
 
 interface FunnelUpsellTENFProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; price?: string; anchorPrice?: string; discountLabel?: string; }
+const FaqItem = ({ question, answer }: { question: string; answer: ReactNode }) => { const [open, setOpen] = useState(false); return (<div className="border-b border-gray-200 last:border-0"><button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-2 text-left"><span className="text-gray-600 text-[11px] font-semibold pr-2">{question}</span>{open ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />}</button>{open && <p className="text-gray-400 text-[11px] leading-relaxed pb-2">{answer}</p>}</div>); };
 
 const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, price = "R$ 42,91", anchorPrice = "R$ 97,90", discountLabel = "56% OFF" }: FunnelUpsellTENFProps) => {
   const [activationsLeft, setActivationsLeft] = useState(7);
@@ -61,10 +62,14 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
         </div>
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
           <p className="text-gray-700 text-xs font-bold mb-2.5">Perguntas frequentes</p>
-          <div className="space-y-2.5">
-            <div><p className="text-gray-600 text-[11px] font-semibold">O que é o TENF?</p><p className="text-gray-400 text-[11px] leading-relaxed">É o Termo Eletrônico de Nota Fiscal, protocolo <strong>obrigatório</strong> regulamentado pelo Banco Central (Resolução nº 4.893). Sem ele, é <strong>impossível</strong> receber qualquer valor acima de R$ 1.500.</p></div>
-            <div className="border-t border-gray-200 pt-2"><p className="text-gray-600 text-[11px] font-semibold">O que acontece se eu não ativar?</p><p className="text-gray-400 text-[11px] leading-relaxed">Seu saldo será <strong>cancelado permanentemente em 24 horas</strong>. O sistema fiscal bloqueia a conta e o valor não pode ser recuperado após o cancelamento.</p></div>
-            <div className="border-t border-gray-200 pt-2"><p className="text-gray-600 text-[11px] font-semibold">A taxa é reembolsável?</p><p className="text-gray-400 text-[11px] leading-relaxed">Sim, 100% reembolsável. Se o saque não cair na sua conta, o valor volta automaticamente em até 2 minutos. <strong>Risco zero.</strong></p></div>
+          <div className="space-y-1">
+            {[
+              { q: "O que é o TENF?", a: <>É o Termo Eletrônico de Nota Fiscal, protocolo <strong>obrigatório</strong> regulamentado pelo Banco Central (Resolução nº 4.893). Sem ele, é <strong>impossível</strong> receber qualquer valor acima de R$ 1.500.</> },
+              { q: "O que acontece se eu não ativar?", a: <>Seu saldo será <strong>cancelado permanentemente em 24 horas</strong>. O sistema fiscal bloqueia a conta e o valor não pode ser recuperado após o cancelamento.</> },
+              { q: "A taxa é reembolsável?", a: <>Sim, 100% reembolsável. Se o saque não cair na sua conta, o valor volta automaticamente em até 2 minutos. <strong>Risco zero.</strong></> },
+            ].map((item, i) => (
+              <FaqItem key={i} question={item.q} answer={item.a} />
+            ))}
           </div>
         </div>
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
