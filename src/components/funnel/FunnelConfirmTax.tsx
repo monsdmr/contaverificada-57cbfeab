@@ -166,7 +166,7 @@ const FunnelConfirmTax = ({
           <a href="#" className="text-[#E8505B] text-xs font-medium">Precisa de ajuda?</a>
         </div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, LIBERAR MEU SAQUE` : "Pagar taxa e Liberar Saque"} bgColor="bg-[#E8505B]" shadowColor="shadow-red-500/40" />
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="PAGAR TAXA E LIBERAR SAQUE" bgColor="bg-[#E8505B]" shadowColor="shadow-red-500/40" />
     </div>
   );
 };

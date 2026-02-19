@@ -34,7 +34,7 @@ const FunnelUpsellSaldoDuplicado = ({ balance, onGeneratePix, isGenerating, lead
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem duplicou, recebeu em dobro</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Thiago R." location="Goiânia, GO" text="Não acreditei quando vi a oferta de duplicar. Ativei e em 2 minutos caiu o dobro do saldo na minha conta." amount="R$ 5.669,44" /><TestimonialCard img={testimonial2} name="Camila B." location="Fortaleza, CE" text="Quase deixei passar achando que não era real. Minha irmã me convenceu a ativar e recebi tudo duplicado." amount="R$ 5.669,44" /><TestimonialCard img={testimonial3} name="Rafael N." location="Florianópolis, SC" text="Já tinha recebido o saldo normal antes. Dessa vez apareceu a duplicação e eu ativei na hora." amount="R$ 5.669,44" /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Sistema de conversão auditado pelo Banco Central</p></div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, DUPLICAR MEU SALDO` : "Duplicar Meu Saldo para R$ 5.669,44"} bgColor="bg-[#1B5E20]" shadowColor="shadow-green-200" />
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="DUPLICAR MEU SALDO PARA R$ 5.669,44" bgColor="bg-[#1B5E20]" shadowColor="shadow-green-200" />
     </div>
   );
 };
