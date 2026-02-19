@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Clock, AlertTriangle } from "lucide-react";
 
 const TIMER_KEY = "funnel_timer_start";
-const TIMER_DURATION = 7 * 60; // 7 minutes in seconds
+const TIMER_DURATION = 10 * 60; // 10 minutes in seconds
 
 const FunnelCountdownTimer = () => {
   const [secondsLeft, setSecondsLeft] = useState(() => {
