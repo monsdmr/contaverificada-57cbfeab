@@ -138,10 +138,7 @@ const FunnelConfirmTax = ({
         </div>
 
         <div className="bg-white rounded-xl p-4 border-2 border-[#E8505B]/30">
-          <button onClick={onGeneratePix} disabled={isGenerating} className="w-full py-4 rounded-xl bg-[#E8505B] text-white font-bold text-base transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 relative overflow-hidden shadow-xl shadow-red-500/40" style={{ animation: isGenerating ? 'none' : 'ctaPulse 2s ease-in-out infinite' }}>
-            {isGenerating ? (<><Loader2 className="w-5 h-5 animate-spin" />Gerando PIX...</>) : (<><ShieldCheck className="w-5 h-5" />Pagar taxa para Liberar Saque</>)}
-          </button>
-          <div className="flex items-center justify-center gap-1.5 mt-3"><Clock className="w-3.5 h-3.5 text-[#4CAF50]" /><span className="text-[#4CAF50] text-xs font-medium">Reembolso automático em 1 minuto</span></div>
+          <div className="flex items-center justify-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#4CAF50]" /><span className="text-[#4CAF50] text-xs font-medium">Reembolso automático em 1 minuto</span></div>
         </div>
 
         <div className="bg-white rounded-xl p-4 border border-gray-100">

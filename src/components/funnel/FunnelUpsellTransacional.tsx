@@ -36,10 +36,7 @@ const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isG
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1"><span className="text-gray-500 text-xs">Valor da quitação</span><span className="bg-[#FDE8F0] text-[#ED1164] text-[10px] font-bold px-2 py-0.5 rounded-full">-84%</span></div>
           <div className="flex items-baseline gap-2 mb-1"><span className="text-gray-300 text-sm line-through">R$ 159,90</span><span className="text-gray-900 text-2xl font-extrabold">R$ 33,41</span></div>
-          <p className="text-green-600 text-[11px] font-medium mb-4">Quitação instantânea + saque liberado na hora</p>
-          <button onClick={onGeneratePix} disabled={isGenerating} className="w-full py-4 rounded-xl bg-[#ED1164] text-white font-bold text-[15px] hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-pink-200" style={{ animation: isGenerating ? 'none' : 'ctaPulse 2s ease-in-out infinite' }}>
-            {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Gerando PIX...</>) : (<>Quitar Serasa e liberar saque<ChevronRight className="w-4 h-4" /></>)}
-          </button>
+          <p className="text-green-600 text-[11px] font-medium mb-3">Quitação instantânea + saque liberado na hora</p>
           <div className="flex items-center justify-center gap-1.5 mt-3"><Shield className="w-3 h-3 text-gray-300" /><span className="text-gray-400 text-[10px]">Pagamento seguro via PIX</span></div>
         </div>
         <div className="bg-white rounded-2xl p-4 shadow-sm border-l-4 border-[#ED1164]">
@@ -53,9 +50,6 @@ const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isG
             ))}
           </div>
         </div>
-        <button onClick={onGeneratePix} disabled={isGenerating} className="w-full py-4 rounded-xl bg-[#ED1164] text-white font-bold text-[15px] hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-pink-200" style={{ animation: isGenerating ? 'none' : 'ctaPulse 2s ease-in-out infinite' }}>
-          {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Gerando PIX...</>) : (<>Quitar e liberar saque<ChevronRight className="w-4 h-4" /></>)}
-        </button>
         <p className="text-gray-400 text-[10px] text-center pb-2">Regulamentado pelo Banco Central do Brasil</p>
       </main>
       <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="Quitar Serasa e liberar saque" bgColor="bg-[#ED1164]" shadowColor="shadow-pink-200" />
