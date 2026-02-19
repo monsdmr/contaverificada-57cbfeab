@@ -1,9 +1,21 @@
 import { useMemo } from "react";
 
+const PREVIEW_NAME = "Carlos Eduardo Silva";
+const PREVIEW_CPF = "123.456.789-00";
+
 export function useLeadData() {
   return useMemo(() => {
-    const cpf = sessionStorage.getItem("lead_cpf") || "";
-    const name = sessionStorage.getItem("lead_name") || "";
+    let cpf = sessionStorage.getItem("lead_cpf") || "";
+    let name = sessionStorage.getItem("lead_name") || "";
+
+    // Populate with preview data if empty (for visualization)
+    if (!cpf && !name) {
+      cpf = PREVIEW_CPF;
+      name = PREVIEW_NAME;
+      sessionStorage.setItem("lead_cpf", cpf);
+      sessionStorage.setItem("lead_name", name);
+    }
+
     return { leadCpf: cpf, leadName: name };
   }, []);
 }
