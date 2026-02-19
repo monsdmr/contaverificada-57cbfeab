@@ -10,7 +10,7 @@ import { usePreloadFunnelImages } from "@/hooks/usePreloadFunnelImages";
 import { useEffect, useMemo } from "react";
 import { trackFunnelView } from "@/lib/funnelAnalytics";
 
-const HIDDEN_TIMER_PAGES = ["sucesso", "processando-saque"];
+const HIDDEN_TIMER_PAGES = ["sucesso", "processando-saque", "confirmar-identidade", "confirmar-taxa"];
 
 const FunnelLayout = () => {
   const location = useLocation();
