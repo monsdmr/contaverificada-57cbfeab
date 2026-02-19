@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import FunnelUpsellTENF from "@/components/funnel/FunnelUpsellTENF";
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
-import { FunnelPixPopup } from "@/components/funnel";
+import FunnelPixPopup from "@/components/funnel/FunnelPixPopup";
 import { usePaymentFlow } from "@/hooks/usePaymentFlow";
 import { getTenfABVariant } from "@/lib/abTestTenf";
 

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import FunnelUpsellAntiErros from "@/components/funnel/FunnelUpsellAntiErros";
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
-import { FunnelPixPopup } from "@/components/funnel";
+import FunnelPixPopup from "@/components/funnel/FunnelPixPopup";
 import { usePaymentFlow } from "@/hooks/usePaymentFlow";
 
 interface LocationState { pixKey?: string; pixKeyType?: string; }
