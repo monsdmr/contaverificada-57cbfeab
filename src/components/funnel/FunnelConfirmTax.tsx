@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Check, Clock, Loader2, ShieldCheck, ChevronDown } from "lucide-react";
+import StickyCtaBar from "./StickyCtaBar";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 import bacenLogo from "@/assets/bacen-logo.png";
 import govbrLogo from "@/assets/govbr-logo.webp";
@@ -76,7 +77,7 @@ const FunnelConfirmTax = ({
         </p>
       </div>
 
-      <main className="px-3 py-2.5 space-y-2.5 max-w-md mx-auto pb-6">
+      <main className="px-3 py-2.5 space-y-2.5 max-w-md mx-auto pb-24">
         <div className="bg-black rounded-xl p-4">
           <p className="text-white/90 text-[10px] font-semibold tracking-wider mb-0.5">SALDO DISPONÍVEL</p>
           <p className="text-white text-[26px] font-extrabold tracking-tight leading-none">{balance}</p>
@@ -167,7 +168,7 @@ const FunnelConfirmTax = ({
           <a href="#" className="text-[#E8505B] text-xs font-medium">Precisa de ajuda?</a>
         </div>
       </main>
-
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="Pagar taxa e Liberar Saque" bgColor="bg-[#E8505B]" shadowColor="shadow-red-500/40" />
     </div>
   );
 };

