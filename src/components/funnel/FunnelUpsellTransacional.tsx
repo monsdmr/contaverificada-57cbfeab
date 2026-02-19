@@ -1,4 +1,5 @@
 import { Check, Loader2, Shield, ChevronRight, AlertCircle } from "lucide-react";
+import StickyCtaBar from "./StickyCtaBar";
 import serasaBanner from "@/assets/serasa-limpa-nome.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
@@ -11,7 +12,7 @@ const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isG
   return (
     <div className="fixed inset-0 z-[80] bg-[#F5F0F6] overflow-y-auto">
       <div className="bg-[#ED1164] pt-3 pb-4 px-4"><div className="flex items-center justify-center mb-4"><img src={serasaBanner} alt="Serasa Limpa Nome" className="h-20 object-contain" /></div></div>
-      <main className="px-4 -mt-6 space-y-3 max-w-md mx-auto pb-8">
+      <main className="px-4 -mt-6 space-y-3 max-w-md mx-auto pb-24">
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           {leadName && <p className="text-gray-400 text-xs mb-1">Devedor: <strong className="text-gray-700">{leadName}</strong></p>}
           <h2 className="text-gray-900 text-base font-bold mb-2">{leadCpf ? `CPF ${leadCpf} possui pendência no Serasa` : "Seu CPF possui uma pendência no Serasa"}</h2>
@@ -57,6 +58,7 @@ const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isG
         </button>
         <p className="text-gray-400 text-[10px] text-center pb-2">Regulamentado pelo Banco Central do Brasil</p>
       </main>
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="Quitar Serasa e liberar saque" bgColor="bg-[#ED1164]" shadowColor="shadow-pink-200" />
     </div>
   );
 };

