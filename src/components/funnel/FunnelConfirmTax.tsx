@@ -43,7 +43,7 @@ const FunnelConfirmTax = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[80] bg-[#F8F8F8] overflow-y-auto pt-6">
+    <div className="fixed inset-0 z-[80] bg-[#F8F8F8] overflow-y-auto">
       <div className="py-3 flex justify-center bg-white border-b border-gray-100">
         <img src={tiktokLogo} alt="TikTok" className="h-6 w-auto" />
       </div>
