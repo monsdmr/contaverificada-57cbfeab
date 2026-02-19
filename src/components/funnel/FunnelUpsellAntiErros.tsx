@@ -15,7 +15,7 @@ const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, 
   useEffect(() => { const interval = setInterval(() => setActivationsLeft(prev => (prev <= 1 ? 5 : prev - 1)), 20000); return () => clearInterval(interval); }, []);
 
   return (
-    <div className="fixed inset-0 z-[80] bg-white overflow-y-auto">
+    <div className="fixed inset-0 z-[80] bg-white overflow-y-auto pt-6">
       <div className="bg-[#FE2C55] py-2.5 flex justify-center"><img src={tiktokLogo} alt="TikTok" className="h-5 w-auto brightness-0 invert" /></div>
       <main className="px-4 py-3 space-y-3 max-w-md mx-auto pb-24">
         {leadCpf && (<div className="bg-gray-50 rounded-lg p-2.5 flex items-center gap-2.5 border border-gray-200"><span className="text-sm">🪪</span><div className="flex-1"><p className="text-gray-800 text-xs font-semibold">{leadName || "Titular"}</p><p className="text-gray-400 text-[10px]">CPF: {leadCpf}</p></div><span className="text-emerald-600 text-[10px] font-bold">Verificado ✓</span></div>)}

