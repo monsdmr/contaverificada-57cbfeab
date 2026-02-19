@@ -10,34 +10,6 @@ import { generateRandomEmail } from "@/lib/generateRandomEmail";
 type PixKeyType = "CPF" | "E-mail" | "Celular" | "Chave Aleatória" | null;
 type SheetStep = "closed" | "selectMethod" | "linkPix" | "selectKeyType";
 
-// Isolated timer component to prevent re-renders of the whole page
-const CountdownHeader = () => {
-  const [timeLeftSeconds, setTimeLeftSeconds] = useState(5 * 60);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeftSeconds((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (totalSeconds: number) => {
-    const minutes = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const isExpired = timeLeftSeconds === 0;
-
-  return (
-    <header className="bg-red-600 py-2.5 text-center border-b border-red-700">
-      <span className="text-white text-xs font-bold tracking-wide uppercase">
-        {isExpired ? "⚠️ SEU SALDO EXPIROU" : `⚠️ O SEU SALDO EXPIRA EM: ${formatTime(timeLeftSeconds)}`}
-      </span>
-    </header>
-  );
-};
-
 const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
   const navigate = useNavigate();
   const [selectedAmount, setSelectedAmount] = useState<string | null>("R$2.834,72");
@@ -203,7 +175,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
 
   return (
     <div ref={ref} className="min-h-screen bg-[#F2F2F2] font-['Inter',system-ui,sans-serif]">
-      <CountdownHeader />
+      
 
       {/* Title */}
       <div className="text-center py-3">
