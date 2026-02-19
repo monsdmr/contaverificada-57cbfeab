@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Check, Clock, Loader2, ShieldCheck, ChevronDown } from "lucide-react";
-import StickyCtaBar from "./StickyCtaBar";
+import { Check, Loader2, ShieldCheck, ChevronDown } from "lucide-react";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 import bacenLogo from "@/assets/bacen-logo.png";
 import govbrLogo from "@/assets/govbr-logo.webp";
@@ -49,7 +48,7 @@ const FunnelConfirmTax = ({
         <img src={tiktokLogo} alt="TikTok" className="h-6 w-auto" />
       </div>
 
-      <main className="px-3 py-2.5 space-y-2.5 max-w-md mx-auto pb-24">
+      <main className="px-3 py-2.5 space-y-2.5 max-w-md mx-auto pb-6">
         <div className="bg-black rounded-xl p-4">
           <p className="text-white/90 text-[10px] font-semibold tracking-wider mb-0.5">SALDO DISPONÍVEL</p>
           <p className="text-white text-[26px] font-extrabold tracking-tight leading-none">{balance}</p>
@@ -109,6 +108,13 @@ const FunnelConfirmTax = ({
           </div>
         </div>
 
+        <button
+          onClick={onGeneratePix}
+          disabled={isGenerating}
+          className="w-full bg-[#00A651] text-white font-bold text-base py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/40 active:scale-95 transition-transform"
+        >
+          {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : "LIBERAR SAQUE"}
+        </button>
 
         <div className="bg-white rounded-xl p-4 border border-gray-100">
           <p className="text-gray-500 text-[10px] font-medium tracking-wide mb-3">PERGUNTAS FREQUENTES</p>
@@ -134,7 +140,6 @@ const FunnelConfirmTax = ({
           <a href="#" className="text-[#E8505B] text-xs font-medium">Precisa de ajuda?</a>
         </div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="PAGAR TAXA E LIBERAR SAQUE" bgColor="bg-[#00A651]" shadowColor="shadow-green-500/40" />
     </div>
   );
 };
