@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import FunnelConfirmTax from "@/components/funnel/FunnelConfirmTax";
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
-import { FunnelPixPopup } from "@/components/funnel";
+import FunnelPixPopup from "@/components/funnel/FunnelPixPopup";
 import { usePaymentFlow } from "@/hooks/usePaymentFlow";
 import { trackInitiateCheckoutPixel } from "@/lib/tiktokPixel";
 import { getTaxABVariant } from "@/lib/abTest";
