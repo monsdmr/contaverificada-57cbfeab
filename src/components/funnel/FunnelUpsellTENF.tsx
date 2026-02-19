@@ -10,14 +10,14 @@ interface FunnelUpsellTENFProps { balance: string; onGeneratePix: () => void; is
 const FaqItem = ({ question, answer }: { question: string; answer: ReactNode }) => { const [open, setOpen] = useState(false); return (<div className="border-b border-gray-200 last:border-0"><button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-2 text-left"><span className="text-gray-600 text-[11px] font-semibold pr-2">{question}</span>{open ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />}</button>{open && <p className="text-gray-400 text-[11px] leading-relaxed pb-2">{answer}</p>}</div>); };
 
 const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, price = "R$ 42,91", anchorPrice = "R$ 97,90", discountLabel = "56% OFF" }: FunnelUpsellTENFProps) => {
-  const [activationsLeft, setActivationsLeft] = useState(7);
+  
   const [recentUser, setRecentUser] = useState("");
   const recentNames = ["Maria S.", "João P.", "Ana L.", "Carlos R.", "Fernanda M.", "Ricardo T.", "Patrícia G.", "Lucas H.", "Camila D.", "Bruno F."];
 
   const firstName = leadName ? leadName.split(" ")[0] : "";
   const maskCpf = (cpf: string) => cpf.length >= 11 ? `${cpf.slice(0, 3)}.***.***.${cpf.slice(-2)}` : cpf;
 
-  useEffect(() => { const interval = setInterval(() => setActivationsLeft(prev => (prev <= 2 ? 7 : prev - 1)), 25000); return () => clearInterval(interval); }, []);
+  
   useEffect(() => { const pick = () => setRecentUser(recentNames[Math.floor(Math.random() * recentNames.length)]); pick(); const interval = setInterval(pick, 12000); return () => clearInterval(interval); }, []);
 
   return (
@@ -52,7 +52,7 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
           <div className="flex items-start gap-2"><AlertTriangle className="w-3.5 h-3.5 text-[#FE2C55] shrink-0 mt-0.5" /><span className="text-gray-600 text-[11px]"><strong className="text-red-600">Impossível recuperar</strong> o valor depois do cancelamento</span></div>
           <div className="border-t border-red-200 pt-2 mt-1"><div className="flex items-start gap-2"><Zap className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" /><span className="text-gray-600 text-[11px]">Com TENF ativado: valor cai <strong className="text-emerald-700">em até 3 minutos</strong> na sua conta</span></div></div>
         </div>
-        <div className="bg-red-600 border border-red-700 rounded-lg px-3 py-2.5 flex items-center justify-center gap-2"><div className="relative"><div className="w-2 h-2 bg-white rounded-full" /><div className="absolute inset-0 w-2 h-2 bg-white rounded-full animate-ping" /></div><span className="text-white text-[11px] font-bold">⚠️ ÚLTIMAS {activationsLeft} VAGAS — Após esgotar, saldo será cancelado</span></div>
+        
         <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
           <div className="flex items-center justify-between mb-1"><span className="text-gray-500 text-xs">Taxa única de ativação</span><span className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">{discountLabel}</span></div>
           <div className="flex items-baseline gap-2 mb-1"><span className="text-gray-300 text-sm line-through">{anchorPrice}</span><span className="text-gray-900 text-3xl font-extrabold">{price}</span></div>
