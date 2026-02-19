@@ -144,35 +144,36 @@ Deno.serve(async (req) => {
 
     let result: { pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }
 
-    // Try SkalePay first
-    if (SKALE_PAY_SECRET_KEY) {
+    // Try SigmaPay first
+    if (SIGMA_API_TOKEN) {
       try {
+        result = await generateWithSigma({
+          amountCentavos, cleanCpf, name: safeName, email: safeEmail,
+          phone: safePhone, paymentType: payment_type, ttclid: ttclid || '', apiToken: SIGMA_API_TOKEN,
+        })
+        console.log(`[generate-pix] SigmaPay succeeded: ${result.transactionHash}`)
+      } catch (sigmaErr) {
+        console.error('[generate-pix] SigmaPay failed, trying SkalePay:', sigmaErr instanceof Error ? sigmaErr.message : sigmaErr)
+
+        if (!SKALE_PAY_SECRET_KEY) throw sigmaErr // no fallback available
+
         const webhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
         result = await generateWithSkale({
           amountCentavos, cleanCpf, name: safeName, email: safeEmail,
           phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY, webhookUrl,
         })
-        console.log(`[generate-pix] SkalePay succeeded: ${result.transactionHash}`)
-      } catch (skaleErr) {
-        console.error('[generate-pix] SkalePay failed, trying SigmaPay:', skaleErr instanceof Error ? skaleErr.message : skaleErr)
-
-        if (!SIGMA_API_TOKEN) throw skaleErr // no fallback available
-
-        result = await generateWithSigma({
-          amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-          phone: safePhone, paymentType: payment_type, ttclid: ttclid || '', apiToken: SIGMA_API_TOKEN,
-        })
-        console.log(`[generate-pix] SigmaPay fallback succeeded: ${result.transactionHash}`)
+        console.log(`[generate-pix] SkalePay fallback succeeded: ${result.transactionHash}`)
       }
-    } else if (SIGMA_API_TOKEN) {
-      // No SkalePay key, use SigmaPay directly
-      result = await generateWithSigma({
+    } else if (SKALE_PAY_SECRET_KEY) {
+      // No SigmaPay token, use SkalePay directly
+      const webhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
+      result = await generateWithSkale({
         amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-        phone: safePhone, paymentType: payment_type, ttclid: ttclid || '', apiToken: SIGMA_API_TOKEN,
+        phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY, webhookUrl,
       })
-      console.log(`[generate-pix] SigmaPay direct succeeded: ${result.transactionHash}`)
+      console.log(`[generate-pix] SkalePay direct succeeded: ${result.transactionHash}`)
     } else {
-      throw new Error('No payment provider configured (SKALE_PAY_SECRET_KEY or SIGMA_API_TOKEN)')
+      throw new Error('No payment provider configured (SIGMA_API_TOKEN or SKALE_PAY_SECRET_KEY)')
     }
 
     // Build transaction_id with provider prefix
