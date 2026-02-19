@@ -85,7 +85,7 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
       <StickyCtaBar
         onClick={onGeneratePix}
         isGenerating={isGenerating}
-        label={firstName ? `${firstName.toUpperCase()}, LIBERAR MEU SAQUE` : "LIBERAR MEU SAQUE AGORA"}
+        label="LIBERAR MEU SAQUE AGORA"
         bgColor="bg-emerald-500"
         shadowColor="shadow-emerald-500/30"
       />

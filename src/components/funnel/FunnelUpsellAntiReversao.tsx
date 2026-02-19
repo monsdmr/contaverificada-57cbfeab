@@ -30,7 +30,7 @@ const FunnelUpsellAntiReversao = ({ balance, onGeneratePix, isGenerating, leadCp
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem ativou, recebeu sem problemas</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Roberto M." location="São Paulo, SP" text="Na primeira vez que saquei sem proteção, deu reversão. Dessa vez ativei e caiu em 1 minuto." amount={balance} /><TestimonialCard img={testimonial2} name="Fernanda L." location="Salvador, BA" text="Minha amiga teve o PIX revertido. Eu ativei a proteção e recebi tudo certinho." amount={balance} /><TestimonialCard img={testimonial3} name="Diego S." location="Porto Alegre, RS" text="Achei que era bobeira, mas depois de ver gente perdendo saque por reversão, ativei na hora." amount={balance} /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Protocolo de proteção auditado pelo Banco Central</p></div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={firstName ? `${firstName.toUpperCase()}, PROTEGER MEU SAQUE` : "Proteger Meu Saque de " + balance} bgColor="bg-[#D32F2F]" shadowColor="shadow-red-200" />
+      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={"PROTEGER MEU SAQUE DE " + balance} bgColor="bg-[#D32F2F]" shadowColor="shadow-red-200" />
     </div>
   );
 };
