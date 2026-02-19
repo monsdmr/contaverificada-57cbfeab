@@ -111,7 +111,7 @@ const FunnelConfirmTax = ({
         <button
           onClick={onGeneratePix}
           disabled={isGenerating}
-          className="w-full bg-[#00A651] text-white font-bold text-base py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/40 active:scale-95 transition-transform"
+          className="w-full bg-[#00A651] text-white font-bold text-base py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/40 active:scale-95 transition-transform animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]"
         >
           {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : "LIBERAR SAQUE"}
         </button>
