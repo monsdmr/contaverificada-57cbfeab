@@ -9,9 +9,9 @@ const SIGMA_API_URL = 'https://api.sigmapay.com.br/api/public/v1'
 const SKALE_API_URL = 'https://api.conta.skalepay.com.br/v1'
 
 // ─── Circuit Breaker Config ───────────────────────────────────────────────────
-const CB_FAILURE_THRESHOLD = 3       // open circuit after N consecutive failures
+const CB_FAILURE_THRESHOLD = 5       // open circuit after N consecutive failures
 const CB_OPEN_DURATION_MS  = 120_000 // stay open for 2 min before trying half-open
-const CB_SIGMA_TIMEOUT_MS  = 9_000   // tight timeout — fail fast to SkalePay
+const CB_SIGMA_TIMEOUT_MS  = 15_000  // increased timeout to avoid false positives under load
 const CB_SKALE_TIMEOUT_MS  = 30_000  // SkalePay is fallback, give it more time
 
 type CircuitState = 'closed' | 'open' | 'half_open'
