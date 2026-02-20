@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      gateway_circuit_breaker: {
+        Row: {
+          failure_count: number
+          gateway: string
+          last_failure_at: string | null
+          last_success_at: string | null
+          opened_at: string | null
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          failure_count?: number
+          gateway: string
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          opened_at?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          failure_count?: number
+          gateway?: string
+          last_failure_at?: string | null
+          last_success_at?: string | null
+          opened_at?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pix_payments: {
         Row: {
           ab_variant: string | null
