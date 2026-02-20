@@ -7,7 +7,11 @@ import { generateRandomEmail } from "@/lib/generateRandomEmail";
 import { generateRandomPhone } from "@/lib/generateRandomPhone";
 import { PixPaymentData } from "@/components/funnel/types";
 
-const REALTIME_GRACE_PERIOD_MS = 15 * 60 * 1000; // 15 minutes after popup closes
+// Quanto tempo o canal Realtime fica vivo após fechar o popup
+const REALTIME_GRACE_PERIOD_MS = 5 * 60 * 1000; // 5 min (era 15 min)
+
+// Após quanto tempo o recovery polling desiste completamente
+const RECOVERY_MAX_DURATION_MS = 10 * 60 * 1000; // 10 min
 
 interface UsePaymentFlowOptions {
   contentId: string;
@@ -22,36 +26,35 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
   const [pixCopied, setPixCopied] = useState(false);
   const [showProcessing, setShowProcessing] = useState(false);
 
-  // ─── Manual check state (botão "Já paguei") ──────────────────────────────
   const [isChecking, setIsChecking] = useState(false);
   const [checkError, setCheckError] = useState<string | null>(null);
 
   const { generatePix, isGenerating, pixData } = usePixGeneration();
   const { leadCpf, leadName, leadEmail, leadPhone } = useLeadData();
 
-  // Ref to track if payment was already confirmed (prevents double-fire)
+  // Trava de confirmação única — nunca é resetada após confirmada
   const didConfirmRef = useRef(false);
-  // Ref to the grace-period timeout after popup closes
+  // Timer do grace period
   const gracePeriodTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Ref to hold teardown function for the active channel+polling
+  // Teardown do canal+polling ativo
   const teardownRef = useRef<(() => void) | null>(null);
+  // Quando o PIX foi gerado — usado pelo recovery para saber se já expirou
+  const pixGeneratedAtRef = useRef<number | null>(null);
 
-  // ─── Core confirmation logic (shared by polling, realtime, recovery and manual check) ───
+  // ─── Core confirmation (único ponto de redirect — sem duplicatas) ─────────
   const confirm = useCallback((source: string, transactionId: string, pixAmount: number) => {
     if (didConfirmRef.current) return;
     didConfirmRef.current = true;
-    console.log(`[${contentId}] Payment confirmed (${source})`);
 
     if (transactionId && pixAmount) {
       trackPurchasePixelOnce({ transactionId, value: pixAmount, contentId });
     }
 
-    // Always redirect, even if popup is already closed
     setShowPixPopup(false);
     setShowProcessing(true);
   }, [contentId]);
 
-  // ─── Manual check — botão "Já paguei" usa confirm() para evitar double-redirect ───
+  // ─── Botão "Já paguei" ────────────────────────────────────────────────────
   const checkPayment = useCallback(async () => {
     if (!pixData?.transaction_id) {
       setCheckError("Nenhuma transação encontrada.");
@@ -79,39 +82,34 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     }
   }, [pixData, confirm]);
 
-  // ─── Keep Realtime + polling alive 5 min after popup closes ───
+  // ─── Polling + Realtime (ativo apenas com popup aberto) ───────────────────
   useEffect(() => {
     if (!pixData?.transaction_id) return;
+    if (!showPixPopup) return;
+    if (didConfirmRef.current) return;
 
-    const transactionId = pixData.transaction_id;
-    const pixAmount = pixData.amount;
-
-    // If popup just opened, reset confirmation guard and cancel any grace timer
-    if (showPixPopup) {
-      didConfirmRef.current = false;
-      if (gracePeriodTimerRef.current) {
-        clearTimeout(gracePeriodTimerRef.current);
-        gracePeriodTimerRef.current = null;
-      }
+    // Cancela grace period pendente ao reabrir popup
+    if (gracePeriodTimerRef.current) {
+      clearTimeout(gracePeriodTimerRef.current);
+      gracePeriodTimerRef.current = null;
     }
 
-    // Only start a new channel+polling if popup is open and none is active
-    if (!showPixPopup) return;
-
-    // Teardown any previous session
+    // Teardown de sessão anterior antes de iniciar nova
     if (teardownRef.current) {
       teardownRef.current();
       teardownRef.current = null;
     }
 
+    const transactionId = pixData.transaction_id;
+    const pixAmount = pixData.amount;
     let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout>;
     const popupOpenedAt = Date.now();
 
-    // Polling intervals by elapsed time since popup opened:
-    // 0–2 min  → 5s
-    // 2–5 min  → 15s
-    // 5+ min   → 30s (max)
+    // Intervalo baseado no tempo decorrido desde abertura do popup:
+    // 0–2 min  → 5s  (janela principal de pagamento)
+    // 2–5 min  → 15s (usuário ainda pode estar no banco)
+    // 5+ min   → 30s (manutenção mínima, realtime cuida do resto)
     const getDelay = () => {
       const elapsed = Date.now() - popupOpenedAt;
       if (elapsed < 2 * 60 * 1000) return 5_000;
@@ -131,10 +129,9 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       } catch {}
     };
 
-    // Initial check after 20s — tempo mínimo realista para abrir o banco e pagar
+    // Primeiro check após 20s — mínimo realista para pagar no banco
     const initialTimer = setTimeout(() => check('initial'), 20_000);
 
-    // Smart polling com delay baseado no tempo decorrido desde abertura do popup
     const scheduleNext = () => {
       timeoutId = setTimeout(() => {
         check('poll');
@@ -143,7 +140,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     };
     scheduleNext();
 
-    // Realtime: confirm instantly without extra API call
+    // Realtime — detecta pagamento instantaneamente via webhook
     const channel = supabase
       .channel(`payment-${contentId}-${transactionId}`)
       .on('postgres_changes', {
@@ -169,17 +166,14 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     return teardown;
   }, [showPixPopup, pixData, contentId, confirm]);
 
-  // ─── Keep channel alive for REALTIME_GRACE_PERIOD_MS after popup closes ───
+  // ─── Grace period: mantém canal vivo por 5 min após fechar popup ──────────
   useEffect(() => {
     if (!pixData?.transaction_id) return;
     if (showPixPopup) return;
     if (didConfirmRef.current) return;
     if (!teardownRef.current) return;
 
-    console.log(`[${contentId}] Popup closed, keeping realtime alive for ${REALTIME_GRACE_PERIOD_MS / 1000}s`);
-
     gracePeriodTimerRef.current = setTimeout(() => {
-      console.log(`[${contentId}] Grace period expired, tearing down channel`);
       if (teardownRef.current) {
         teardownRef.current();
         teardownRef.current = null;
@@ -192,36 +186,45 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
         gracePeriodTimerRef.current = null;
       }
     };
-  }, [showPixPopup, pixData, contentId]);
+  }, [showPixPopup, pixData]);
 
-  // ─── Recovery ativo — verifica ao montar e periodicamente enquanto popup fechado ─
+  // ─── Recovery: verifica periodicamente enquanto popup fechado ─────────────
+  // Só roda se há PIX pendente, popup fechado e dentro do tempo máximo
   useEffect(() => {
     if (!pixData?.transaction_id) return;
     if (didConfirmRef.current) return;
-    if (showPixPopup) return; // polling já cuida quando popup está aberto
+    if (showPixPopup) return;
 
     const transactionId = pixData.transaction_id;
     const pixAmount = pixData.amount;
+    const startedAt = Date.now();
     let cancelled = false;
 
     const runCheck = async () => {
       if (cancelled || didConfirmRef.current) return;
+
+      // Para de tentar após RECOVERY_MAX_DURATION_MS
+      if (Date.now() - startedAt > RECOVERY_MAX_DURATION_MS) {
+        cancelled = true;
+        clearInterval(recoveryInterval);
+        return;
+      }
+
       try {
         const { data, error } = await supabase.functions.invoke('check-payment', {
           body: { transaction_id: transactionId }
         });
         if (!error && data?.status === 'paid') {
-          console.log(`[${contentId}] Recovery: PIX confirmed`);
           confirm('recovery', transactionId, pixAmount);
         }
       } catch {}
     };
 
-    // Verificação imediata após 1,5s (mount recovery)
-    const mountTimer = setTimeout(runCheck, 1500);
+    // Primeiro check após 10s (não 1,5s — evita request desnecessário no mount)
+    const mountTimer = setTimeout(runCheck, 10_000);
 
-    // Polling leve a cada 20s enquanto popup está fechado mas ainda há PIX pendente
-    const recoveryInterval = setInterval(runCheck, 20_000);
+    // Polling leve a cada 30s (não 20s) — realtime já cobre os casos rápidos
+    const recoveryInterval = setInterval(runCheck, 30_000);
 
     return () => {
       cancelled = true;
@@ -231,13 +234,13 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pixData?.transaction_id, showPixPopup]);
 
+  // ─── Gerar PIX ────────────────────────────────────────────────────────────
   const handleGeneratePix = useCallback(async (leadPixKey: string, leadPixKeyType: string) => {
     if (pixData) {
       setShowPixPopup(true);
       return;
     }
 
-    // Garantir que strings "undefined" literais não vazem
     const cleanLeadName = (leadName && leadName !== 'undefined') ? leadName : undefined;
     const cleanLeadEmail = (leadEmail && leadEmail !== 'undefined' && leadEmail.includes('@')) ? leadEmail : undefined;
     const cleanLeadPhone = (leadPhone && leadPhone !== 'undefined') ? leadPhone : undefined;
@@ -261,10 +264,12 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     });
 
     if (result) {
+      pixGeneratedAtRef.current = Date.now();
       setShowPixPopup(true);
     }
   }, [pixData, generatePix, amount, leadName, leadCpf, leadEmail, leadPhone, paymentType, abVariant]);
 
+  // ─── Copiar código PIX ────────────────────────────────────────────────────
   const handleCopyPixCode = useCallback(() => {
     if (pixData?.pix_code) {
       navigator.clipboard.writeText(pixData.pix_code).catch(() => {

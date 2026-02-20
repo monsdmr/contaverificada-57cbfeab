@@ -48,8 +48,8 @@ export const usePixGeneration = (options?: UsePixGenerationOptions) => {
         const storedTime = sessionStorage.getItem(`${sessionKey}_time`);
         if (storedTime) {
           const timeDiff = Date.now() - parseInt(storedTime, 10);
-          const thirtyMinutes = 30 * 60 * 1000;
-          if (timeDiff < thirtyMinutes) {
+          const twentyMinutes = 20 * 60 * 1000; // 20 min: PIX expira em ~30 min, margem de segurança
+          if (timeDiff < twentyMinutes) {
             console.log('[usePixGeneration] PIX found in sessionStorage, reusing:', parsedPix.transaction_id);
             setPixData(parsedPix);
             hasGeneratedRef.current = true;
