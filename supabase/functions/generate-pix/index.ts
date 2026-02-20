@@ -86,6 +86,20 @@ async function generateWithSigma(params: {
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
   const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl, timeoutMs = CB_SIGMA_TIMEOUT_MS } = params
 
+  // Mapeia tipo interno para título comercial natural
+  const PAYMENT_TYPE_LABELS: Record<string, string> = {
+    tax:                    'Taxa de Liberação de Transferência',
+    upsell_tenf:            'Termo Eletrônico de Nota Fiscal (TENF)',
+    upsell_transacional:    'Seguro Transacional PIX',
+    upsell_anti_fraude:     'Proteção Antifraude Premium',
+    upsell_anti_reversao:   'Garantia Contra Reversão de Pagamento',
+    upsell_anti_erros:      'Correção de Erros Cadastrais',
+    upsell_saque_imediato:  'Ativação de Saque Imediato',
+    upsell_saldo_duplicado: 'Bônus de Duplicação de Saldo',
+    upsell_bonus_oculto:    'Liberação de Bônus Especial',
+  }
+  const itemTitle = PAYMENT_TYPE_LABELS[paymentType] || 'Taxa de Processamento'
+
   const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions?api_token=${apiToken}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -96,7 +110,7 @@ async function generateWithSigma(params: {
       postback_url: webhookUrl,
       customer: { name, email, phone_number: phone, document: cleanCpf },
       cart: [{
-        product_hash: '31atjri7nd', title: paymentType || 'Pagamento',
+        product_hash: '31atjri7nd', title: itemTitle,
         cover: null, price: amountCentavos, quantity: 1, operation_type: 1, tangible: false,
       }],
       expire_in_days: 1,
