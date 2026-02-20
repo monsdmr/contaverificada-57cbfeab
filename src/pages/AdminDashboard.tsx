@@ -30,21 +30,13 @@ interface Summary {
 
 // ─── Fetch helpers ────────────────────────────────────────────────────────────
 
+const todayStart = () => new Date().toISOString().slice(0, 10);
+
 async function fetchSummary(): Promise<{ hoje: Summary; total: Summary }> {
-  const [{ data: hoje }, { data: total }] = await Promise.all([
-    supabase.rpc("run_summary" as never, {} as never).throwOnError(),
-    supabase.rpc("run_summary" as never, {} as never).throwOnError(),
+  const [{ data: h }, { data: t }] = await Promise.all([
+    supabase.from("pix_payments").select("status, amount").gte("created_at", todayStart()),
+    supabase.from("pix_payments").select("status, amount"),
   ]);
-
-  // Fallback: query direta
-  const { data: h } = await supabase
-    .from("pix_payments")
-    .select("status, amount")
-    .gte("created_at", new Date().toISOString().slice(0, 10));
-
-  const { data: t } = await supabase
-    .from("pix_payments")
-    .select("status, amount");
 
   const calc = (rows: { status: string; amount: number }[] | null): Summary => {
     if (!rows) return { total_pix: 0, pagos: 0, conv_pct: 0, receita: 0 };
@@ -60,7 +52,8 @@ async function fetchSummary(): Promise<{ hoje: Summary; total: Summary }> {
 async function fetchSteps(): Promise<StepRow[]> {
   const { data } = await supabase
     .from("pix_payments")
-    .select("payment_type, status, amount");
+    .select("payment_type, status, amount")
+    .gte("created_at", new Date().toISOString().slice(0, 10));
 
   if (!data) return [];
 
@@ -87,7 +80,8 @@ async function fetchAB(): Promise<ABRow[]> {
     .from("pix_payments")
     .select("ab_variant, status, amount")
     .eq("payment_type", "upsell_tenf")
-    .not("ab_variant", "is", null);
+    .not("ab_variant", "is", null)
+    .gte("created_at", new Date().toISOString().slice(0, 10));
 
   if (!data) return [];
 
