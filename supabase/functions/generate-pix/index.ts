@@ -153,7 +153,11 @@ Deno.serve(async (req) => {
         })
         console.log(`[generate-pix] SigmaPay succeeded: ${result.transactionHash}`)
       } catch (sigmaErr) {
-        console.error('[generate-pix] SigmaPay failed, trying SkalePay:', sigmaErr instanceof Error ? sigmaErr.message : sigmaErr)
+        const sigmaErrMsg = sigmaErr instanceof Error ? sigmaErr.message : String(sigmaErr)
+        const sigmaErrStack = sigmaErr instanceof Error ? sigmaErr.stack : undefined
+        console.error('[generate-pix] SigmaPay FAILED — message:', sigmaErrMsg)
+        if (sigmaErrStack) console.error('[generate-pix] SigmaPay FAILED — stack:', sigmaErrStack)
+        console.error('[generate-pix] SigmaPay FAILED — full error object:', JSON.stringify(sigmaErr, Object.getOwnPropertyNames(sigmaErr)))
 
         if (!SKALE_PAY_SECRET_KEY) throw sigmaErr // no fallback available
 
