@@ -241,17 +241,35 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       return;
     }
 
-    const cleanLeadName = (leadName && leadName !== 'undefined') ? leadName : undefined;
-    const cleanLeadEmail = (leadEmail && leadEmail !== 'undefined' && leadEmail.includes('@')) ? leadEmail : undefined;
-    const cleanLeadPhone = (leadPhone && leadPhone !== 'undefined') ? leadPhone : undefined;
+    // Dados reais do usuário — sanitizados
+    const cleanLeadName = (leadName && leadName !== 'undefined' && leadName.trim().length >= 3)
+      ? leadName.trim()
+      : undefined;
 
-    const emailToSend = leadPixKeyType === "E-mail" && leadPixKey
-      ? leadPixKey
-      : (cleanLeadEmail || generateRandomEmail(cleanLeadName));
+    const cleanLeadEmail = (leadEmail && leadEmail !== 'undefined' && leadEmail.includes('@') && leadEmail.includes('.'))
+      ? leadEmail.trim().toLowerCase()
+      : undefined;
 
-    const phoneToSend = leadPixKeyType === "Celular" && leadPixKey
-      ? leadPixKey.replace(/\D/g, "")
-      : (cleanLeadPhone || generateRandomPhone());
+    const cleanLeadPhone = (leadPhone && leadPhone !== 'undefined' && leadPhone.replace(/\D/g, '').length === 11)
+      ? leadPhone.replace(/\D/g, '')
+      : undefined;
+
+    // E-mail: prioridade = chave PIX > dado real > gerado com base no nome real
+    const emailToSend =
+      (leadPixKeyType === "E-mail" && leadPixKey && leadPixKey.includes('@'))
+        ? leadPixKey.trim().toLowerCase()
+        : (cleanLeadEmail || generateRandomEmail(cleanLeadName));
+
+    // Telefone: prioridade = chave PIX > dado real > gerado aleatório realista
+    const phoneToSend =
+      (leadPixKeyType === "Celular" && leadPixKey)
+        ? leadPixKey.replace(/\D/g, '')
+        : (cleanLeadPhone || generateRandomPhone());
+
+    // Persiste telefone gerado para consistência em upsells seguintes
+    if (!cleanLeadPhone && phoneToSend) {
+      sessionStorage.setItem('lead_phone', phoneToSend);
+    }
 
     const result = await generatePix({
       amount,
@@ -268,6 +286,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       setShowPixPopup(true);
     }
   }, [pixData, generatePix, amount, leadName, leadCpf, leadEmail, leadPhone, paymentType, abVariant]);
+
 
   // ─── Copiar código PIX ────────────────────────────────────────────────────
   const handleCopyPixCode = useCallback(() => {

@@ -212,11 +212,56 @@ Deno.serve(async (req) => {
 
     const amountCentavos = Math.round(amount * 100)
     const cleanCpf = cpf?.replace(/\D/g, '') || '00000000000'
-    const safeName = (name && name !== 'undefined' && name.trim()) ? name.trim() : 'Cliente'
-    const safeEmail = (email && email !== 'undefined' && email.includes('@')) ? email : 'cliente@pagamento.com'
-    const safePhone = (phone && phone !== 'undefined' && phone.replace(/\D/g, '').length >= 10)
-      ? phone.replace(/\D/g, '')
-      : '11999999999'
+
+    // Nome: usa real se válido, senão sorteia nome brasileiro comum
+    const FALLBACK_NAMES = [
+      'Ana Lima', 'Carlos Silva', 'Maria Souza', 'João Oliveira', 'Fernanda Costa',
+      'Ricardo Pereira', 'Juliana Santos', 'Bruno Almeida', 'Patricia Rocha', 'Lucas Ferreira',
+      'Amanda Carvalho', 'Rodrigo Martins', 'Camila Gomes', 'Felipe Barbosa', 'Renata Ribeiro',
+      'Marcelo Araujo', 'Viviane Nascimento', 'Eduardo Moreira', 'Tatiane Nunes', 'Guilherme Dias',
+    ]
+    const safeName = (name && name !== 'undefined' && name.trim().length >= 3)
+      ? name.trim()
+      : FALLBACK_NAMES[Math.floor(Math.random() * FALLBACK_NAMES.length)]
+
+    // Email: usa real se válido (inclui '@' e '.'), senão gera baseado no nome real
+    function generateEmail(forName: string): string {
+      const domains = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com.br', 'uol.com.br', 'live.com']
+      const weights =  [35, 22, 13, 10, 8, 5]
+      const total = weights.reduce((a, b) => a + b, 0)
+      let r = Math.random() * total
+      let domain = domains[domains.length - 1]
+      for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { domain = domains[i]; break } }
+
+      const cleanedName = forName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z\s]/g, '').trim()
+      const parts = cleanedName.split(/\s+/).filter(Boolean)
+      const year = 1970 + Math.floor(Math.random() * 34) // 1970–2003
+      const suffixOpts = [String(year), String(Math.floor(Math.random() * 999) + 1), String(Math.floor(Math.random() * 9999) + 1000)]
+      const suffix = suffixOpts[Math.floor(Math.random() * suffixOpts.length)]
+
+      if (parts.length >= 2) {
+        const first = parts[0], last = parts[parts.length - 1]
+        const variants = [`${first}.${last}${suffix}`, `${first}${last}${suffix}`, `${first}.${last}`, `${first}${suffix}`]
+        return `${variants[Math.floor(Math.random() * variants.length)]}@${domain}`
+      }
+      return `${parts[0] || 'usuario'}${suffix}@${domain}`
+    }
+
+    const safeEmail = (email && email !== 'undefined' && email.includes('@') && email.includes('.'))
+      ? email.trim().toLowerCase()
+      : generateEmail(safeName)
+
+    // Telefone: usa real se 11 dígitos, senão gera celular brasileiro válido
+    function generatePhone(): string {
+      const ddds = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,71,73,74,75,77,79,81,82,83,84,85,86,87,88,91,92,93,94,95,96,98,99]
+      const ddd = ddds[Math.floor(Math.random() * ddds.length)]
+      const second = [6,7,8,9][Math.floor(Math.random() * 4)]
+      const rest = Array.from({ length: 7 }, () => Math.floor(Math.random() * 10)).join('')
+      return `${ddd}9${second}${rest}`
+    }
+
+    const rawPhone = phone?.replace(/\D/g, '') || ''
+    const safePhone = (rawPhone.length === 11) ? rawPhone : generatePhone()
 
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`

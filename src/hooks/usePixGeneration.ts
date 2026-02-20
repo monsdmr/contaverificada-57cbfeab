@@ -84,10 +84,10 @@ export const usePixGeneration = (options?: UsePixGenerationOptions) => {
           const { data, error: apiError } = await supabase.functions.invoke('generate-pix', {
             body: {
               amount: params.amount,
-              name: params.name || "Usuário",
-              email: params.email || "cliente@pagamento.com",
+              name: params.name,       // undefined se não disponível — edge function gera
+              email: params.email,     // sempre presente (real ou gerado no hook)
               cpf: params.cpf,
-              phone: params.phone,
+              phone: params.phone,     // sempre presente (real ou gerado no hook)
               payment_type: params.payment_type,
               ab_variant: params.ab_variant,
               ttclid: attribution.ttclid,
