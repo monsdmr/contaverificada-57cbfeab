@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { RefreshCw, TrendingUp, DollarSign, Users, Zap } from "lucide-react";
+import { RefreshCw, TrendingUp, DollarSign, Users, Zap, ArrowDown } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -312,6 +312,66 @@ export default function AdminDashboard() {
                   <span className="text-gray-600 text-[11px]">{fmt(row.receita)}</span>
                 </div>
               ))
+            )}
+          </div>
+        </section>
+
+        {/* Funil de quem pagou — sequencial */}
+        <section>
+          <p className="text-gray-500 text-[11px] font-bold uppercase tracking-wider mb-2">Quem pagou → seguiu para próxima etapa</p>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {!steps?.length ? (
+              <p className="text-gray-400 text-xs text-center py-8">Carregando…</p>
+            ) : (
+              <div className="px-4 py-3 space-y-0">
+                {steps.map((row, i) => {
+                  const prev = i > 0 ? steps[i - 1] : null;
+                  const dropPct = prev && prev.pagos > 0
+                    ? Math.round((row.pagos / prev.pagos) * 1000) / 10
+                    : null;
+
+                  return (
+                    <div key={row.payment_type}>
+                      {/* Step row */}
+                      <div className="flex items-center justify-between py-2.5">
+                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                          {/* Index bubble */}
+                          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                            <span className="text-gray-500 text-[10px] font-bold">{i + 1}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-gray-800 text-xs font-semibold truncate">{STEP_LABELS[row.payment_type] ?? row.payment_type}</p>
+                            {/* Progress bar width relative to first step */}
+                            <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1">
+                              <div
+                                className="bg-blue-400 h-1.5 rounded-full transition-all duration-700"
+                                style={{ width: `${steps[0].pagos > 0 ? Math.min((row.pagos / steps[0].pagos) * 100, 100) : 0}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 ml-3 shrink-0">
+                          <span className="text-gray-800 text-sm font-bold">{row.pagos.toLocaleString("pt-BR")}</span>
+                          <span className="text-gray-400 text-[10px]">pagos</span>
+                          <span className="text-gray-500 text-[11px] w-16 text-right">{fmt(row.receita)}</span>
+                        </div>
+                      </div>
+
+                      {/* Drop-off arrow between steps */}
+                      {i < steps.length - 1 && (
+                        <div className="flex items-center gap-2 pl-3 pb-1">
+                          <ArrowDown className="w-3 h-3 text-gray-300 ml-1.5" />
+                          {dropPct !== null ? (
+                            <span className={`text-[10px] font-semibold ${dropPct >= 50 ? "text-emerald-500" : dropPct >= 25 ? "text-yellow-500" : "text-red-400"}`}>
+                              {dropPct}% dos pagantes da etapa anterior seguiram
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </section>
