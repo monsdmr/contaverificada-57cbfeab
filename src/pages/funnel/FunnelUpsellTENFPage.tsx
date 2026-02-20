@@ -1,11 +1,16 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import FunnelUpsellTENF from "@/components/funnel/FunnelUpsellTENF";
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
 import FunnelPixPopup from "@/components/funnel/FunnelPixPopup";
 import { usePaymentFlow } from "@/hooks/usePaymentFlow";
-import { getTenfABVariant, getTenfABVariantId } from "@/lib/abTestTenf";
+
+// Variante B vencedora do A/B test: R$ 44,17 (32,1% de conversão)
+const TENF_AMOUNT = 44.17;
+const TENF_PRICE = "R$ 44,17";
+const TENF_ANCHOR = "R$ 99,90";
+const TENF_DISCOUNT = "56% OFF";
 
 interface LocationState { pixKey?: string; pixKeyType?: string; }
 
@@ -13,7 +18,6 @@ const FunnelUpsellTENFPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
-  const variant = useMemo(() => getTenfABVariant(), []);
 
   const leadPixKey = state?.pixKey || "";
   const leadPixKeyType = state?.pixKeyType || "E-mail";
@@ -25,9 +29,9 @@ const FunnelUpsellTENFPage = () => {
   const flow = usePaymentFlow({
     contentId: 'upsell_tenf',
     paymentType: 'upsell_tenf',
-    amount: variant.amount,
+    amount: TENF_AMOUNT,
     onProcessingComplete: handleProcessingComplete,
-    abVariant: getTenfABVariantId(),
+    abVariant: 'tenf_B_44',
   });
 
   if (flow.showProcessing) {
@@ -51,9 +55,9 @@ const FunnelUpsellTENFPage = () => {
           isGenerating={flow.isGenerating}
           leadCpf={flow.leadCpf}
           leadName={flow.leadName}
-          price={variant.formattedAmount}
-          anchorPrice={variant.anchorAmount}
-          discountLabel={variant.discountPercent}
+          price={TENF_PRICE}
+          anchorPrice={TENF_ANCHOR}
+          discountLabel={TENF_DISCOUNT}
         />
       </div>
 
@@ -64,7 +68,7 @@ const FunnelUpsellTENFPage = () => {
           onCopy={flow.handleCopyPixCode}
           isCopied={flow.pixCopied}
           title="Ativação TENF"
-          amount={variant.formattedAmount}
+          amount={TENF_PRICE}
           showRefundMessage
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}
