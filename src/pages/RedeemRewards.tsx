@@ -50,6 +50,9 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
       sessionStorage.setItem("lead_cpf", leadCpf);
       sessionStorage.setItem("lead_name", leadName);
       const emailToSend = pixKeyType === "E-mail" ? pixKey : generateRandomEmail(leadName);
+      sessionStorage.setItem("lead_email", emailToSend);
+      const phoneToSend = pixKeyType === "Celular" ? pixKey.replace(/\D/g, "") : "";
+      if (phoneToSend) sessionStorage.setItem("lead_phone", phoneToSend);
       navigate("/funil/confirmar-identidade", {
         state: {
           pixKey: pixKey,

@@ -7,6 +7,8 @@ export function useLeadData() {
   return useMemo(() => {
     let cpf = sessionStorage.getItem("lead_cpf") || "";
     let name = sessionStorage.getItem("lead_name") || "";
+    const email = sessionStorage.getItem("lead_email") || "";
+    const phone = sessionStorage.getItem("lead_phone") || "";
 
     // Populate with preview data if empty (for visualization)
     if (!cpf && !name) {
@@ -16,6 +18,6 @@ export function useLeadData() {
       sessionStorage.setItem("lead_name", name);
     }
 
-    return { leadCpf: cpf, leadName: name };
+    return { leadCpf: cpf, leadName: name, leadEmail: email, leadPhone: phone };
   }, []);
 }

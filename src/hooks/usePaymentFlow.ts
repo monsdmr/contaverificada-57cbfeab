@@ -20,7 +20,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
   const [showProcessing, setShowProcessing] = useState(false);
 
   const { generatePix, isGenerating, pixData } = usePixGeneration();
-  const { leadCpf, leadName } = useLeadData();
+  const { leadCpf, leadName, leadEmail, leadPhone } = useLeadData();
 
   const handlePaymentConfirmed = useCallback(async () => {
     if (pixData?.transaction_id && pixData?.amount) {
@@ -119,20 +119,25 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
 
     const emailToSend = leadPixKeyType === "E-mail" && leadPixKey
       ? leadPixKey
-      : generateRandomEmail(leadName || undefined);
+      : (leadEmail || generateRandomEmail(leadName || undefined));
+
+    const phoneToSend = leadPixKeyType === "Celular" && leadPixKey
+      ? leadPixKey.replace(/\D/g, "")
+      : (leadPhone || undefined);
 
     const result = await generatePix({
       amount,
       name: leadName || undefined,
       email: emailToSend,
       cpf: leadCpf || undefined,
+      phone: phoneToSend,
       payment_type: paymentType,
     });
 
     if (result) {
       setShowPixPopup(true);
     }
-  }, [pixData, generatePix, amount, leadName, leadCpf, paymentType]);
+  }, [pixData, generatePix, amount, leadName, leadCpf, leadEmail, leadPhone, paymentType]);
 
   const handleCopyPixCode = useCallback(() => {
     if (pixData?.pix_code) {
@@ -151,6 +156,8 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     pixData,
     leadCpf,
     leadName,
+    leadEmail,
+    leadPhone,
     isChecking,
     checkError,
     checkPayment,
