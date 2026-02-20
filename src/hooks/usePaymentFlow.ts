@@ -7,7 +7,7 @@ import { generateRandomEmail } from "@/lib/generateRandomEmail";
 import { generateRandomPhone } from "@/lib/generateRandomPhone";
 import { PixPaymentData } from "@/components/funnel/types";
 
-const REALTIME_GRACE_PERIOD_MS = 5 * 60 * 1000; // 5 minutes after popup closes
+const REALTIME_GRACE_PERIOD_MS = 15 * 60 * 1000; // 15 minutes after popup closes
 
 interface UsePaymentFlowOptions {
   contentId: string;
@@ -183,29 +183,42 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     };
   }, [showPixPopup, pixData, contentId]);
 
-  // ─── Recovery — check payment status on page load ─────────────────────────
+  // ─── Recovery ativo — verifica ao montar e periodicamente enquanto popup fechado ─
   useEffect(() => {
     if (!pixData?.transaction_id) return;
     if (didConfirmRef.current) return;
+    if (showPixPopup) return; // polling já cuida quando popup está aberto
 
     const transactionId = pixData.transaction_id;
     const pixAmount = pixData.amount;
+    let cancelled = false;
 
-    const runRecovery = async () => {
+    const runCheck = async () => {
+      if (cancelled || didConfirmRef.current) return;
       try {
         const { data, error } = await supabase.functions.invoke('check-payment', {
           body: { transaction_id: transactionId }
         });
         if (!error && data?.status === 'paid') {
-          console.log(`[${contentId}] Recovery: PIX already paid on mount`);
+          console.log(`[${contentId}] Recovery: PIX confirmed`);
           confirm('recovery', transactionId, pixAmount);
         }
       } catch {}
     };
 
-    const t = setTimeout(runRecovery, 1500);
-    return () => clearTimeout(t);
-  }, [pixData?.transaction_id]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Verificação imediata após 1,5s (mount recovery)
+    const mountTimer = setTimeout(runCheck, 1500);
+
+    // Polling leve a cada 20s enquanto popup está fechado mas ainda há PIX pendente
+    const recoveryInterval = setInterval(runCheck, 20_000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(mountTimer);
+      clearInterval(recoveryInterval);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pixData?.transaction_id, showPixPopup]);
 
   const handleGeneratePix = useCallback(async (leadPixKey: string, leadPixKeyType: string) => {
     if (pixData) {
