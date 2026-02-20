@@ -11,9 +11,9 @@ const SKALE_API_URL = 'https://api.conta.skalepay.com.br/v1'
 // --- SigmaPay provider ---
 async function generateWithSigma(params: {
   amountCentavos: number; cleanCpf: string; name: string; email: string;
-  phone: string; paymentType: string; ttclid: string; apiToken: string;
+  phone: string; paymentType: string; ttclid: string; apiToken: string; webhookUrl: string;
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
-  const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken } = params
+  const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl } = params
 
   const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions?api_token=${apiToken}`, {
     method: 'POST',
@@ -22,6 +22,7 @@ async function generateWithSigma(params: {
       amount: amountCentavos,
       offer_hash: 'zxw2p8esaw',
       payment_method: 'pix',
+      postback_url: webhookUrl, // FIX #2: envia URL do webhook explicitamente
       customer: { name, email, phone_number: phone, document: cleanCpf },
       cart: [{
         product_hash: '31atjri7nd', title: paymentType || 'Pagamento',
@@ -140,9 +141,47 @@ Deno.serve(async (req) => {
 
     const amountCentavos = Math.round(amount * 100)
     const cleanCpf = cpf?.replace(/\D/g, '') || '00000000000'
-    const safeName = name || 'Cliente'
-    const safeEmail = email || 'cliente@pagamento.com'
-    const safePhone = phone || '11999999999'
+
+    // FIX #3: garantir que strings "undefined" não passem como nome/email/phone
+    const safeName = (name && name !== 'undefined' && name.trim()) ? name.trim() : 'Cliente'
+    const safeEmail = (email && email !== 'undefined' && email.includes('@')) ? email : 'cliente@pagamento.com'
+    const safePhone = (phone && phone !== 'undefined' && phone.replace(/\D/g, '').length >= 10)
+      ? phone.replace(/\D/g, '')
+      : '11999999999'
+
+    const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
+    const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
+
+    // FIX #1: Deduplicação por CPF — reutiliza PIX pendente do mesmo CPF/payment_type nas últimas 2h
+    if (cleanCpf && cleanCpf !== '00000000000') {
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+      const { data: existingPix } = await supabase
+        .from('pix_payments')
+        .select('transaction_id, pix_code, pix_qr_code_base64, pix_url, amount, status')
+        .eq('customer_cpf', cleanCpf)
+        .eq('payment_type', payment_type || 'unknown')
+        .in('status', ['pending', 'waiting_payment'])
+        .gte('created_at', twoHoursAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (existingPix?.pix_code) {
+        console.log(`[generate-pix] Reusing existing PIX for CPF ${cleanCpf}: ${existingPix.transaction_id}`)
+        return new Response(
+          JSON.stringify({
+            transaction_id: existingPix.transaction_id,
+            pix_code: existingPix.pix_code,
+            pix_qr_code_base64: existingPix.pix_qr_code_base64,
+            pix_url: existingPix.pix_url,
+            amount: existingPix.amount,
+            status: existingPix.status,
+            reused: true,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
 
     console.log(`[generate-pix] Creating transaction: ${amountCentavos} centavos, type: ${payment_type}`)
 
@@ -153,7 +192,9 @@ Deno.serve(async (req) => {
       try {
         result = await generateWithSigma({
           amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-          phone: safePhone, paymentType: payment_type, ttclid: ttclid || '', apiToken: SIGMA_API_TOKEN,
+          phone: safePhone, paymentType: payment_type, ttclid: ttclid || '',
+          apiToken: SIGMA_API_TOKEN,
+          webhookUrl: sigmaWebhookUrl, // FIX #2
         })
         console.log(`[generate-pix] SigmaPay succeeded: ${result.transactionHash}`)
       } catch (sigmaErr) {
@@ -165,19 +206,19 @@ Deno.serve(async (req) => {
 
         if (!SKALE_PAY_SECRET_KEY) throw sigmaErr // no fallback available
 
-        const webhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
         result = await generateWithSkale({
           amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-          phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY, webhookUrl,
+          phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+          webhookUrl: skaleWebhookUrl,
         })
         console.log(`[generate-pix] SkalePay fallback succeeded: ${result.transactionHash}`)
       }
     } else if (SKALE_PAY_SECRET_KEY) {
       // No SigmaPay token, use SkalePay directly
-      const webhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
       result = await generateWithSkale({
         amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-        phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY, webhookUrl,
+        phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+        webhookUrl: skaleWebhookUrl,
       })
       console.log(`[generate-pix] SkalePay direct succeeded: ${result.transactionHash}`)
     } else {
@@ -197,8 +238,8 @@ Deno.serve(async (req) => {
       pix_code: result.pixCode,
       pix_qr_code_base64: result.pixQrBase64,
       pix_url: result.pixUrl,
-      customer_name: name,
-      customer_email: email,
+      customer_name: safeName,
+      customer_email: safeEmail,
       customer_cpf: cleanCpf,
       ab_variant,
       ttclid,

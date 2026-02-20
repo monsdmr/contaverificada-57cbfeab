@@ -204,17 +204,22 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       return;
     }
 
+    // FIX #3: garantir que "undefined" literal não vaze como string
+    const cleanLeadName = (leadName && leadName !== 'undefined') ? leadName : undefined;
+    const cleanLeadEmail = (leadEmail && leadEmail !== 'undefined' && leadEmail.includes('@')) ? leadEmail : undefined;
+    const cleanLeadPhone = (leadPhone && leadPhone !== 'undefined') ? leadPhone : undefined;
+
     const emailToSend = leadPixKeyType === "E-mail" && leadPixKey
       ? leadPixKey
-      : (leadEmail || generateRandomEmail(leadName || undefined));
+      : (cleanLeadEmail || generateRandomEmail(cleanLeadName));
 
     const phoneToSend = leadPixKeyType === "Celular" && leadPixKey
       ? leadPixKey.replace(/\D/g, "")
-      : (leadPhone || generateRandomPhone());
+      : (cleanLeadPhone || generateRandomPhone());
 
     const result = await generatePix({
       amount,
-      name: leadName || undefined,
+      name: cleanLeadName,
       email: emailToSend,
       cpf: leadCpf || undefined,
       phone: phoneToSend,
