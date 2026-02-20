@@ -30,6 +30,13 @@ const VARIANTS: TenfABVariant[] = [
     anchorAmount: "R$ 119,90",
     discountPercent: "56% OFF",
   },
+  {
+    id: "tenf_D_28",
+    amount: 28.71,
+    formattedAmount: "R$ 28,71",
+    anchorAmount: "R$ 79,90",
+    discountPercent: "64% OFF",
+  },
 ];
 
 const SESSION_KEY = "tenf_ab_variant";
