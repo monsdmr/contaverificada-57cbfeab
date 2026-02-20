@@ -19,9 +19,13 @@ Deno.serve(async (req) => {
     console.log('[sigmapay-webhook] Received:', JSON.stringify(payload))
 
     // SigmaPay payload structure:
-    // { hash, status, payment_status, pix: { ... }, customer: { ... }, ... }
-    const transactionHash = payload.hash || payload.transaction_hash || payload.id
-    const status = payload.status || payload.payment_status
+    // { transaction: { id, status }, status, hash, transaction_hash, ... }
+    const transactionHash =
+      payload.transaction?.id ||
+      payload.hash ||
+      payload.transaction_hash ||
+      payload.id
+    const status = payload.status || payload.transaction?.status || payload.payment_status
 
     if (!transactionHash) {
       console.warn('[sigmapay-webhook] No transaction hash in payload')
