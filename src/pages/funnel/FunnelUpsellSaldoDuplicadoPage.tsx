@@ -22,7 +22,7 @@ const FunnelUpsellSaldoDuplicadoPage = () => {
   const flow = usePaymentFlow({
     contentId: 'upsell_saldo_duplicado',
     paymentType: 'upsell_saldo_duplicado',
-    amount: 17.63,
+    amount: 17.97,
     onProcessingComplete: handleProcessingComplete,
   });
 
@@ -55,7 +55,7 @@ const FunnelUpsellSaldoDuplicadoPage = () => {
           onCopy={flow.handleCopyPixCode}
           isCopied={flow.pixCopied}
           title="Saldo Duplicado"
-          amount="R$ 9,91"
+          amount="R$ 17,97"
           showRefundMessage
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}

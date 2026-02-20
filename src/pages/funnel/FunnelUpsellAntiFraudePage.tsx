@@ -22,7 +22,7 @@ const FunnelUpsellAntiFraudePage = () => {
   const flow = usePaymentFlow({
     contentId: 'upsell_antifraude',
     paymentType: 'upsell_antifraude',
-    amount: 67.43,
+    amount: 67.97,
     onProcessingComplete: handleProcessingComplete,
   });
 
@@ -55,7 +55,7 @@ const FunnelUpsellAntiFraudePage = () => {
           onCopy={flow.handleCopyPixCode}
           isCopied={flow.pixCopied}
           title="Proteção Anti-Fraude"
-          amount="R$ 85,23"
+          amount="R$ 67,97"
           showRefundMessage
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}
