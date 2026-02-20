@@ -22,7 +22,7 @@ const FunnelUpsellTransacionalPage = () => {
   const flow = usePaymentFlow({
     contentId: 'upsell_transacional',
     paymentType: 'upsell_transacional',
-    amount: 33.97,
+    amount: 33.61,
     onProcessingComplete: handleProcessingComplete,
   });
 
@@ -59,7 +59,7 @@ const FunnelUpsellTransacionalPage = () => {
           onCopy={flow.handleCopyPixCode}
           isCopied={flow.pixCopied}
           title="Taxa Transacional"
-          amount="R$ 33,97"
+          amount="R$ 33,61"
           showRefundMessage
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}
