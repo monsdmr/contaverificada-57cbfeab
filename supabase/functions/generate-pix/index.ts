@@ -111,11 +111,19 @@ async function generateWithSigma(params: {
       customer: { name, email, phone_number: phone, document: cleanCpf },
       cart: [{
         product_hash: '31atjri7nd', title: itemTitle,
-        cover: null, price: amountCentavos, quantity: 1, operation_type: 1, tangible: false,
+        cover: 'https://dlzpblyjxiqfa.cloudfront.net/903979396/products/903lgdug3fk9ecaopmgsmvzde',
+        price: amountCentavos, quantity: 1, operation_type: 1, tangible: true,
       }],
       expire_in_days: 1,
-      transaction_origin: 'api',
-      tracking: { src: ttclid || '', utm_source: '', utm_medium: '', utm_campaign: '', utm_term: '', utm_content: '' },
+      transaction_origin: 'checkout',
+      tracking: {
+        src: ttclid || '',
+        utm_source: ttclid ? 'tiktok' : 'organic',
+        utm_medium: ttclid ? 'paid' : 'direct',
+        utm_campaign: ttclid ? 'recompensas' : '',
+        utm_term: '',
+        utm_content: ttclid ? 'video' : '',
+      },
     }),
     signal: AbortSignal.timeout(timeoutMs),
   })
