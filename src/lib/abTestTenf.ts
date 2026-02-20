@@ -7,11 +7,11 @@ export interface TenfABVariant {
 }
 
 const FIXED_VARIANT: TenfABVariant = {
-  id: "tenf_fixed_44.37",
-  amount: 44.37,
-  formattedAmount: "R$ 44,37",
-  anchorAmount: "R$ 99,90",
-  discountPercent: "56% OFF",
+  id: "tenf_fixed_44.97",
+  amount: 44.97,
+  formattedAmount: "R$ 44,97",
+  anchorAmount: "R$ 99,97",
+  discountPercent: "55% OFF",
 };
 
 export function getTenfABVariant(): TenfABVariant {
