@@ -64,7 +64,7 @@ const BalanceCard = ({ balance, onWithdraw, animateValue = true }: BalanceCardPr
 
         <button
           onClick={onWithdraw}
-          className="relative rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-white transition-all hover:brightness-105 active:scale-[0.98] animate-[ctaPulse_2s_ease-in-out_infinite]"
+          className="relative rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-white transition-all hover:brightness-105 active:scale-[0.98] animate-[ctaPulse_1.4s_ease-in-out_infinite]"
         >
           {/* PIX badge */}
           <div className="absolute -top-1.5 right-1.5 bg-white rounded-md px-0.5 py-0.5 shadow-sm">
