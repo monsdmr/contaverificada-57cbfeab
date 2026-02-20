@@ -22,7 +22,7 @@ const FunnelUpsellBonusOcultoPage = () => {
   const flow = usePaymentFlow({
     contentId: 'upsell_bonus_oculto',
     paymentType: 'upsell_bonus_oculto',
-    amount: 19.97,
+    amount: 19.53,
     onProcessingComplete: handleProcessingComplete,
   });
 
@@ -55,7 +55,7 @@ const FunnelUpsellBonusOcultoPage = () => {
           onCopy={flow.handleCopyPixCode}
           isCopied={flow.pixCopied}
           title="Bônus Oculto"
-          amount="R$ 19,97"
+          amount="R$ 19,53"
           showRefundMessage
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}
