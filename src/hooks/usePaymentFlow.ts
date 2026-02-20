@@ -106,8 +106,18 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
 
     let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout>;
-    let delay = 5000;
-    const maxDelay = 15000;
+    const popupOpenedAt = Date.now();
+
+    // Polling intervals by elapsed time since popup opened:
+    // 0–2 min  → 5s
+    // 2–5 min  → 15s
+    // 5+ min   → 30s (max)
+    const getDelay = () => {
+      const elapsed = Date.now() - popupOpenedAt;
+      if (elapsed < 2 * 60 * 1000) return 5_000;
+      if (elapsed < 5 * 60 * 1000) return 15_000;
+      return 30_000;
+    };
 
     const check = async (source: string) => {
       if (cancelled || didConfirmRef.current) return;
@@ -121,16 +131,15 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       } catch {}
     };
 
-    // Initial check after short delay
-    setTimeout(() => check('initial'), 3000);
+    // Initial check after 20s — tempo mínimo realista para abrir o banco e pagar
+    const initialTimer = setTimeout(() => check('initial'), 20_000);
 
-    // Conservative polling: 5s → 8s → 12s → 15s (max) to avoid SigmaPay 429
+    // Smart polling com delay baseado no tempo decorrido desde abertura do popup
     const scheduleNext = () => {
       timeoutId = setTimeout(() => {
         check('poll');
-        delay = Math.min(delay + 3000, maxDelay);
         if (!cancelled && !didConfirmRef.current) scheduleNext();
-      }, delay);
+      }, getDelay());
     };
     scheduleNext();
 
@@ -151,6 +160,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
 
     const teardown = () => {
       cancelled = true;
+      clearTimeout(initialTimer);
       clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
