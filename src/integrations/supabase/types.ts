@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      funnel_events: {
+        Row: {
+          cpf_hash: string | null
+          created_at: string
+          event: string
+          id: string
+          session_id: string
+          step: string
+        }
+        Insert: {
+          cpf_hash?: string | null
+          created_at?: string
+          event: string
+          id?: string
+          session_id: string
+          step: string
+        }
+        Update: {
+          cpf_hash?: string | null
+          created_at?: string
+          event?: string
+          id?: string
+          session_id?: string
+          step?: string
+        }
+        Relationships: []
+      }
       pix_payments: {
         Row: {
           ab_variant: string | null
