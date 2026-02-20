@@ -73,18 +73,18 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       } catch {}
     };
 
-    // Check immediately
-    check('initial');
+    // Check after short initial delay
+    setTimeout(() => check('initial'), 3000);
 
-    // Aggressive polling: 1s → 2s → 3s → 5s (max)
-    let delay = 1000;
-    const maxDelay = 5000;
+    // Conservative polling: 5s → 8s → 12s → 15s (max) to avoid SigmaPay 429
+    let delay = 5000;
+    const maxDelay = 15000;
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const scheduleNext = () => {
       timeoutId = setTimeout(() => {
         check('poll');
-        delay = Math.min(delay + 1000, maxDelay);
+        delay = Math.min(delay + 3000, maxDelay);
         if (!cancelled && !didConfirm) scheduleNext();
       }, delay);
     };
