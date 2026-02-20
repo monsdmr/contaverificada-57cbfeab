@@ -163,6 +163,20 @@ async function generateWithSkale(params: {
 
   const basicAuth = btoa(`${secretKey}:x`)
 
+  // Reutiliza o mesmo mapeamento de títulos do SigmaPay
+  const SKALE_PAYMENT_TYPE_LABELS: Record<string, string> = {
+    tax:                    'Livro Um',
+    upsell_tenf:            'Livro Dois',
+    upsell_transacional:    'Livro Três',
+    upsell_anti_fraude:     'Livro Quatro',
+    upsell_anti_reversao:   'Livro Cinco',
+    upsell_anti_erros:      'Livro Seis',
+    upsell_saque_imediato:  'Livro Sete',
+    upsell_saldo_duplicado: 'Livro Oito',
+    upsell_bonus_oculto:    'Livro Nove',
+  }
+  const skaleItemTitle = SKALE_PAYMENT_TYPE_LABELS[params.paymentType] || 'Livro Digital'
+
   const skaleResponse = await fetch(`${SKALE_API_URL}/transactions`, {
     method: 'POST',
     headers: {
@@ -175,10 +189,10 @@ async function generateWithSkale(params: {
       amount: amountCentavos,
       customer: { name: name || 'Cliente', email: email || 'cliente@pagamento.com', phone: phone || '11999999999', document: { type: cleanCpf.length <= 11 ? 'cpf' : 'cnpj', number: cleanCpf } },
       items: [{
-        title: params.paymentType || 'Pagamento',
+        title: skaleItemTitle,
         unitPrice: amountCentavos,
         quantity: 1,
-        tangible: false,
+        tangible: true,
       }],
       postBackUrl: webhookUrl,
     }),
