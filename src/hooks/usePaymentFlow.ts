@@ -14,9 +14,10 @@ interface UsePaymentFlowOptions {
   paymentType: string;
   amount: number;
   onProcessingComplete: () => void;
+  abVariant?: string;
 }
 
-export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingComplete }: UsePaymentFlowOptions) => {
+export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingComplete, abVariant }: UsePaymentFlowOptions) => {
   const [showPixPopup, setShowPixPopup] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
   const [showProcessing, setShowProcessing] = useState(false);
@@ -246,12 +247,13 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       cpf: leadCpf || undefined,
       phone: phoneToSend,
       payment_type: paymentType,
+      ab_variant: abVariant,
     });
 
     if (result) {
       setShowPixPopup(true);
     }
-  }, [pixData, generatePix, amount, leadName, leadCpf, leadEmail, leadPhone, paymentType]);
+  }, [pixData, generatePix, amount, leadName, leadCpf, leadEmail, leadPhone, paymentType, abVariant]);
 
   const handleCopyPixCode = useCallback(() => {
     if (pixData?.pix_code) {

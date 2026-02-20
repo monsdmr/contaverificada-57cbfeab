@@ -5,7 +5,7 @@ import FunnelUpsellTENF from "@/components/funnel/FunnelUpsellTENF";
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
 import FunnelPixPopup from "@/components/funnel/FunnelPixPopup";
 import { usePaymentFlow } from "@/hooks/usePaymentFlow";
-import { getTenfABVariant } from "@/lib/abTestTenf";
+import { getTenfABVariant, getTenfABVariantId } from "@/lib/abTestTenf";
 
 interface LocationState { pixKey?: string; pixKeyType?: string; }
 
@@ -27,6 +27,7 @@ const FunnelUpsellTENFPage = () => {
     paymentType: 'upsell_tenf',
     amount: variant.amount,
     onProcessingComplete: handleProcessingComplete,
+    abVariant: getTenfABVariantId(),
   });
 
   if (flow.showProcessing) {
