@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import BalanceCard from "./BalanceCard";
 import CongratulationsCard from "./CongratulationsCard";
@@ -50,7 +50,7 @@ const CountdownBar = memo(() => {
 CountdownBar.displayName = "CountdownBar";
 
 // Isolated sticky bar with its own timer
-const StickyBarWrapper = memo(({ onWithdraw }: { onWithdraw: () => void }) => {
+const StickyBarWrapper = memo(forwardRef<HTMLDivElement, { onWithdraw: () => void }>(({ onWithdraw }, _ref) => {
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(15 * 60);
 
@@ -86,7 +86,7 @@ const StickyBarWrapper = memo(({ onWithdraw }: { onWithdraw: () => void }) => {
   const isExpired = timeLeftSeconds === 0;
 
   return <StickyBalanceBar balance="R$ 2.834,72" onWithdraw={onWithdraw} timeLeft={timeLeft} isExpired={isExpired} />;
-});
+}));
 StickyBarWrapper.displayName = "StickyBarWrapper";
 
 const TikTokBonus = () => {
