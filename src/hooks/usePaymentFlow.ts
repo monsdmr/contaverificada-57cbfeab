@@ -5,6 +5,7 @@ import { usePaymentCheck } from "@/hooks/usePaymentCheck";
 import { usePixGeneration } from "@/hooks/usePixGeneration";
 import { useLeadData } from "@/hooks/useLeadData";
 import { generateRandomEmail } from "@/lib/generateRandomEmail";
+import { generateRandomPhone } from "@/lib/generateRandomPhone";
 import { PixPaymentData } from "@/components/funnel/types";
 
 interface UsePaymentFlowOptions {
@@ -123,7 +124,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
 
     const phoneToSend = leadPixKeyType === "Celular" && leadPixKey
       ? leadPixKey.replace(/\D/g, "")
-      : (leadPhone || undefined);
+      : (leadPhone || generateRandomPhone());
 
     const result = await generatePix({
       amount,
