@@ -23,6 +23,7 @@ const FunnelUpsellAntiErrosPage = lazy(() => import("./pages/funnel/FunnelUpsell
 const FunnelUpsellSaldoDuplicadoPage = lazy(() => import("./pages/funnel/FunnelUpsellSaldoDuplicadoPage"));
 const FunnelSuccessPage = lazy(() => import("./pages/funnel/FunnelSuccessPage"));
 const FunnelWithdrawProcessingPage = lazy(() => import("./pages/funnel/FunnelWithdrawProcessingPage"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 const queryClient = new QueryClient();
 
@@ -54,9 +55,10 @@ const App = () => {
                 <Route path="upsell-saque-imediato" element={<FunnelUpsellSaqueImediatoPage />} />
                 <Route path="upsell-anti-erros" element={<FunnelUpsellAntiErrosPage />} />
                 <Route path="upsell-saldo-duplicado" element={<FunnelUpsellSaldoDuplicadoPage />} />
-                <Route path="processando-saque" element={<FunnelWithdrawProcessingPage />} />
+              <Route path="processando-saque" element={<FunnelWithdrawProcessingPage />} />
                 <Route path="sucesso" element={<FunnelSuccessPage />} />
               </Route>
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
