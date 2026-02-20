@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { trackPurchasePixelOnce } from "@/lib/tiktokPixel";
-import { usePaymentCheck } from "@/hooks/usePaymentCheck";
 import { usePixGeneration } from "@/hooks/usePixGeneration";
 import { useLeadData } from "@/hooks/useLeadData";
 import { generateRandomEmail } from "@/lib/generateRandomEmail";
@@ -22,6 +21,10 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
   const [pixCopied, setPixCopied] = useState(false);
   const [showProcessing, setShowProcessing] = useState(false);
 
+  // ─── Manual check state (botão "Já paguei") ──────────────────────────────
+  const [isChecking, setIsChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string | null>(null);
+
   const { generatePix, isGenerating, pixData } = usePixGeneration();
   const { leadCpf, leadName, leadEmail, leadPhone } = useLeadData();
 
@@ -32,24 +35,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
   // Ref to hold teardown function for the active channel+polling
   const teardownRef = useRef<(() => void) | null>(null);
 
-  const handlePaymentConfirmed = useCallback(async () => {
-    if (pixData?.transaction_id && pixData?.amount) {
-      trackPurchasePixelOnce({
-        transactionId: pixData.transaction_id,
-        value: pixData.amount,
-        contentId,
-      });
-    }
-    setShowPixPopup(false);
-    setShowProcessing(true);
-  }, [pixData, contentId]);
-
-  const { isChecking, checkError, checkPayment } = usePaymentCheck({
-    transactionId: pixData?.transaction_id,
-    onPaymentConfirmed: handlePaymentConfirmed,
-  });
-
-  // ─── Core confirmation logic (shared by polling, realtime and recovery) ───
+  // ─── Core confirmation logic (shared by polling, realtime, recovery and manual check) ───
   const confirm = useCallback((source: string, transactionId: string, pixAmount: number) => {
     if (didConfirmRef.current) return;
     didConfirmRef.current = true;
@@ -64,7 +50,35 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     setShowProcessing(true);
   }, [contentId]);
 
-  // ─── FIX 1 & 3: Keep Realtime + polling alive 5 min after popup closes ───
+  // ─── Manual check — botão "Já paguei" usa confirm() para evitar double-redirect ───
+  const checkPayment = useCallback(async () => {
+    if (!pixData?.transaction_id) {
+      setCheckError("Nenhuma transação encontrada.");
+      return;
+    }
+    setIsChecking(true);
+    setCheckError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-payment', {
+        body: { transaction_id: pixData.transaction_id }
+      });
+      if (error) {
+        setCheckError("Erro ao verificar pagamento. Tente novamente.");
+        return;
+      }
+      if (data?.status === 'paid') {
+        confirm('manual', pixData.transaction_id, pixData.amount);
+      } else {
+        setCheckError("Pagamento ainda não confirmado. Aguarde ou tente novamente.");
+      }
+    } catch {
+      setCheckError("Erro ao verificar pagamento. Tente novamente.");
+    } finally {
+      setIsChecking(false);
+    }
+  }, [pixData, confirm]);
+
+  // ─── Keep Realtime + polling alive 5 min after popup closes ───
   useEffect(() => {
     if (!pixData?.transaction_id) return;
 
@@ -145,15 +159,12 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
   }, [showPixPopup, pixData, contentId, confirm]);
 
   // ─── Keep channel alive for REALTIME_GRACE_PERIOD_MS after popup closes ───
-  // When popup closes but we haven't confirmed, start a grace timer
-  // that only tears down after 5 minutes (so webhook can still redirect)
   useEffect(() => {
     if (!pixData?.transaction_id) return;
-    if (showPixPopup) return; // popup is open, the main effect handles it
-    if (didConfirmRef.current) return; // already confirmed, nothing to do
-    if (!teardownRef.current) return; // no active session to preserve
+    if (showPixPopup) return;
+    if (didConfirmRef.current) return;
+    if (!teardownRef.current) return;
 
-    // Popup just closed without confirmation — start grace period
     console.log(`[${contentId}] Popup closed, keeping realtime alive for ${REALTIME_GRACE_PERIOD_MS / 1000}s`);
 
     gracePeriodTimerRef.current = setTimeout(() => {
@@ -172,7 +183,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     };
   }, [showPixPopup, pixData, contentId]);
 
-  // ─── FIX 2: Recovery — check payment status on page load ─────────────────
+  // ─── Recovery — check payment status on page load ─────────────────────────
   useEffect(() => {
     if (!pixData?.transaction_id) return;
     if (didConfirmRef.current) return;
@@ -180,7 +191,6 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     const transactionId = pixData.transaction_id;
     const pixAmount = pixData.amount;
 
-    // Check immediately on mount if there's a cached PIX
     const runRecovery = async () => {
       try {
         const { data, error } = await supabase.functions.invoke('check-payment', {
@@ -193,7 +203,6 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       } catch {}
     };
 
-    // Small delay to avoid racing with the main popup flow
     const t = setTimeout(runRecovery, 1500);
     return () => clearTimeout(t);
   }, [pixData?.transaction_id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -204,7 +213,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       return;
     }
 
-    // FIX #3: garantir que "undefined" literal não vaze como string
+    // Garantir que strings "undefined" literais não vazem
     const cleanLeadName = (leadName && leadName !== 'undefined') ? leadName : undefined;
     const cleanLeadEmail = (leadEmail && leadEmail !== 'undefined' && leadEmail.includes('@')) ? leadEmail : undefined;
     const cleanLeadPhone = (leadPhone && leadPhone !== 'undefined') ? leadPhone : undefined;
@@ -234,7 +243,6 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
   const handleCopyPixCode = useCallback(() => {
     if (pixData?.pix_code) {
       navigator.clipboard.writeText(pixData.pix_code).catch(() => {
-        // Fallback for browsers that block clipboard (especially mobile WebView)
         try {
           const el = document.createElement("textarea");
           el.value = pixData.pix_code!;

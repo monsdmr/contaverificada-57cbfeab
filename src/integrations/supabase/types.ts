@@ -24,6 +24,7 @@ export type Database = {
           customer_name: string | null
           id: string
           ip_address: string | null
+          last_checked_at: string | null
           page_referrer: string | null
           page_url: string | null
           paid_at: string | null
@@ -48,6 +49,7 @@ export type Database = {
           customer_name?: string | null
           id?: string
           ip_address?: string | null
+          last_checked_at?: string | null
           page_referrer?: string | null
           page_url?: string | null
           paid_at?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           customer_name?: string | null
           id?: string
           ip_address?: string | null
+          last_checked_at?: string | null
           page_referrer?: string | null
           page_url?: string | null
           paid_at?: string | null
