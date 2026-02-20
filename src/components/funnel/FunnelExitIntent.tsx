@@ -1,15 +1,33 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 const FunnelExitIntent = () => {
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const shownRef = useRef(false);
+
+  const triggerIntent = useCallback(() => {
+    if (dismissed || shownRef.current) return;
+    shownRef.current = true;
+    setShow(true);
+  }, [dismissed]);
 
   const handleBack = useCallback(() => {
     if (dismissed) return;
     window.history.pushState(null, "", window.location.href);
-    setShow(true);
-  }, [dismissed]);
+    triggerIntent();
+  }, [dismissed, triggerIntent]);
+
+  // visibilitychange: captura minimização/troca de aba no mobile
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        triggerIntent();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [triggerIntent]);
 
   useEffect(() => {
     window.history.pushState(null, "", window.location.href);

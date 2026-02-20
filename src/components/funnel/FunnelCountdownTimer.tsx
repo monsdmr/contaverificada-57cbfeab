@@ -1,29 +1,34 @@
 import { useState, useEffect } from "react";
 import { Clock, AlertTriangle } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
-const TIMER_KEY = "funnel_timer_start";
-const TIMER_DURATION = 10 * 60; // 10 minutes in seconds
+const TIMER_DURATION = 3 * 60; // 3 minutes per upsell step
 
 const FunnelCountdownTimer = () => {
+  const location = useLocation();
+  const currentStep = location.pathname.split("/").pop() || "unknown";
+
   const [secondsLeft, setSecondsLeft] = useState(() => {
-    const stored = sessionStorage.getItem(TIMER_KEY);
+    const timerKey = `funnel_timer_${currentStep}`;
+    const stored = sessionStorage.getItem(timerKey);
     if (stored) {
       const elapsed = Math.floor((Date.now() - parseInt(stored, 10)) / 1000);
       return Math.max(0, TIMER_DURATION - elapsed);
     }
-    sessionStorage.setItem(TIMER_KEY, Date.now().toString());
+    sessionStorage.setItem(timerKey, Date.now().toString());
     return TIMER_DURATION;
   });
 
   useEffect(() => {
+    const timerKey = `funnel_timer_${currentStep}`;
     const interval = setInterval(() => {
-      const stored = sessionStorage.getItem(TIMER_KEY);
+      const stored = sessionStorage.getItem(timerKey);
       if (!stored) return;
       const elapsed = Math.floor((Date.now() - parseInt(stored, 10)) / 1000);
       setSecondsLeft(Math.max(0, TIMER_DURATION - elapsed));
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentStep]);
 
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;
