@@ -8,6 +8,8 @@ import { generateRandomEmail } from "@/lib/generateRandomEmail";
 import { generateRandomPhone } from "@/lib/generateRandomPhone";
 import { PixPaymentData } from "@/components/funnel/types";
 
+const REALTIME_GRACE_PERIOD_MS = 5 * 60 * 1000; // 5 minutes after popup closes
+
 interface UsePaymentFlowOptions {
   contentId: string;
   paymentType: string;
@@ -22,6 +24,13 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
 
   const { generatePix, isGenerating, pixData } = usePixGeneration();
   const { leadCpf, leadName, leadEmail, leadPhone } = useLeadData();
+
+  // Ref to track if payment was already confirmed (prevents double-fire)
+  const didConfirmRef = useRef(false);
+  // Ref to the grace-period timeout after popup closes
+  const gracePeriodTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref to hold teardown function for the active channel+polling
+  const teardownRef = useRef<(() => void) | null>(null);
 
   const handlePaymentConfirmed = useCallback(async () => {
     if (pixData?.transaction_id && pixData?.amount) {
@@ -40,52 +49,72 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     onPaymentConfirmed: handlePaymentConfirmed,
   });
 
-  // Auto-check payment status via polling + realtime
-  useEffect(() => {
-    if (!showPixPopup || !pixData?.transaction_id) return;
+  // ─── Core confirmation logic (shared by polling, realtime and recovery) ───
+  const confirm = useCallback((source: string, transactionId: string, pixAmount: number) => {
+    if (didConfirmRef.current) return;
+    didConfirmRef.current = true;
+    console.log(`[${contentId}] Payment confirmed (${source})`);
 
-    let cancelled = false;
-    let didConfirm = false;
+    if (transactionId && pixAmount) {
+      trackPurchasePixelOnce({ transactionId, value: pixAmount, contentId });
+    }
+
+    // Always redirect, even if popup is already closed
+    setShowPixPopup(false);
+    setShowProcessing(true);
+  }, [contentId]);
+
+  // ─── FIX 1 & 3: Keep Realtime + polling alive 5 min after popup closes ───
+  useEffect(() => {
+    if (!pixData?.transaction_id) return;
 
     const transactionId = pixData.transaction_id;
     const pixAmount = pixData.amount;
 
-    const confirm = (source: string) => {
-      if (didConfirm) return;
-      didConfirm = true;
-      console.log(`[${contentId}] Payment confirmed (${source})`);
-
-      if (transactionId && pixAmount) {
-        trackPurchasePixelOnce({ transactionId, value: pixAmount, contentId });
+    // If popup just opened, reset confirmation guard and cancel any grace timer
+    if (showPixPopup) {
+      didConfirmRef.current = false;
+      if (gracePeriodTimerRef.current) {
+        clearTimeout(gracePeriodTimerRef.current);
+        gracePeriodTimerRef.current = null;
       }
+    }
 
-      setShowPixPopup(false);
-      setShowProcessing(true);
-    };
+    // Only start a new channel+polling if popup is open and none is active
+    if (!showPixPopup) return;
+
+    // Teardown any previous session
+    if (teardownRef.current) {
+      teardownRef.current();
+      teardownRef.current = null;
+    }
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let delay = 5000;
+    const maxDelay = 15000;
 
     const check = async (source: string) => {
-      if (cancelled || didConfirm) return;
+      if (cancelled || didConfirmRef.current) return;
       try {
         const { data, error } = await supabase.functions.invoke('check-payment', {
           body: { transaction_id: transactionId }
         });
-        if (!error && data?.status === 'paid') confirm(source);
+        if (!error && data?.status === 'paid') {
+          confirm(source, transactionId, pixAmount);
+        }
       } catch {}
     };
 
-    // Check after short initial delay
+    // Initial check after short delay
     setTimeout(() => check('initial'), 3000);
 
     // Conservative polling: 5s → 8s → 12s → 15s (max) to avoid SigmaPay 429
-    let delay = 5000;
-    const maxDelay = 15000;
-    let timeoutId: ReturnType<typeof setTimeout>;
-
     const scheduleNext = () => {
       timeoutId = setTimeout(() => {
         check('poll');
         delay = Math.min(delay + 3000, maxDelay);
-        if (!cancelled && !didConfirm) scheduleNext();
+        if (!cancelled && !didConfirmRef.current) scheduleNext();
       }, delay);
     };
     scheduleNext();
@@ -100,17 +129,74 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
         filter: `transaction_id=eq.${transactionId}`
       }, (payload) => {
         if (payload.new?.status === 'paid' || payload.new?.status === 'approved') {
-          confirm('realtime');
+          confirm('realtime', transactionId, pixAmount);
         }
       })
       .subscribe();
 
-    return () => {
+    const teardown = () => {
       cancelled = true;
       clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
+
+    teardownRef.current = teardown;
+    return teardown;
+  }, [showPixPopup, pixData, contentId, confirm]);
+
+  // ─── Keep channel alive for REALTIME_GRACE_PERIOD_MS after popup closes ───
+  // When popup closes but we haven't confirmed, start a grace timer
+  // that only tears down after 5 minutes (so webhook can still redirect)
+  useEffect(() => {
+    if (!pixData?.transaction_id) return;
+    if (showPixPopup) return; // popup is open, the main effect handles it
+    if (didConfirmRef.current) return; // already confirmed, nothing to do
+    if (!teardownRef.current) return; // no active session to preserve
+
+    // Popup just closed without confirmation — start grace period
+    console.log(`[${contentId}] Popup closed, keeping realtime alive for ${REALTIME_GRACE_PERIOD_MS / 1000}s`);
+
+    gracePeriodTimerRef.current = setTimeout(() => {
+      console.log(`[${contentId}] Grace period expired, tearing down channel`);
+      if (teardownRef.current) {
+        teardownRef.current();
+        teardownRef.current = null;
+      }
+    }, REALTIME_GRACE_PERIOD_MS);
+
+    return () => {
+      if (gracePeriodTimerRef.current) {
+        clearTimeout(gracePeriodTimerRef.current);
+        gracePeriodTimerRef.current = null;
+      }
+    };
   }, [showPixPopup, pixData, contentId]);
+
+  // ─── FIX 2: Recovery — check payment status on page load ─────────────────
+  useEffect(() => {
+    if (!pixData?.transaction_id) return;
+    if (didConfirmRef.current) return;
+
+    const transactionId = pixData.transaction_id;
+    const pixAmount = pixData.amount;
+
+    // Check immediately on mount if there's a cached PIX
+    const runRecovery = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('check-payment', {
+          body: { transaction_id: transactionId }
+        });
+        if (!error && data?.status === 'paid') {
+          console.log(`[${contentId}] Recovery: PIX already paid on mount`);
+          confirm('recovery', transactionId, pixAmount);
+        }
+      } catch {}
+    };
+
+    // Small delay to avoid racing with the main popup flow
+    const t = setTimeout(runRecovery, 1500);
+    return () => clearTimeout(t);
+  }, [pixData?.transaction_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGeneratePix = useCallback(async (leadPixKey: string, leadPixKeyType: string) => {
     if (pixData) {
