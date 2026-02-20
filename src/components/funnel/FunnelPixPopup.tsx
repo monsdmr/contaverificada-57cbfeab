@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Clock, Copy, Loader2, CheckCircle2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import pixLogoFull from "@/assets/pix-logo-full.svg";
@@ -9,15 +9,6 @@ import receitaFederalLogo from "@/assets/receita-federal-logo.png";
 import { PixPopupProps } from "./types";
 
 const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, showRefundMessage = false, onManualCheck, isCheckingPayment = false, checkError = null }: PixPopupProps) => {
-  const autoCopiedRef = useRef(false);
-
-  // Auto-copy when pix_code becomes available (first time only)
-  useEffect(() => {
-    if (pixData?.pix_code && !autoCopiedRef.current) {
-      autoCopiedRef.current = true;
-      onCopy();
-    }
-  }, [pixData?.pix_code]);
 
   useEffect(() => {
     const transactionId = pixData?.transaction_id;
