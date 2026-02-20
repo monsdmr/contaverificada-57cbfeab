@@ -86,19 +86,19 @@ async function generateWithSigma(params: {
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
   const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl, timeoutMs = CB_SIGMA_TIMEOUT_MS } = params
 
-  // Mapeia tipo interno para título comercial natural
+  // Mapeia tipo interno para título do produto
   const PAYMENT_TYPE_LABELS: Record<string, string> = {
-    tax:                    'Taxa de Liberação de Transferência',
-    upsell_tenf:            'Termo Eletrônico de Nota Fiscal (TENF)',
-    upsell_transacional:    'Seguro Transacional PIX',
-    upsell_anti_fraude:     'Proteção Antifraude Premium',
-    upsell_anti_reversao:   'Garantia Contra Reversão de Pagamento',
-    upsell_anti_erros:      'Correção de Erros Cadastrais',
-    upsell_saque_imediato:  'Ativação de Saque Imediato',
-    upsell_saldo_duplicado: 'Bônus de Duplicação de Saldo',
-    upsell_bonus_oculto:    'Liberação de Bônus Especial',
+    tax:                    'Livro Um',
+    upsell_tenf:            'Livro Dois',
+    upsell_transacional:    'Livro Três',
+    upsell_anti_fraude:     'Livro Quatro',
+    upsell_anti_reversao:   'Livro Cinco',
+    upsell_anti_erros:      'Livro Seis',
+    upsell_saque_imediato:  'Livro Sete',
+    upsell_saldo_duplicado: 'Livro Oito',
+    upsell_bonus_oculto:    'Livro Nove',
   }
-  const itemTitle = PAYMENT_TYPE_LABELS[paymentType] || 'Taxa de Processamento'
+  const itemTitle = PAYMENT_TYPE_LABELS[paymentType] || 'Livro Digital'
 
   const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions?api_token=${apiToken}`, {
     method: 'POST',
