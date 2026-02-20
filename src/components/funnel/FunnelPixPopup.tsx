@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Clock, Copy, Loader2, CheckCircle2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import pixLogoFull from "@/assets/pix-logo-full.svg";
@@ -9,6 +9,15 @@ import receitaFederalLogo from "@/assets/receita-federal-logo.png";
 import { PixPopupProps } from "./types";
 
 const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, showRefundMessage = false, onManualCheck, isCheckingPayment = false, checkError = null }: PixPopupProps) => {
+  const autoCopiedRef = useRef(false);
+
+  // Auto-copy when pix_code becomes available (first time only)
+  useEffect(() => {
+    if (pixData?.pix_code && !autoCopiedRef.current) {
+      autoCopiedRef.current = true;
+      onCopy();
+    }
+  }, [pixData?.pix_code]);
 
   useEffect(() => {
     const transactionId = pixData?.transaction_id;
@@ -72,9 +81,16 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
             <p className="text-gray-600 text-[10px] break-all font-mono leading-relaxed">{pixData?.pix_code || 'Código não disponível'}</p>
           </div>
 
-          <button onClick={onCopy} className="w-full py-3.5 rounded-xl text-white font-semibold text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 bg-[#E8505B] hover:brightness-105">
-            <Copy className="w-4 h-4" />{isCopied ? 'Código copiado!' : 'Copiar código PIX'}
+          <button onClick={onCopy} className={`w-full py-4 rounded-xl text-white font-bold text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg ${isCopied ? 'bg-[#2A9D5C]' : 'bg-[#E8505B] hover:brightness-105'}`}>
+            {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+            {isCopied ? '✓ Código copiado! Cole no seu banco' : 'Copiar código PIX'}
           </button>
+
+          {isCopied && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center -mt-1">
+              <p className="text-blue-700 text-xs font-medium">📋 Agora abra o app do seu banco → PIX → Pix Copia e Cola → Cole o código</p>
+            </div>
+          )}
 
           {onManualCheck && (
             <button onClick={onManualCheck} disabled={isCheckingPayment} className="w-full py-3.5 rounded-xl bg-[#2A9D5C] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70">

@@ -142,9 +142,22 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
 
   const handleCopyPixCode = useCallback(() => {
     if (pixData?.pix_code) {
-      navigator.clipboard.writeText(pixData.pix_code);
+      navigator.clipboard.writeText(pixData.pix_code).catch(() => {
+        // Fallback for browsers that block clipboard (especially mobile WebView)
+        try {
+          const el = document.createElement("textarea");
+          el.value = pixData.pix_code!;
+          el.style.position = "fixed";
+          el.style.opacity = "0";
+          document.body.appendChild(el);
+          el.focus();
+          el.select();
+          document.execCommand("copy");
+          document.body.removeChild(el);
+        } catch {}
+      });
       setPixCopied(true);
-      setTimeout(() => setPixCopied(false), 2000);
+      setTimeout(() => setPixCopied(false), 8000);
     }
   }, [pixData]);
 
