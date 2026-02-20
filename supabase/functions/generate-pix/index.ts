@@ -8,12 +8,83 @@ const corsHeaders = {
 const SIGMA_API_URL = 'https://api.sigmapay.com.br/api/public/v1'
 const SKALE_API_URL = 'https://api.conta.skalepay.com.br/v1'
 
-// --- SigmaPay provider ---
+// ─── Circuit Breaker Config ───────────────────────────────────────────────────
+const CB_FAILURE_THRESHOLD = 3       // open circuit after N consecutive failures
+const CB_OPEN_DURATION_MS  = 120_000 // stay open for 2 min before trying half-open
+const CB_SIGMA_TIMEOUT_MS  = 9_000   // tight timeout — fail fast to SkalePay
+const CB_SKALE_TIMEOUT_MS  = 30_000  // SkalePay is fallback, give it more time
+
+type CircuitState = 'closed' | 'open' | 'half_open'
+
+interface CircuitBreaker {
+  gateway: string
+  state: CircuitState
+  failure_count: number
+  last_failure_at: string | null
+  opened_at: string | null
+  last_success_at: string | null
+}
+
+// ─── Circuit Breaker Helpers ──────────────────────────────────────────────────
+
+async function getCircuitState(supabase: ReturnType<typeof createClient>, gateway: string): Promise<CircuitBreaker> {
+  const { data } = await supabase
+    .from('gateway_circuit_breaker')
+    .select('*')
+    .eq('gateway', gateway)
+    .single()
+
+  if (!data) return { gateway, state: 'closed', failure_count: 0, last_failure_at: null, opened_at: null, last_success_at: null }
+
+  // Auto-transition open → half_open after CB_OPEN_DURATION_MS
+  if (data.state === 'open' && data.opened_at) {
+    const msSinceOpen = Date.now() - new Date(data.opened_at).getTime()
+    if (msSinceOpen >= CB_OPEN_DURATION_MS) {
+      await supabase.from('gateway_circuit_breaker')
+        .update({ state: 'half_open', updated_at: new Date().toISOString() })
+        .eq('gateway', gateway)
+      return { ...data, state: 'half_open' }
+    }
+  }
+
+  return data as CircuitBreaker
+}
+
+async function recordSuccess(supabase: ReturnType<typeof createClient>, gateway: string): Promise<void> {
+  await supabase.from('gateway_circuit_breaker').update({
+    state: 'closed',
+    failure_count: 0,
+    last_success_at: new Date().toISOString(),
+    opened_at: null,
+    updated_at: new Date().toISOString(),
+  }).eq('gateway', gateway)
+}
+
+async function recordFailure(supabase: ReturnType<typeof createClient>, gateway: string, currentCount: number): Promise<void> {
+  const newCount = currentCount + 1
+  const shouldOpen = newCount >= CB_FAILURE_THRESHOLD
+  const now = new Date().toISOString()
+
+  await supabase.from('gateway_circuit_breaker').update({
+    state: shouldOpen ? 'open' : 'closed',
+    failure_count: newCount,
+    last_failure_at: now,
+    opened_at: shouldOpen ? now : null,
+    updated_at: now,
+  }).eq('gateway', gateway)
+
+  if (shouldOpen) {
+    console.warn(`[circuit-breaker] ${gateway} circuit OPENED after ${newCount} failures`)
+  }
+}
+
+// ─── SigmaPay provider ────────────────────────────────────────────────────────
 async function generateWithSigma(params: {
   amountCentavos: number; cleanCpf: string; name: string; email: string;
   phone: string; paymentType: string; ttclid: string; apiToken: string; webhookUrl: string;
+  timeoutMs?: number;
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
-  const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl } = params
+  const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl, timeoutMs = CB_SIGMA_TIMEOUT_MS } = params
 
   const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions?api_token=${apiToken}`, {
     method: 'POST',
@@ -22,7 +93,7 @@ async function generateWithSigma(params: {
       amount: amountCentavos,
       offer_hash: 'zxw2p8esaw',
       payment_method: 'pix',
-      postback_url: webhookUrl, // FIX #2: envia URL do webhook explicitamente
+      postback_url: webhookUrl,
       customer: { name, email, phone_number: phone, document: cleanCpf },
       cart: [{
         product_hash: '31atjri7nd', title: paymentType || 'Pagamento',
@@ -32,7 +103,7 @@ async function generateWithSigma(params: {
       transaction_origin: 'api',
       tracking: { src: ttclid || '', utm_source: '', utm_medium: '', utm_campaign: '', utm_term: '', utm_content: '' },
     }),
-    signal: AbortSignal.timeout(60000),
+    signal: AbortSignal.timeout(timeoutMs),
   })
 
   const contentType = sigmaResponse.headers.get('content-type')
@@ -50,7 +121,6 @@ async function generateWithSigma(params: {
     throw new Error(`SigmaPay error [${sigmaResponse.status}]: ${JSON.stringify(sigmaData)}`)
   }
 
-  // SigmaPay can return pix either at top-level or nested under transaction{}
   const txn = sigmaData.transaction || sigmaData
   const transactionHash = sigmaData.hash || txn.id || sigmaData.transaction_hash || sigmaData.id || crypto.randomUUID()
   const pixCode = txn.pix?.code || txn.pix?.pix_qr_code || sigmaData.pix?.code || sigmaData.pix?.pix_qr_code || sigmaData.pix_code || ''
@@ -62,7 +132,7 @@ async function generateWithSigma(params: {
   return { pixCode, pixQrBase64, pixUrl, transactionHash, provider: 'sigma' }
 }
 
-// --- SkalePay provider ---
+// ─── SkalePay provider ────────────────────────────────────────────────────────
 async function generateWithSkale(params: {
   amountCentavos: number; cleanCpf: string; name: string; email: string;
   phone: string; paymentType: string; secretKey: string; webhookUrl: string;
@@ -90,7 +160,7 @@ async function generateWithSkale(params: {
       }],
       postBackUrl: webhookUrl,
     }),
-    signal: AbortSignal.timeout(60000),
+    signal: AbortSignal.timeout(CB_SKALE_TIMEOUT_MS),
   })
 
   const contentType = skaleResponse.headers.get('content-type')
@@ -110,7 +180,7 @@ async function generateWithSkale(params: {
 
   const transactionHash = String(skaleData.id || skaleData.transaction_id || skaleData.hash || crypto.randomUUID())
   const pixCode = skaleData.pix?.qrcode || skaleData.pix?.copy_and_paste || skaleData.pix?.qr_code || ''
-  const pixQrBase64 = '' // Skale doesn't return base64, QR will be generated client-side from pixCode
+  const pixQrBase64 = ''
   const pixUrl = skaleData.secureUrl || ''
 
   if (!pixCode) throw new Error('SkalePay: pix_code missing in response')
@@ -118,6 +188,7 @@ async function generateWithSkale(params: {
   return { pixCode, pixQrBase64, pixUrl, transactionHash, provider: 'skale' }
 }
 
+// ─── Main handler ─────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -141,8 +212,6 @@ Deno.serve(async (req) => {
 
     const amountCentavos = Math.round(amount * 100)
     const cleanCpf = cpf?.replace(/\D/g, '') || '00000000000'
-
-    // FIX #3: garantir que strings "undefined" não passem como nome/email/phone
     const safeName = (name && name !== 'undefined' && name.trim()) ? name.trim() : 'Cliente'
     const safeEmail = (email && email !== 'undefined' && email.includes('@')) ? email : 'cliente@pagamento.com'
     const safePhone = (phone && phone !== 'undefined' && phone.replace(/\D/g, '').length >= 10)
@@ -152,7 +221,7 @@ Deno.serve(async (req) => {
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
 
-    // FIX #1: Deduplicação por CPF — reutiliza PIX pendente do mesmo CPF/payment_type nas últimas 2h
+    // Deduplication by CPF — reuse pending PIX from same CPF/payment_type within last 2h
     if (cleanCpf && cleanCpf !== '00000000000') {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
       const { data: existingPix } = await supabase
@@ -187,34 +256,68 @@ Deno.serve(async (req) => {
 
     let result: { pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }
 
-    // Try SigmaPay first
+    // ─── Circuit breaker + provider selection ─────────────────────────────────
     if (SIGMA_API_TOKEN) {
-      try {
-        result = await generateWithSigma({
-          amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-          phone: safePhone, paymentType: payment_type, ttclid: ttclid || '',
-          apiToken: SIGMA_API_TOKEN,
-          webhookUrl: sigmaWebhookUrl, // FIX #2
-        })
-        console.log(`[generate-pix] SigmaPay succeeded: ${result.transactionHash}`)
-      } catch (sigmaErr) {
-        const sigmaErrMsg = sigmaErr instanceof Error ? sigmaErr.message : String(sigmaErr)
-        const sigmaErrStack = sigmaErr instanceof Error ? sigmaErr.stack : undefined
-        console.error('[generate-pix] SigmaPay FAILED — message:', sigmaErrMsg)
-        if (sigmaErrStack) console.error('[generate-pix] SigmaPay FAILED — stack:', sigmaErrStack)
-        console.error('[generate-pix] SigmaPay FAILED — full error object:', JSON.stringify(sigmaErr, Object.getOwnPropertyNames(sigmaErr)))
+      const sigmaCircuit = await getCircuitState(supabase, 'sigmapay')
+      const sigmaBlocked = sigmaCircuit.state === 'open'
 
-        if (!SKALE_PAY_SECRET_KEY) throw sigmaErr // no fallback available
+      if (sigmaBlocked) {
+        // Circuit is OPEN — skip SigmaPay entirely, go straight to SkalePay
+        console.warn(`[circuit-breaker] SigmaPay circuit is OPEN (opened at ${sigmaCircuit.opened_at}). Bypassing → SkalePay`)
+        if (!SKALE_PAY_SECRET_KEY) throw new Error('SigmaPay circuit open and no SkalePay fallback configured')
 
-        result = await generateWithSkale({
-          amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-          phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
-          webhookUrl: skaleWebhookUrl,
-        })
-        console.log(`[generate-pix] SkalePay fallback succeeded: ${result.transactionHash}`)
+        try {
+          result = await generateWithSkale({
+            amountCentavos, cleanCpf, name: safeName, email: safeEmail,
+            phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+            webhookUrl: skaleWebhookUrl,
+          })
+          console.log(`[generate-pix] SkalePay (circuit bypass) succeeded: ${result.transactionHash}`)
+        } catch (skaleErr) {
+          await recordFailure(supabase, 'skalepay', 0)
+          throw skaleErr
+        }
+      } else {
+        // Circuit is CLOSED or HALF_OPEN — try SigmaPay with tight timeout
+        const isHalfOpen = sigmaCircuit.state === 'half_open'
+        const timeoutMs = CB_SIGMA_TIMEOUT_MS // 9s — fail fast
+
+        try {
+          result = await generateWithSigma({
+            amountCentavos, cleanCpf, name: safeName, email: safeEmail,
+            phone: safePhone, paymentType: payment_type, ttclid: ttclid || '',
+            apiToken: SIGMA_API_TOKEN,
+            webhookUrl: sigmaWebhookUrl,
+            timeoutMs,
+          })
+          console.log(`[generate-pix] SigmaPay succeeded${isHalfOpen ? ' (half-open probe)' : ''}: ${result.transactionHash}`)
+          // Success — reset circuit
+          await recordSuccess(supabase, 'sigmapay')
+        } catch (sigmaErr) {
+          const sigmaErrMsg = sigmaErr instanceof Error ? sigmaErr.message : String(sigmaErr)
+          console.error(`[circuit-breaker] SigmaPay failure (count=${sigmaCircuit.failure_count + 1}/${CB_FAILURE_THRESHOLD}): ${sigmaErrMsg}`)
+
+          // Record failure and potentially open the circuit
+          await recordFailure(supabase, 'sigmapay', sigmaCircuit.failure_count)
+
+          if (!SKALE_PAY_SECRET_KEY) throw sigmaErr
+
+          // Fallback to SkalePay
+          try {
+            result = await generateWithSkale({
+              amountCentavos, cleanCpf, name: safeName, email: safeEmail,
+              phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+              webhookUrl: skaleWebhookUrl,
+            })
+            console.log(`[generate-pix] SkalePay fallback succeeded: ${result.transactionHash}`)
+            await recordSuccess(supabase, 'skalepay')
+          } catch (skaleErr) {
+            await recordFailure(supabase, 'skalepay', 0)
+            throw skaleErr
+          }
+        }
       }
     } else if (SKALE_PAY_SECRET_KEY) {
-      // No SigmaPay token, use SkalePay directly
       result = await generateWithSkale({
         amountCentavos, cleanCpf, name: safeName, email: safeEmail,
         phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
