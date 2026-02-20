@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // If already paid locally, return immediately
+    // If already paid locally, return immediately (no external API call needed)
     if (localPayment.status === 'paid' || localPayment.status === 'approved') {
       console.log(`[check-payment] Already paid: ${transaction_id}`)
       return new Response(
@@ -62,6 +62,25 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // ── Cooldown: só bate na API externa se passou ≥30s desde o último check ──
+    const COOLDOWN_MS = 30_000
+    if (localPayment.last_checked_at) {
+      const msSinceLastCheck = Date.now() - new Date(localPayment.last_checked_at).getTime()
+      if (msSinceLastCheck < COOLDOWN_MS) {
+        console.log(`[check-payment] Cooldown active (${Math.round(msSinceLastCheck / 1000)}s ago), returning DB status: ${localPayment.status}`)
+        return new Response(
+          JSON.stringify({ status: localPayment.status, transaction_id, cached: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
+    // Marca last_checked_at antes de chamar a API externa (evita chamadas duplicadas simultâneas)
+    await supabase
+      .from('pix_payments')
+      .update({ last_checked_at: new Date().toISOString() })
+      .eq('transaction_id', transaction_id)
 
     // Detect provider from transaction_id prefix
     const isSkale = transaction_id.startsWith('skale_')
