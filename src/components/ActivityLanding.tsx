@@ -85,9 +85,8 @@ const ActivityLanding = () => {
     <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-4">
         {/* Header with TikTok branding */}
-        <div className="flex items-center justify-center gap-2 mb-2">
+        <div className="flex items-center justify-center mb-2">
           <img src={tiktokLogo} alt="TikTok" className="h-6 w-auto object-contain" />
-          <span className="text-gray-900 font-bold text-lg">TikTok Recompensas</span>
         </div>
 
         {/* Main card */}
