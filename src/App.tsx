@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useTikTokAttribution } from "@/hooks/useTikTokAttribution";
 const Index = lazy(() => import("./pages/Index"));
+const TikTokBonusPage = lazy(() => import("./components/TikTokBonus"));
 import NotFound from "./pages/NotFound";
 import FunnelSkeleton from "@/components/funnel/FunnelSkeleton";
 
@@ -39,6 +40,7 @@ const App = () => {
           <Suspense fallback={null}>
             <Routes>
               <Route path="/" element={<Suspense fallback={null}><Index /></Suspense>} />
+              <Route path="/bonus" element={<Suspense fallback={null}><TikTokBonusPage /></Suspense>} />
               <Route path="/resgatar" element={<RedeemRewards />} />
               <Route path="/funil" element={
                 <Suspense fallback={<FunnelSkeleton />}>
