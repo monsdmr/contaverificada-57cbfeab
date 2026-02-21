@@ -72,7 +72,7 @@ const ActivityLanding = () => {
   }, [loading]);
 
   const handleClaim = useCallback(() => {
-    navigate("/resgatar");
+    navigate("/bonus");
   }, [navigate]);
 
   if (loading) {
