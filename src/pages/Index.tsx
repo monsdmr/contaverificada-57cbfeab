@@ -1,7 +1,7 @@
-import TikTokBonus from "@/components/TikTokBonus";
+import ActivityLanding from "@/components/ActivityLanding";
 
 const Index = () => {
-  return <TikTokBonus />;
+  return <ActivityLanding />;
 };
 
 export default Index;
