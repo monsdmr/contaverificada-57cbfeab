@@ -74,7 +74,7 @@ const ActivityLanding = () => {
   if (loading) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white">
-        <img src={tiktokLogo} alt="TikTok" className="w-16 h-16 mb-4 animate-pulse" />
+        <img src={tiktokLogo} alt="TikTok" className="h-10 w-auto object-contain mb-4 animate-pulse" />
         <div className="w-10 h-10 rounded-full border-[3px] border-gray-200 border-t-[#fe2c55] animate-spin mb-4" />
         <p className="text-sm text-gray-500 font-medium">Sincronizando com a sua conta...</p>
       </div>
@@ -86,7 +86,7 @@ const ActivityLanding = () => {
       <div className="w-full max-w-md space-y-4">
         {/* Header with TikTok branding */}
         <div className="flex items-center justify-center gap-2 mb-2">
-          <img src={tiktokLogo} alt="TikTok" className="w-8 h-8" />
+          <img src={tiktokLogo} alt="TikTok" className="h-6 w-auto object-contain" />
           <span className="text-gray-900 font-bold text-lg">TikTok Recompensas</span>
         </div>
 
