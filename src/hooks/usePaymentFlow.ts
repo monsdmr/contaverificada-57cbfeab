@@ -275,7 +275,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       amount,
       name: cleanLeadName,
       email: emailToSend,
-      cpf: leadCpf || undefined,
+      cpf: leadCpf ? leadCpf.replace(/\D/g, '') : undefined,
       phone: phoneToSend,
       payment_type: paymentType,
       ab_variant: abVariant,
