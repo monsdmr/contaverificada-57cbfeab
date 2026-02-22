@@ -22,7 +22,7 @@ const FunnelUpsellAntiErrosPage = () => {
   const flow = usePaymentFlow({
     contentId: 'upsell_antierros',
     paymentType: 'upsell_antierros',
-    amount: 22.83,
+    amount: 21.47,
     onProcessingComplete: handleProcessingComplete,
   });
 
@@ -55,7 +55,7 @@ const FunnelUpsellAntiErrosPage = () => {
           onCopy={flow.handleCopyPixCode}
           isCopied={flow.pixCopied}
           title="Proteção Anti-Erros"
-          amount="R$ 22,83"
+          amount="R$ 21,47"
           showRefundMessage
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}

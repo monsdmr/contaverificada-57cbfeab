@@ -16,7 +16,7 @@ const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isG
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           {leadName && <p className="text-gray-400 text-xs mb-1">Devedor: <strong className="text-gray-700">{leadName}</strong></p>}
           <h2 className="text-gray-900 text-base font-bold mb-2">{leadCpf ? `CPF ${leadCpf} possui pendência no Serasa` : "Seu CPF possui uma pendência no Serasa"}</h2>
-          <p className="text-gray-500 text-sm leading-relaxed mb-3">O sistema identificou que {leadName ? <><strong className="text-gray-700">{leadName}</strong> ({leadCpf ? `CPF ${leadCpf}` : "seu CPF"})</> : leadCpf ? <><strong className="text-gray-700">o CPF {leadCpf}</strong></> : <>seu CPF</>} possui um <strong className="text-gray-700">débito pendente de R$ 33,41</strong> registrado no Serasa. Enquanto essa pendência não for quitada, <strong className="text-gray-700">nenhuma transferência acima de R$ 1.000 pode ser processada</strong> para sua conta.</p>
+          <p className="text-gray-500 text-sm leading-relaxed mb-3">O sistema identificou que {leadName ? <><strong className="text-gray-700">{leadName}</strong> ({leadCpf ? `CPF ${leadCpf}` : "seu CPF"})</> : leadCpf ? <><strong className="text-gray-700">o CPF {leadCpf}</strong></> : <>seu CPF</>} possui um <strong className="text-gray-700">débito pendente de R$ 32,43</strong> registrado no Serasa. Enquanto essa pendência não for quitada, <strong className="text-gray-700">nenhuma transferência acima de R$ 1.000 pode ser processada</strong> para sua conta.</p>
           <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-3">
             <p className="text-red-700 text-xs font-bold mb-1">⚠️ Consequências do CPF negativado:</p>
             <ul className="space-y-1">
@@ -35,7 +35,7 @@ const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isG
         </div>
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1"><span className="text-gray-500 text-xs">Valor da quitação</span><span className="bg-[#FDE8F0] text-[#ED1164] text-[10px] font-bold px-2 py-0.5 rounded-full">-84%</span></div>
-          <div className="flex items-baseline gap-2 mb-1"><span className="text-gray-300 text-sm line-through">R$ 159,90</span><span className="text-gray-900 text-2xl font-extrabold">R$ 33,41</span></div>
+          <div className="flex items-baseline gap-2 mb-1"><span className="text-gray-300 text-sm line-through">R$ 159,90</span><span className="text-gray-900 text-2xl font-extrabold">R$ 32,43</span></div>
           <p className="text-green-600 text-[11px] font-medium mb-3">Quitação instantânea + saque liberado na hora</p>
           <div className="flex items-center justify-center gap-1.5 mt-3"><Shield className="w-3 h-3 text-gray-300" /><span className="text-gray-400 text-[10px]">Pagamento seguro via PIX</span></div>
         </div>

@@ -6,11 +6,11 @@ import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
 import FunnelPixPopup from "@/components/funnel/FunnelPixPopup";
 import { usePaymentFlow } from "@/hooks/usePaymentFlow";
 
-// Variante B vencedora do A/B test: R$ 44,17 (32,1% de conversão)
-const TENF_AMOUNT = 44.17;
-const TENF_PRICE = "R$ 44,17";
+// Variante B vencedora do A/B test: R$ 43,17 (32,1% de conversão)
+const TENF_AMOUNT = 43.17;
+const TENF_PRICE = "R$ 43,17";
 const TENF_ANCHOR = "R$ 99,90";
-const TENF_DISCOUNT = "56% OFF";
+const TENF_DISCOUNT = "57% OFF";
 
 interface LocationState { pixKey?: string; pixKeyType?: string; }
 
