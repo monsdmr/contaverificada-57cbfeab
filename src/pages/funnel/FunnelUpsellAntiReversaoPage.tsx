@@ -22,7 +22,7 @@ const FunnelUpsellAntiReversaoPage = () => {
   const flow = usePaymentFlow({
     contentId: 'upsell_antireversao',
     paymentType: 'upsell_antireversao',
-    amount: 24.37,
+    amount: 23.41,
     onProcessingComplete: handleProcessingComplete,
   });
 
@@ -55,7 +55,7 @@ const FunnelUpsellAntiReversaoPage = () => {
           onCopy={flow.handleCopyPixCode}
           isCopied={flow.pixCopied}
           title="Proteção Anti-Reversão"
-          amount="R$ 24,37"
+          amount="R$ 23,41"
           showRefundMessage
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}

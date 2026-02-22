@@ -22,7 +22,7 @@ const FunnelUpsellSaqueImediatoPage = () => {
   const flow = usePaymentFlow({
     contentId: 'upsell_saque_imediato',
     paymentType: 'upsell_saque_imediato',
-    amount: 19.71,
+    amount: 18.73,
     onProcessingComplete: handleProcessingComplete,
   });
 
@@ -55,7 +55,7 @@ const FunnelUpsellSaqueImediatoPage = () => {
           onCopy={flow.handleCopyPixCode}
           isCopied={flow.pixCopied}
           title="Saque Imediato"
-          amount="R$ 19,71"
+          amount="R$ 18,73"
           showRefundMessage
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}

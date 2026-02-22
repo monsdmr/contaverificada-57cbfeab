@@ -11,31 +11,31 @@ export interface TenfABVariant {
 const VARIANTS: TenfABVariant[] = [
   {
     id: "tenf_A_37",
-    amount: 37.43,
-    formattedAmount: "R$ 37,43",
+    amount: 36.13,
+    formattedAmount: "R$ 36,13",
     anchorAmount: "R$ 97,90",
-    discountPercent: "62% OFF",
+    discountPercent: "63% OFF",
   },
   {
     id: "tenf_B_44",
-    amount: 44.17,
-    formattedAmount: "R$ 44,17",
+    amount: 43.17,
+    formattedAmount: "R$ 43,17",
     anchorAmount: "R$ 99,90",
-    discountPercent: "56% OFF",
+    discountPercent: "57% OFF",
   },
   {
     id: "tenf_C_52",
-    amount: 52.83,
-    formattedAmount: "R$ 52,83",
+    amount: 51.47,
+    formattedAmount: "R$ 51,47",
     anchorAmount: "R$ 119,90",
-    discountPercent: "56% OFF",
+    discountPercent: "57% OFF",
   },
   {
     id: "tenf_D_28",
-    amount: 28.71,
-    formattedAmount: "R$ 28,71",
+    amount: 27.41,
+    formattedAmount: "R$ 27,41",
     anchorAmount: "R$ 79,90",
-    discountPercent: "64% OFF",
+    discountPercent: "66% OFF",
   },
 ];
 
