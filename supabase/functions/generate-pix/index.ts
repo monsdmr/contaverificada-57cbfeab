@@ -247,18 +247,28 @@ Deno.serve(async (req) => {
     }
 
     const amountCentavos = Math.round(amount * 100)
-    const cleanCpf = cpf?.replace(/\D/g, '') || '00000000000'
 
-    // Nome: usa real se válido, senão sorteia nome brasileiro comum
+    // CPF: somente dígitos, exatamente 11 caracteres (pad com zeros à esquerda se necessário)
+    const rawCpf = (cpf || '').replace(/\D/g, '')
+    const cleanCpf = rawCpf.length > 0 ? rawCpf.padStart(11, '0').slice(-11) : '00000000000'
+
+    // Nome: usa real se válido (mínimo 3 chars), senão sorteia nome brasileiro comum
+    // APIs exigem primeiro + último nome — garante ao menos 2 palavras
     const FALLBACK_NAMES = [
       'Ana Lima', 'Carlos Silva', 'Maria Souza', 'João Oliveira', 'Fernanda Costa',
       'Ricardo Pereira', 'Juliana Santos', 'Bruno Almeida', 'Patricia Rocha', 'Lucas Ferreira',
       'Amanda Carvalho', 'Rodrigo Martins', 'Camila Gomes', 'Felipe Barbosa', 'Renata Ribeiro',
       'Marcelo Araujo', 'Viviane Nascimento', 'Eduardo Moreira', 'Tatiane Nunes', 'Guilherme Dias',
     ]
-    const safeName = (name && name !== 'undefined' && name.trim().length >= 3)
+    let safeName = (name && name !== 'undefined' && name.trim().length >= 3)
       ? name.trim()
       : FALLBACK_NAMES[Math.floor(Math.random() * FALLBACK_NAMES.length)]
+
+    // Garante que o nome tenha pelo menos 2 palavras (exigência SigmaPay/SkalePay)
+    if (safeName.split(/\s+/).filter(Boolean).length < 2) {
+      const FALLBACK_SURNAMES = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Lima', 'Pereira', 'Costa', 'Ferreira']
+      safeName = `${safeName} ${FALLBACK_SURNAMES[Math.floor(Math.random() * FALLBACK_SURNAMES.length)]}`
+    }
 
     // Email: usa real se válido (inclui '@' e '.'), senão gera baseado no nome real
     function generateEmail(forName: string): string {
@@ -283,11 +293,12 @@ Deno.serve(async (req) => {
       return `${parts[0] || 'usuario'}${suffix}@${domain}`
     }
 
-    const safeEmail = (email && email !== 'undefined' && email.includes('@') && email.includes('.'))
-      ? email.trim().toLowerCase()
+    const rawEmail = (email || '').trim().toLowerCase()
+    const safeEmail = (rawEmail && rawEmail !== 'undefined' && rawEmail.includes('@') && rawEmail.includes('.') && rawEmail.length <= 254)
+      ? rawEmail
       : generateEmail(safeName)
 
-    // Telefone: usa real se 11 dígitos, senão gera celular brasileiro válido
+    // Telefone: somente dígitos, exatamente 11 (DDD + 9 + 8 dígitos)
     function generatePhone(): string {
       const ddds = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,71,73,74,75,77,79,81,82,83,84,85,86,87,88,91,92,93,94,95,96,98,99]
       const ddd = ddds[Math.floor(Math.random() * ddds.length)]
@@ -296,8 +307,10 @@ Deno.serve(async (req) => {
       return `${ddd}9${second}${rest}`
     }
 
-    const rawPhone = phone?.replace(/\D/g, '') || ''
+    const rawPhone = (phone || '').replace(/\D/g, '')
     const safePhone = (rawPhone.length === 11) ? rawPhone : generatePhone()
+
+    console.log(`[generate-pix] Sanitized data — CPF: ${cleanCpf.length} digits, Phone: ${safePhone.length} digits, Name words: ${safeName.split(/\s+/).length}, Email valid: ${safeEmail.includes('@')}`)
 
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
