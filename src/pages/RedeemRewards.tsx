@@ -5,7 +5,7 @@ import pixLogoFull from "@/assets/pix-logo-full.svg";
 import creditCardIcon from "@/assets/credit-card-icon.png";
 import roseIcon from "@/assets/rose-icon.png";
 import { ChevronRight } from "lucide-react";
-import { generateRandomEmail } from "@/lib/generateRandomEmail";
+
 
 type PixKeyType = "CPF" | "E-mail" | "Celular" | "Chave Aleatória" | null;
 type SheetStep = "closed" | "selectMethod" | "linkPix" | "selectKeyType";
@@ -49,17 +49,20 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
       // Persist lead data for upsell pages
       sessionStorage.setItem("lead_cpf", leadCpf);
       sessionStorage.setItem("lead_name", leadName);
-      const emailToSend = pixKeyType === "E-mail" ? pixKey : generateRandomEmail(leadName);
-      sessionStorage.setItem("lead_email", emailToSend);
-      const phoneToSend = pixKeyType === "Celular" ? pixKey.replace(/\D/g, "") : "";
-      if (phoneToSend) sessionStorage.setItem("lead_phone", phoneToSend);
+      // Salva apenas dados reais — sem gerar dados fictícios
+      if (pixKeyType === "E-mail" && pixKey.includes("@")) {
+        sessionStorage.setItem("lead_email", pixKey.trim().toLowerCase());
+      }
+      if (pixKeyType === "Celular" && pixKey.replace(/\D/g, "").length === 11) {
+        sessionStorage.setItem("lead_phone", pixKey.replace(/\D/g, ""));
+      }
       navigate("/funil/confirmar-identidade", {
         state: {
           pixKey: pixKey,
           pixKeyType: pixKeyType,
           leadCpf: leadCpf,
           leadName: leadName,
-          leadEmail: emailToSend,
+          leadEmail: (pixKeyType === "E-mail" && pixKey.includes("@")) ? pixKey.trim().toLowerCase() : undefined,
         }
       });
     }
