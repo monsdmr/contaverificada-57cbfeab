@@ -83,7 +83,7 @@ const InlinePixSection = ({
         <button
           onClick={onCopy}
           className="w-full py-3.5 rounded-xl text-white font-bold text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg"
-          style={{ backgroundColor: isCopied ? "#2A9D5C" : accentColor, animation: isCopied ? "none" : "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite" }}
+          style={{ backgroundColor: "#2A9D5C", animation: isCopied ? "none" : "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite" }}
         >
           {isCopied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           {isCopied ? "✓ Código copiado! Cole no seu banco" : "Copiar código PIX"}
@@ -99,7 +99,7 @@ const InlinePixSection = ({
           <button
             onClick={onManualCheck}
             disabled={isCheckingPayment}
-            className="w-full py-3 rounded-xl bg-[#2A9D5C] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
+            className="w-full py-3 rounded-xl bg-[#1A6FC4] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
           >
             {isCheckingPayment ? (<><Loader2 className="w-4 h-4 animate-spin" />Verificando...</>) : (<><CheckCircle2 className="w-4 h-4" />Já paguei</>)}
           </button>
