@@ -19,6 +19,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
   const [leadCpf, setLeadCpf] = useState("");
   const [leadName, setLeadName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
 
   const handleWithdrawClick = () => {
     if (selectedAmount) {
@@ -45,16 +46,13 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
   };
 
   const handleSubmitPix = () => {
-    if (isFormValid && validateCPF(leadCpf) && leadName.trim().length >= 3 && validatePhone(leadPhone)) {
+    if (isFormValid) {
       setSheetStep("closed");
       // Persist lead data for upsell pages
       sessionStorage.setItem("lead_cpf", leadCpf);
       sessionStorage.setItem("lead_name", leadName);
       sessionStorage.setItem("lead_phone", leadPhone.replace(/\D/g, ""));
-      // Salva e-mail apenas se for dado real
-      if (pixKeyType === "E-mail" && pixKey.includes("@")) {
-        sessionStorage.setItem("lead_email", pixKey.trim().toLowerCase());
-      }
+      sessionStorage.setItem("lead_email", leadEmail.trim().toLowerCase());
       navigate("/funil/confirmar-identidade", {
         state: {
           pixKey: pixKey,
@@ -62,7 +60,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
           leadCpf: leadCpf,
           leadName: leadName,
           leadPhone: leadPhone.replace(/\D/g, ""),
-          leadEmail: (pixKeyType === "E-mail" && pixKey.includes("@")) ? pixKey.trim().toLowerCase() : undefined,
+          leadEmail: leadEmail.trim().toLowerCase(),
         }
       });
     }
@@ -173,7 +171,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
     }
   };
 
-  const isFormValid = pixKeyType && pixKey.length > 0 && isPixKeyValid() && validateCPF(leadCpf) && leadName.trim().length >= 3 && validatePhone(leadPhone);
+  const isFormValid = pixKeyType && pixKey.length > 0 && isPixKeyValid() && validateCPF(leadCpf) && leadName.trim().length >= 3 && validatePhone(leadPhone) && validateEmail(leadEmail);
   const validationError = getValidationError();
 
   const amounts = ["R$1,5", "R$5", "R$10"];
@@ -457,6 +455,29 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
                 )}
                 {leadPhone && validatePhone(leadPhone) && (
                   <p className="text-green-500 text-xs mt-1">✓ Telefone válido</p>
+                )}
+              </div>
+
+              {/* E-mail obrigatório */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">
+                  E-mail <span className="text-red-500">*</span>
+                  <span className="text-gray-400 text-[10px] font-normal ml-1">obrigatório</span>
+                </label>
+                <input
+                  type="email"
+                  value={leadEmail}
+                  onChange={(e) => setLeadEmail(e.target.value)}
+                  placeholder="exemplo@email.com"
+                  className={`w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 ${
+                    leadEmail && !validateEmail(leadEmail) ? "border-red-500" : "border-gray-200"
+                  }`}
+                />
+                {leadEmail && !validateEmail(leadEmail) && (
+                  <p className="text-red-500 text-xs mt-1">E-mail inválido</p>
+                )}
+                {leadEmail && validateEmail(leadEmail) && (
+                  <p className="text-green-500 text-xs mt-1">✓ E-mail válido</p>
                 )}
               </div>
 
