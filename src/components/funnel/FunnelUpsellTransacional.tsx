@@ -1,13 +1,16 @@
 import { Check, Loader2, Shield, ChevronRight, AlertCircle } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
+import InlinePixSection from "./InlinePixSection";
 import serasaBanner from "@/assets/serasa-limpa-nome.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
+import { PixPaymentData } from "./types";
 
-interface FunnelUpsellTransacionalProps { balance: string; pixName: string; pixKey: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; }
+interface FunnelUpsellTransacionalProps { balance: string; pixName: string; pixKey: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; pixData?: PixPaymentData | null; onCopyPix?: () => void; isPixCopied?: boolean; onManualCheck?: () => void; isCheckingPayment?: boolean; checkError?: string | null; }
 
-const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellTransacionalProps) => {
+const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isGenerating, leadCpf, leadName, pixData, onCopyPix, isPixCopied, onManualCheck, isCheckingPayment, checkError }: FunnelUpsellTransacionalProps) => {
+  const showPixInline = !!pixData?.pix_code;
 
   return (
     <div className="fixed inset-0 z-[80] bg-[#F5F0F6] overflow-y-auto pt-6">
@@ -39,6 +42,11 @@ const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isG
           <p className="text-green-600 text-[11px] font-medium mb-3">Quitação instantânea + saque liberado na hora</p>
           <div className="flex items-center justify-center gap-1.5 mt-3"><Shield className="w-3 h-3 text-gray-300" /><span className="text-gray-400 text-[10px]">Pagamento seguro via PIX</span></div>
         </div>
+
+        {showPixInline && pixData && (
+          <InlinePixSection pixData={pixData} amount="R$ 32,43" label="Taxa Transacional" onCopy={onCopyPix} isCopied={isPixCopied} onManualCheck={onManualCheck} isCheckingPayment={isCheckingPayment} checkError={checkError} accentColor="#ED1164" />
+        )}
+
         <div className="bg-white rounded-2xl p-4 shadow-sm border-l-4 border-[#ED1164]">
           <div className="flex items-start gap-2.5"><AlertCircle className="w-5 h-5 text-[#ED1164] shrink-0 mt-0.5" /><div><p className="text-gray-800 text-xs font-bold mb-0.5">Oferta de quitação com prazo limitado</p><p className="text-gray-500 text-[11px] leading-relaxed">O desconto de 84% na quitação é válido apenas agora. Se não quitar dentro do prazo, o débito volta ao valor original de R$ 159,90 e o saque de <strong>{balance}</strong> permanece bloqueado.</p></div></div>
         </div>
@@ -52,7 +60,7 @@ const FunnelUpsellTransacional = ({ balance, pixName, pixKey, onGeneratePix, isG
         </div>
         <p className="text-gray-400 text-[10px] text-center pb-2">Regulamentado pelo Banco Central do Brasil</p>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="Quitar Serasa e liberar saque" bgColor="bg-[#ED1164]" shadowColor="shadow-pink-200" />
+      {!showPixInline && <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="Quitar Serasa e liberar saque" bgColor="bg-[#ED1164]" shadowColor="shadow-pink-200" />}
     </div>
   );
 };

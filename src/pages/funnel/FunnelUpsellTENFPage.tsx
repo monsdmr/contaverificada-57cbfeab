@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import FunnelUpsellTENF from "@/components/funnel/FunnelUpsellTENF";
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
-import FunnelPixPopup from "@/components/funnel/FunnelPixPopup";
 import { usePaymentFlow } from "@/hooks/usePaymentFlow";
 
 // Variante B vencedora do A/B test: R$ 43,17 (32,1% de conversão)
@@ -58,23 +57,14 @@ const FunnelUpsellTENFPage = () => {
           price={TENF_PRICE}
           anchorPrice={TENF_ANCHOR}
           discountLabel={TENF_DISCOUNT}
-        />
-      </div>
-
-      {flow.showPixPopup && flow.pixData && (
-        <FunnelPixPopup
           pixData={flow.pixData}
-          onClose={() => flow.setShowPixPopup(false)}
-          onCopy={flow.handleCopyPixCode}
-          isCopied={flow.pixCopied}
-          title="Ativação TENF"
-          amount={TENF_PRICE}
-          showRefundMessage
+          onCopyPix={flow.handleCopyPixCode}
+          isPixCopied={flow.pixCopied}
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}
           checkError={flow.checkError}
         />
-      )}
+      </div>
     </div>
   );
 };
