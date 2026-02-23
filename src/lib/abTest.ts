@@ -8,10 +8,10 @@ export interface ABVariant {
 
 const FIXED_VARIANT: ABVariant = {
   id: "tax_B",
-  amount: 26.47,
-  formattedAmount: "R$ 26,47",
-  anchorAmount: "R$ 69,90",
-  discountPercent: "62% OFF",
+  amount: 31.47,
+  formattedAmount: "R$ 31,47",
+  anchorAmount: "R$ 79,90",
+  discountPercent: "61% OFF",
 };
 
 export function getTaxABVariant(): ABVariant {
