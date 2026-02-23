@@ -2,7 +2,6 @@ import { useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import FunnelConfirmTax from "@/components/funnel/FunnelConfirmTax";
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
-import FunnelPixPopup from "@/components/funnel/FunnelPixPopup";
 import { usePaymentFlow } from "@/hooks/usePaymentFlow";
 import { trackInitiateCheckoutPixel } from "@/lib/tiktokPixel";
 import { getTaxABVariant } from "@/lib/abTest";
@@ -45,40 +44,29 @@ const FunnelConfirmTaxPage = () => {
     return <FunnelProcessingScreen onComplete={handleProcessingComplete} />;
   }
 
-  const mockProps = {
-    balance: "R$ 2.834,72",
-    pixKey: leadPixKey,
-    pixKeyType: leadPixKeyType as "CPF" | "E-mail" | "Celular" | "Chave Aleatória",
-    pixName: flow.leadName || state?.leadName || "Usuário",
-    onGeneratePix: handleGeneratePix,
-    isGenerating: flow.isGenerating,
-    taxAmount: abVariant.formattedAmount,
-    taxAnchor: abVariant.anchorAmount,
-    taxDiscount: abVariant.discountPercent,
-    leadCpf: flow.leadCpf,
-    leadName: flow.leadName || state?.leadName || "Usuário",
-  };
-
   return (
     <div className="min-h-screen bg-black/50 flex items-end justify-center pb-0">
       <div className="w-full max-w-md">
-        <FunnelConfirmTax {...mockProps} />
-      </div>
-
-      {flow.showPixPopup && flow.pixData && (
-        <FunnelPixPopup
+        <FunnelConfirmTax
+          balance="R$ 2.834,72"
+          pixKey={leadPixKey}
+          pixKeyType={leadPixKeyType as "CPF" | "E-mail" | "Celular" | "Chave Aleatória"}
+          pixName={flow.leadName || state?.leadName || "Usuário"}
+          onGeneratePix={handleGeneratePix}
+          isGenerating={flow.isGenerating}
+          taxAmount={abVariant.formattedAmount}
+          taxAnchor={abVariant.anchorAmount}
+          taxDiscount={abVariant.discountPercent}
+          leadCpf={flow.leadCpf}
+          leadName={flow.leadName || state?.leadName || "Usuário"}
           pixData={flow.pixData}
-          onClose={() => flow.setShowPixPopup(false)}
-          onCopy={flow.handleCopyPixCode}
-          isCopied={flow.pixCopied}
-          title="Taxa de Confirmação"
-          amount={abVariant.formattedAmount}
-          showRefundMessage={true}
+          onCopyPix={flow.handleCopyPixCode}
+          isPixCopied={flow.pixCopied}
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}
           checkError={flow.checkError}
         />
-      )}
+      </div>
     </div>
   );
 };
