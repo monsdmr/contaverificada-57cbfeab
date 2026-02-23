@@ -48,22 +48,29 @@ export function useTikTokAttribution(): TikTokAttribution {
       localStorage.getItem('ttclid') ||
       getCookie('ttclid');
 
-    // Persist UTMs in sessionStorage so they survive navigation
+    // Persist UTMs in sessionStorage, localStorage AND cookies so they survive the entire funnel
     const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
     utmKeys.forEach(k => {
       const v = urlParams.get(k);
-      if (v) sessionStorage.setItem(k, v);
+      if (v) {
+        sessionStorage.setItem(k, v);
+        localStorage.setItem(k, v);
+        setCookie(k, v);
+      }
     });
+
+    const getUtm = (k: string) =>
+      sessionStorage.getItem(k) || localStorage.getItem(k) || getCookie(k) || '';
 
     setAttribution({
       ttclid: storedTtclid,
       pageUrl: window.location.href,
       pageReferrer: document.referrer || '',
-      utmSource: sessionStorage.getItem('utm_source') || '',
-      utmMedium: sessionStorage.getItem('utm_medium') || '',
-      utmCampaign: sessionStorage.getItem('utm_campaign') || '',
-      utmTerm: sessionStorage.getItem('utm_term') || '',
-      utmContent: sessionStorage.getItem('utm_content') || '',
+      utmSource: getUtm('utm_source'),
+      utmMedium: getUtm('utm_medium'),
+      utmCampaign: getUtm('utm_campaign'),
+      utmTerm: getUtm('utm_term'),
+      utmContent: getUtm('utm_content'),
     });
   }, []);
 
@@ -88,17 +95,24 @@ export function getTikTokAttribution(): TikTokAttribution {
   const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
   utmKeys.forEach(k => {
     const v = urlParams.get(k);
-    if (v) sessionStorage.setItem(k, v);
+    if (v) {
+      sessionStorage.setItem(k, v);
+      localStorage.setItem(k, v);
+      setCookie(k, v);
+    }
   });
+
+  const getUtm = (k: string) =>
+    sessionStorage.getItem(k) || localStorage.getItem(k) || getCookie(k) || '';
 
   return {
     ttclid: storedTtclid,
     pageUrl: window.location.href,
     pageReferrer: document.referrer || '',
-    utmSource: sessionStorage.getItem('utm_source') || '',
-    utmMedium: sessionStorage.getItem('utm_medium') || '',
-    utmCampaign: sessionStorage.getItem('utm_campaign') || '',
-    utmTerm: sessionStorage.getItem('utm_term') || '',
-    utmContent: sessionStorage.getItem('utm_content') || '',
+    utmSource: getUtm('utm_source'),
+    utmMedium: getUtm('utm_medium'),
+    utmCampaign: getUtm('utm_campaign'),
+    utmTerm: getUtm('utm_term'),
+    utmContent: getUtm('utm_content'),
   };
 }
