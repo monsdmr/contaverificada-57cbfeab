@@ -246,7 +246,13 @@ Deno.serve(async (req) => {
       )
     }
 
-    const amountCentavos = Math.round(amount * 100)
+    const amountCentavosOriginal = Math.round(amount * 100)
+
+    // ─── Variação aleatória de centavos para evitar padrão detectável ─────────
+    // Adiciona entre +1 e +99 centavos ao valor cobrado na adquirente
+    const centavoVariation = Math.floor(Math.random() * 99) + 1
+    const amountCentavos = amountCentavosOriginal + centavoVariation
+    console.log(`[generate-pix] Amount variation: original=${amountCentavosOriginal}, charged=${amountCentavos} (+${centavoVariation}c)`)
 
     // ─── Mapa DDD → cidade/estado/CEP realista ────────────────────────────────
     const DDD_MAP: Record<number, { city: string; state: string; cep: string }> = {
