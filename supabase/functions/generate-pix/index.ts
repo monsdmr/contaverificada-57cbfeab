@@ -146,8 +146,10 @@ async function generateWithSigma(params: {
   const txn = sigmaData.transaction || sigmaData
   const transactionHash = sigmaData.hash || txn.id || sigmaData.transaction_hash || sigmaData.id || crypto.randomUUID()
   const pixCode = txn.pix?.code || txn.pix?.pix_qr_code || sigmaData.pix?.code || sigmaData.pix?.pix_qr_code || sigmaData.pix_code || ''
-  const pixQrBase64 = txn.pix?.url || sigmaData.pix?.pix_url || sigmaData.pix?.qr_code_base64 || sigmaData.pix_qr_code_base64 || ''
-  const pixUrl = txn.pix?.url || sigmaData.pix?.pix_url || sigmaData.pix_url || ''
+  const pixQrBase64 = txn.pix?.qr_code_base64 || sigmaData.pix?.qr_code_base64 || sigmaData.pix_qr_code_base64 || ''
+  // SigmaPay geralmente retorna pix_url como null — construímos uma URL de fallback se possível
+  const rawPixUrl = txn.pix?.url || txn.pix?.pix_url || sigmaData.pix?.pix_url || sigmaData.pix_url || ''
+  const pixUrl = rawPixUrl || (pixCode ? `https://pix.sigmapay.com.br/${transactionHash}` : '')
 
   if (!pixCode) throw new Error(`SigmaPay: pix_code missing in response. Keys: ${Object.keys(sigmaData).join(', ')}`)
 
