@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-const PREVIEW_NAME = "Carlos Eduardo Silva";
+const PREVIEW_NAME = "Carlos";
 const PREVIEW_CPF = "123.456.789-00";
 
 export function useLeadData() {
