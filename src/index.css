@@ -147,7 +147,7 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .carnival-confetti { display: none !important; }
+  
   .backdrop-blur-sm, .backdrop-blur-xl { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 }
 
@@ -187,29 +187,7 @@
   50% { transform: scale(1.09); box-shadow: 0 8px 35px rgba(232, 80, 91, 0.7); }
 }
 
-@keyframes confettiFall {
-  0% { transform: translate3d(0, -10px, 0) rotate(0deg); opacity: 0.8; }
-  90% { opacity: 0.3; }
-  100% { transform: translate3d(0, 100vh, 0) rotate(720deg); opacity: 0; }
-}
 
-.carnival-confetti {
-  position: fixed;
-  top: -10px;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  animation: confettiFall linear infinite;
-  pointer-events: none;
-  z-index: 60;
-  will-change: transform, opacity;
-  opacity: 0;
-}
-
-.carnival-banner {
-  background: linear-gradient(135deg, hsl(45 100% 55%) 0%, hsl(35 100% 50%) 50%, hsl(25 100% 55%) 100%);
-  animation: serpentinaSway 2s ease-in-out infinite;
-}
 
 /* CTA pulse animation for funnel buttons */
 @keyframes ctaPulse {

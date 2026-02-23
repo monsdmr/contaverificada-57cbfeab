@@ -82,11 +82,11 @@ const PrizePopup = ({
         <div className="w-full overflow-hidden rounded-2xl border border-border shadow-xl prize-card">
           <div className="px-5 pb-5 pt-12">
             <h2 className="mb-1.5 text-center text-lg font-bold text-foreground">
-              🎉 Prêmio de Carnaval 🎉
+            Prêmio Especial
             </h2>
             <p className="mb-3 text-center text-[13px] leading-snug text-muted-foreground">
               Parabéns! Você ganhou um prêmio<br />
-              especial da promoção de Carnaval! 🎊
+              especial do TikTok Bônus!
             </p>
             <p className="mb-3 text-center text-3xl font-bold tracking-tight text-foreground">
               {formatBRL(animatedPrize)}
@@ -105,7 +105,7 @@ const PrizePopup = ({
               onClick={onClose}
               className="prize-button w-full rounded-full py-3 text-base font-semibold text-primary-foreground transition-all hover:brightness-105 active:scale-[0.98]"
             >
-              🎭 Resgatar Prêmio
+              Resgatar Prêmio
             </button>
           </div>
         </div>

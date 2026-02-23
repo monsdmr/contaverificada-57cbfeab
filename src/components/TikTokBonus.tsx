@@ -7,7 +7,7 @@ import TaskItem from "./TaskItem";
 import ProgressTask from "./ProgressTask";
 import PrizePopup from "./PrizePopup";
 import StickyBalanceBar from "./StickyBalanceBar";
-import CarnivalConfetti from "./CarnivalConfetti";
+
 
 // Isolated countdown to avoid re-rendering the whole tree every second
 const CountdownBar = memo(() => {
@@ -108,11 +108,8 @@ const TikTokBonus = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] w-full max-w-md mx-auto relative overflow-hidden">
-      <CarnivalConfetti />
       <header className="bg-white py-3 px-4 text-center shadow-sm relative">
-        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-lg">🎭</div>
-        <h1 className="text-base font-bold text-gray-900">🎉 TikTok Bônus - Carnaval 🎉</h1>
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 text-lg">🎭</div>
+        <h1 className="text-base font-bold text-gray-900">TikTok Bônus</h1>
       </header>
 
       <CountdownBar />
