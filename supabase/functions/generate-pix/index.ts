@@ -117,11 +117,15 @@ async function generateWithSigma(params: {
   // Monta customer apenas com campos que existem de verdade
   const customer: Record<string, string> = {
     document: lead.cleanCpf,
+    cpf: lead.cleanCpf,
     country: 'br',
   }
   if (lead.name) customer.name = lead.name
   if (lead.email) customer.email = lead.email
-  if (lead.phone) customer.phone_number = lead.phone
+  if (lead.phone) {
+    customer.phone_number = lead.phone
+    customer.phone_country_code = '55'
+  }
   if (params.clientIp) customer.ip = params.clientIp
   if (lead.zipCode) customer.zip_code = lead.zipCode
   if (lead.city) customer.city = lead.city
