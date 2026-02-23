@@ -82,7 +82,7 @@ async function recordFailure(supabase: ReturnType<typeof createClient>, gateway:
 async function generateWithSigma(params: {
   amountCentavos: number; cleanCpf: string; name: string; email: string;
   phone: string; paymentType: string; ttclid: string; apiToken: string; webhookUrl: string;
-  timeoutMs?: number;
+  timeoutMs?: number; zipCode: string; street: string; number: string; neighborhood: string; city: string; state: string;
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
   const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl, timeoutMs = CB_SIGMA_TIMEOUT_MS } = params
 
@@ -108,7 +108,7 @@ async function generateWithSigma(params: {
       offer_hash: 'zxw2p8esaw',
       payment_method: 'pix',
       postback_url: webhookUrl,
-      customer: { name, email, phone_number: phone, document: cleanCpf },
+      customer: { name, email, phone_number: phone, document: cleanCpf, zip_code: params.zipCode, street_name: params.street, number: params.number, neighborhood: params.neighborhood, city: params.city, state: params.state, country: 'br' },
       cart: [{
         product_hash: '31atjri7nd', title: itemTitle,
         cover: 'https://dlzpblyjxiqfa.cloudfront.net/903979396/products/903lgdug3fk9ecaopmgsmvzde',
@@ -248,17 +248,98 @@ Deno.serve(async (req) => {
 
     const amountCentavos = Math.round(amount * 100)
 
-    // CPF: somente dígitos, exatamente 11 caracteres (pad com zeros à esquerda se necessário)
+    // ─── Mapa DDD → cidade/estado/CEP realista ────────────────────────────────
+    const DDD_MAP: Record<number, { city: string; state: string; cep: string }> = {
+      11: { city: 'São Paulo', state: 'SP', cep: '01000000' },
+      12: { city: 'São José dos Campos', state: 'SP', cep: '12200000' },
+      13: { city: 'Santos', state: 'SP', cep: '11000000' },
+      14: { city: 'Bauru', state: 'SP', cep: '17000000' },
+      15: { city: 'Sorocaba', state: 'SP', cep: '18000000' },
+      16: { city: 'Ribeirão Preto', state: 'SP', cep: '14000000' },
+      17: { city: 'São José do Rio Preto', state: 'SP', cep: '15000000' },
+      18: { city: 'Presidente Prudente', state: 'SP', cep: '19000000' },
+      19: { city: 'Campinas', state: 'SP', cep: '13000000' },
+      21: { city: 'Rio de Janeiro', state: 'RJ', cep: '20000000' },
+      22: { city: 'Campos dos Goytacazes', state: 'RJ', cep: '28000000' },
+      24: { city: 'Volta Redonda', state: 'RJ', cep: '27200000' },
+      27: { city: 'Vitória', state: 'ES', cep: '29000000' },
+      28: { city: 'Cachoeiro de Itapemirim', state: 'ES', cep: '29300000' },
+      31: { city: 'Belo Horizonte', state: 'MG', cep: '30000000' },
+      32: { city: 'Juiz de Fora', state: 'MG', cep: '36000000' },
+      33: { city: 'Governador Valadares', state: 'MG', cep: '35010000' },
+      34: { city: 'Uberlândia', state: 'MG', cep: '38400000' },
+      35: { city: 'Poços de Caldas', state: 'MG', cep: '37700000' },
+      37: { city: 'Divinópolis', state: 'MG', cep: '35500000' },
+      38: { city: 'Montes Claros', state: 'MG', cep: '39400000' },
+      41: { city: 'Curitiba', state: 'PR', cep: '80000000' },
+      42: { city: 'Ponta Grossa', state: 'PR', cep: '84000000' },
+      43: { city: 'Londrina', state: 'PR', cep: '86000000' },
+      44: { city: 'Maringá', state: 'PR', cep: '87000000' },
+      45: { city: 'Foz do Iguaçu', state: 'PR', cep: '85850000' },
+      46: { city: 'Francisco Beltrão', state: 'PR', cep: '85600000' },
+      47: { city: 'Joinville', state: 'SC', cep: '89200000' },
+      48: { city: 'Florianópolis', state: 'SC', cep: '88000000' },
+      49: { city: 'Chapecó', state: 'SC', cep: '89800000' },
+      51: { city: 'Porto Alegre', state: 'RS', cep: '90000000' },
+      53: { city: 'Pelotas', state: 'RS', cep: '96000000' },
+      54: { city: 'Caxias do Sul', state: 'RS', cep: '95000000' },
+      55: { city: 'Santa Maria', state: 'RS', cep: '97000000' },
+      61: { city: 'Brasília', state: 'DF', cep: '70000000' },
+      62: { city: 'Goiânia', state: 'GO', cep: '74000000' },
+      63: { city: 'Palmas', state: 'TO', cep: '77000000' },
+      64: { city: 'Rio Verde', state: 'GO', cep: '75900000' },
+      65: { city: 'Cuiabá', state: 'MT', cep: '78000000' },
+      66: { city: 'Rondonópolis', state: 'MT', cep: '78700000' },
+      67: { city: 'Campo Grande', state: 'MS', cep: '79000000' },
+      68: { city: 'Rio Branco', state: 'AC', cep: '69900000' },
+      69: { city: 'Porto Velho', state: 'RO', cep: '76800000' },
+      71: { city: 'Salvador', state: 'BA', cep: '40000000' },
+      73: { city: 'Ilhéus', state: 'BA', cep: '45650000' },
+      74: { city: 'Juazeiro', state: 'BA', cep: '48900000' },
+      75: { city: 'Feira de Santana', state: 'BA', cep: '44000000' },
+      77: { city: 'Barreiras', state: 'BA', cep: '47800000' },
+      79: { city: 'Aracaju', state: 'SE', cep: '49000000' },
+      81: { city: 'Recife', state: 'PE', cep: '50000000' },
+      82: { city: 'Maceió', state: 'AL', cep: '57000000' },
+      83: { city: 'João Pessoa', state: 'PB', cep: '58000000' },
+      84: { city: 'Natal', state: 'RN', cep: '59000000' },
+      85: { city: 'Fortaleza', state: 'CE', cep: '60000000' },
+      86: { city: 'Teresina', state: 'PI', cep: '64000000' },
+      87: { city: 'Petrolina', state: 'PE', cep: '56300000' },
+      88: { city: 'Juazeiro do Norte', state: 'CE', cep: '63000000' },
+      91: { city: 'Belém', state: 'PA', cep: '66000000' },
+      92: { city: 'Manaus', state: 'AM', cep: '69000000' },
+      93: { city: 'Santarém', state: 'PA', cep: '68000000' },
+      94: { city: 'Marabá', state: 'PA', cep: '68500000' },
+      95: { city: 'Boa Vista', state: 'RR', cep: '69300000' },
+      96: { city: 'Macapá', state: 'AP', cep: '68900000' },
+      98: { city: 'São Luís', state: 'MA', cep: '65000000' },
+      99: { city: 'Imperatriz', state: 'MA', cep: '65900000' },
+    }
+    const STREET_NAMES = [
+      'Rua das Flores', 'Rua São Paulo', 'Rua Rio de Janeiro', 'Rua Bahia',
+      'Rua XV de Novembro', 'Rua Sete de Setembro', 'Rua Santos Dumont',
+      'Av. Brasil', 'Av. Getúlio Vargas', 'Rua Tiradentes', 'Rua Paraná',
+      'Rua Goiás', 'Rua Minas Gerais', 'Rua Dom Pedro II', 'Rua Marechal Deodoro',
+    ]
+    const NEIGHBORHOODS = [
+      'Centro', 'Jardim América', 'Vila Nova', 'Boa Vista', 'Santa Cruz',
+      'São José', 'Jardim Europa', 'Vila Maria', 'Santo Antônio', 'Liberdade',
+    ]
+
+    // CPF: somente dígitos, exatamente 11 — NÃO faz zero-padding (CPF real nunca começa com 00)
     const rawCpf = (cpf || '').replace(/\D/g, '')
-    const cleanCpf = rawCpf.length > 0 ? rawCpf.padStart(11, '0').slice(-11) : '00000000000'
+    const cleanCpf = (rawCpf.length === 11) ? rawCpf : '00000000000'
 
     // Nome: usa real se válido (mínimo 3 chars), senão sorteia nome brasileiro comum
-    // APIs exigem primeiro + último nome — garante ao menos 2 palavras
     const FALLBACK_NAMES = [
-      'Ana Lima', 'Carlos Silva', 'Maria Souza', 'João Oliveira', 'Fernanda Costa',
-      'Ricardo Pereira', 'Juliana Santos', 'Bruno Almeida', 'Patricia Rocha', 'Lucas Ferreira',
-      'Amanda Carvalho', 'Rodrigo Martins', 'Camila Gomes', 'Felipe Barbosa', 'Renata Ribeiro',
-      'Marcelo Araujo', 'Viviane Nascimento', 'Eduardo Moreira', 'Tatiane Nunes', 'Guilherme Dias',
+      'Ana Carolina Lima', 'Carlos Eduardo Silva', 'Maria Aparecida Souza',
+      'João Pedro Oliveira', 'Fernanda Cristina Costa', 'Ricardo Augusto Pereira',
+      'Juliana de Almeida Santos', 'Bruno Henrique Almeida', 'Patricia Maria Rocha',
+      'Lucas Gabriel Ferreira', 'Amanda Cristina Carvalho', 'Rodrigo dos Santos Martins',
+      'Camila Rodrigues Gomes', 'Felipe Souza Barbosa', 'Renata Aparecida Ribeiro',
+      'Marcelo José Araujo', 'Viviane Costa Nascimento', 'Eduardo Luiz Moreira',
+      'Tatiane Oliveira Nunes', 'Guilherme Henrique Dias',
     ]
     let safeName = (name && name !== 'undefined' && name.trim().length >= 3)
       ? name.trim()
@@ -266,14 +347,14 @@ Deno.serve(async (req) => {
 
     // Garante que o nome tenha pelo menos 2 palavras (exigência SigmaPay/SkalePay)
     if (safeName.split(/\s+/).filter(Boolean).length < 2) {
-      const FALLBACK_SURNAMES = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Lima', 'Pereira', 'Costa', 'Ferreira']
+      const FALLBACK_SURNAMES = ['da Silva', 'dos Santos', 'de Oliveira', 'de Souza', 'Pereira', 'Ferreira', 'Rodrigues', 'de Almeida']
       safeName = `${safeName} ${FALLBACK_SURNAMES[Math.floor(Math.random() * FALLBACK_SURNAMES.length)]}`
     }
 
-    // Email: usa real se válido (inclui '@' e '.'), senão gera baseado no nome real
+    // Email: usa real se válido, senão gera com padrão mais natural
     function generateEmail(forName: string): string {
-      const domains = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com.br', 'uol.com.br', 'live.com']
-      const weights =  [35, 22, 13, 10, 8, 5]
+      const domains = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com.br', 'uol.com.br', 'live.com', 'bol.com.br', 'terra.com.br']
+      const weights =  [40, 18, 12, 8, 7, 5, 5, 5]
       const total = weights.reduce((a, b) => a + b, 0)
       let r = Math.random() * total
       let domain = domains[domains.length - 1]
@@ -281,16 +362,26 @@ Deno.serve(async (req) => {
 
       const cleanedName = forName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z\s]/g, '').trim()
       const parts = cleanedName.split(/\s+/).filter(Boolean)
-      const year = 1970 + Math.floor(Math.random() * 34) // 1970–2003
-      const suffixOpts = [String(year), String(Math.floor(Math.random() * 999) + 1), String(Math.floor(Math.random() * 9999) + 1000)]
-      const suffix = suffixOpts[Math.floor(Math.random() * suffixOpts.length)]
+      const year = 1965 + Math.floor(Math.random() * 40) // 1965–2004
+      const num2 = Math.floor(Math.random() * 99) + 1
+      const num4 = Math.floor(Math.random() * 9000) + 1000
 
       if (parts.length >= 2) {
         const first = parts[0], last = parts[parts.length - 1]
-        const variants = [`${first}.${last}${suffix}`, `${first}${last}${suffix}`, `${first}.${last}`, `${first}${suffix}`]
+        // Padrões mais naturais e variados
+        const variants = [
+          `${first}.${last}`,           // maria.silva
+          `${first}${last}${year}`,     // mariasilva1987
+          `${first}.${last}${num2}`,    // maria.silva42
+          `${first}${year}`,            // maria1987
+          `${first}_${last}`,           // maria_silva
+          `${first}${last}`,            // mariasilva
+          `${first}.${last}${num4}`,    // maria.silva3847
+          `${last}.${first}${num2}`,    // silva.maria42
+        ]
         return `${variants[Math.floor(Math.random() * variants.length)]}@${domain}`
       }
-      return `${parts[0] || 'usuario'}${suffix}@${domain}`
+      return `${parts[0] || 'usuario'}${year}@${domain}`
     }
 
     const rawEmail = (email || '').trim().toLowerCase()
@@ -310,7 +401,18 @@ Deno.serve(async (req) => {
     const rawPhone = (phone || '').replace(/\D/g, '')
     const safePhone = (rawPhone.length === 11) ? rawPhone : generatePhone()
 
-    console.log(`[generate-pix] Sanitized data — CPF: ${cleanCpf.length} digits, Phone: ${safePhone.length} digits, Name words: ${safeName.split(/\s+/).length}, Email valid: ${safeEmail.includes('@')}`)
+    // Endereço realista baseado no DDD do telefone
+    const ddd = parseInt(safePhone.substring(0, 2), 10)
+    const geoData = DDD_MAP[ddd] || { city: 'São Paulo', state: 'SP', cep: '01000000' }
+    // Variação aleatória nos últimos 3 dígitos do CEP para não ser sempre igual
+    const cepBase = geoData.cep.substring(0, 5)
+    const cepSuffix = String(Math.floor(Math.random() * 900) + 100) // 100-999
+    const safeCep = `${cepBase}${cepSuffix}`
+    const safeStreet = STREET_NAMES[Math.floor(Math.random() * STREET_NAMES.length)]
+    const safeNumber = String(Math.floor(Math.random() * 2000) + 1) // 1-2000
+    const safeNeighborhood = NEIGHBORHOODS[Math.floor(Math.random() * NEIGHBORHOODS.length)]
+
+    console.log(`[generate-pix] Sanitized — CPF: ${cleanCpf.length}d, Phone: ${safePhone.substring(0,2)}, City: ${geoData.city}/${geoData.state}, Name: ${safeName.split(/\s+/).length}w`)
 
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
@@ -383,6 +485,8 @@ Deno.serve(async (req) => {
             apiToken: SIGMA_API_TOKEN,
             webhookUrl: sigmaWebhookUrl,
             timeoutMs,
+            zipCode: safeCep, street: safeStreet, number: safeNumber,
+            neighborhood: safeNeighborhood, city: geoData.city, state: geoData.state,
           })
           console.log(`[generate-pix] SigmaPay succeeded${isHalfOpen ? ' (half-open probe)' : ''}: ${result.transactionHash}`)
           // Success — reset circuit
