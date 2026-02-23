@@ -37,6 +37,13 @@ Deno.serve(async (req) => {
   try {
     const body: TikTokEventBody = await req.json();
 
+    // Extract real client IP from request headers (set by CDN/proxy)
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-real-ip") ||
+      null;
+
     const {
       event,
       event_id,
@@ -50,13 +57,12 @@ Deno.serve(async (req) => {
       page_url,
       page_referrer,
       user_agent,
-      ip_address,
     } = body;
 
     const user: Record<string, unknown> = {};
     if (ttclid) user.ttclid = ttclid;
     if (ttp) user.ttp = ttp;
-    if (ip_address) user.ip = ip_address;
+    if (clientIp) user.ip = clientIp;
     if (user_agent) user.user_agent = user_agent;
 
     const properties: Record<string, unknown> = { currency, content_id, content_type };
