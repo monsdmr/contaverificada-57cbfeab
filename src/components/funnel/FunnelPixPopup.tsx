@@ -72,7 +72,7 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
             <p className="text-gray-600 text-[10px] break-all font-mono leading-relaxed">{pixData?.pix_code || 'Código não disponível'}</p>
           </div>
 
-          <button onClick={onCopy} className={`w-full py-4 rounded-xl text-white font-bold text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg ${isCopied ? 'bg-[#2A9D5C]' : 'bg-[#E8505B] hover:brightness-105'}`}>
+          <button onClick={onCopy} className="w-full py-4 rounded-xl bg-[#2A9D5C] text-white font-bold text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg hover:brightness-105">
             {isCopied ? <CheckCircle2 className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
             {isCopied ? '✓ Código copiado! Cole no seu banco' : 'Copiar código PIX'}
           </button>
@@ -84,7 +84,7 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
           )}
 
           {onManualCheck && (
-            <button onClick={onManualCheck} disabled={isCheckingPayment} className="w-full py-3.5 rounded-xl bg-[#2A9D5C] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70">
+            <button onClick={onManualCheck} disabled={isCheckingPayment} className="w-full py-3.5 rounded-xl bg-[#1A6FC4] text-white font-semibold text-sm hover:brightness-105 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70">
               {isCheckingPayment ? (<><Loader2 className="w-4 h-4 animate-spin" />Verificando pagamento...</>) : (<><CheckCircle2 className="w-4 h-4" />Já paguei</>)}
             </button>
           )}
