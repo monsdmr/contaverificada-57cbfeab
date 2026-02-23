@@ -18,6 +18,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
   const [pixKey, setPixKey] = useState("");
   const [leadCpf, setLeadCpf] = useState("");
   const [leadName, setLeadName] = useState("");
+  const [leadPhone, setLeadPhone] = useState("");
 
   const handleWithdrawClick = () => {
     if (selectedAmount) {
@@ -44,17 +45,15 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
   };
 
   const handleSubmitPix = () => {
-    if (isFormValid && validateCPF(leadCpf) && leadName.trim().length >= 3) {
+    if (isFormValid && validateCPF(leadCpf) && leadName.trim().length >= 3 && validatePhone(leadPhone)) {
       setSheetStep("closed");
       // Persist lead data for upsell pages
       sessionStorage.setItem("lead_cpf", leadCpf);
       sessionStorage.setItem("lead_name", leadName);
-      // Salva apenas dados reais — sem gerar dados fictícios
+      sessionStorage.setItem("lead_phone", leadPhone.replace(/\D/g, ""));
+      // Salva e-mail apenas se for dado real
       if (pixKeyType === "E-mail" && pixKey.includes("@")) {
         sessionStorage.setItem("lead_email", pixKey.trim().toLowerCase());
-      }
-      if (pixKeyType === "Celular" && pixKey.replace(/\D/g, "").length === 11) {
-        sessionStorage.setItem("lead_phone", pixKey.replace(/\D/g, ""));
       }
       navigate("/funil/confirmar-identidade", {
         state: {
@@ -62,6 +61,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
           pixKeyType: pixKeyType,
           leadCpf: leadCpf,
           leadName: leadName,
+          leadPhone: leadPhone.replace(/\D/g, ""),
           leadEmail: (pixKeyType === "E-mail" && pixKey.includes("@")) ? pixKey.trim().toLowerCase() : undefined,
         }
       });
@@ -173,7 +173,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
     }
   };
 
-  const isFormValid = pixKeyType && pixKey.length > 0 && isPixKeyValid() && validateCPF(leadCpf) && leadName.trim().length >= 3;
+  const isFormValid = pixKeyType && pixKey.length > 0 && isPixKeyValid() && validateCPF(leadCpf) && leadName.trim().length >= 3 && validatePhone(leadPhone);
   const validationError = getValidationError();
 
   const amounts = ["R$1,5", "R$5", "R$10"];
@@ -432,6 +432,31 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
                 )}
                 {leadCpf && validateCPF(leadCpf) && (
                   <p className="text-green-500 text-xs mt-1">✓ CPF válido</p>
+                )}
+              </div>
+
+              {/* Telefone obrigatório */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">
+                  Telefone <span className="text-red-500">*</span>
+                  <span className="text-gray-400 text-[10px] font-normal ml-1">obrigatório</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={leadPhone}
+                  onChange={(e) => setLeadPhone(formatPhone(e.target.value))}
+                  placeholder="(00) 00000-0000"
+                  className={`w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 ${
+                    leadPhone && !validatePhone(leadPhone) && leadPhone.replace(/\D/g, "").length >= 10
+                      ? "border-red-500" : "border-gray-200"
+                  }`}
+                />
+                {leadPhone && leadPhone.replace(/\D/g, "").length > 0 && leadPhone.replace(/\D/g, "").length < 11 && (
+                  <p className="text-red-500 text-xs mt-1">Faltam {11 - leadPhone.replace(/\D/g, "").length} dígitos</p>
+                )}
+                {leadPhone && validatePhone(leadPhone) && (
+                  <p className="text-green-500 text-xs mt-1">✓ Telefone válido</p>
                 )}
               </div>
 
