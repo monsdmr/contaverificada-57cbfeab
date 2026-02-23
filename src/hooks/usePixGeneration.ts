@@ -84,15 +84,20 @@ export const usePixGeneration = (options?: UsePixGenerationOptions) => {
           const { data, error: apiError } = await supabase.functions.invoke('generate-pix', {
             body: {
               amount: params.amount,
-              name: params.name,       // undefined se não disponível — edge function gera
-              email: params.email,     // sempre presente (real ou gerado no hook)
+              name: params.name,
+              email: params.email,
               cpf: params.cpf,
-              phone: params.phone,     // sempre presente (real ou gerado no hook)
+              phone: params.phone,
               payment_type: params.payment_type,
               ab_variant: params.ab_variant,
               ttclid: attribution.ttclid,
               page_url: attribution.pageUrl,
-              page_referrer: attribution.pageReferrer
+              page_referrer: attribution.pageReferrer,
+              utm_source: attribution.utmSource,
+              utm_medium: attribution.utmMedium,
+              utm_campaign: attribution.utmCampaign,
+              utm_term: attribution.utmTerm,
+              utm_content: attribution.utmContent,
             }
           });
 
