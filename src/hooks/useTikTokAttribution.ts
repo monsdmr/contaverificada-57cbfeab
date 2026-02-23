@@ -48,19 +48,48 @@ export function useTikTokAttribution(): TikTokAttribution {
       localStorage.getItem('ttclid') ||
       getCookie('ttclid');
 
-    // Persist UTMs in sessionStorage, localStorage AND cookies so they survive the entire funnel
-    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
-    utmKeys.forEach(k => {
+    // Map TikTok Ads params → standard UTMs when utm_* aren't explicitly set
+    const tiktokToUtm: Record<string, string> = {
+      // source: placement or site tell us WHERE the ad ran
+      utm_source: urlParams.get('utm_source') || urlParams.get('placement') || urlParams.get('site') || (ttclidFromUrl ? 'tiktok' : ''),
+      // medium: type tells us the ad type (e.g. "feed", "in-feed")
+      utm_medium: urlParams.get('utm_medium') || urlParams.get('type') || (ttclidFromUrl ? 'paid' : ''),
+      // campaign: cname is the campaign name from TikTok
+      utm_campaign: urlParams.get('utm_campaign') || urlParams.get('cname') || '',
+      // term: adset or adid for ad-group level tracking
+      utm_term: urlParams.get('utm_term') || urlParams.get('adset') || urlParams.get('adid') || urlParams.get('cck') || '',
+      // content: adname is the creative/ad name
+      utm_content: urlParams.get('utm_content') || urlParams.get('adname') || urlParams.get('search') || '',
+    };
+
+    // Also capture extra TikTok params that don't map to UTMs
+    const extraKeys = ['adid', 'adname', 'adset', 'cname', 'domain', 'placement', 'search', 'site', 'type', 'cck', 'tiktok_clid', 'xgo'] as const;
+    extraKeys.forEach(k => {
       const v = urlParams.get(k);
-      if (v) {
-        sessionStorage.setItem(k, v);
-        localStorage.setItem(k, v);
-        setCookie(k, v);
+      if (v && v !== `__${k.toUpperCase()}__` && !v.startsWith('__')) {
+        sessionStorage.setItem(`tt_${k}`, v);
+        localStorage.setItem(`tt_${k}`, v);
+        setCookie(`tt_${k}`, v);
       }
     });
 
-    const getUtm = (k: string) =>
-      sessionStorage.getItem(k) || localStorage.getItem(k) || getCookie(k) || '';
+    // Persist resolved UTMs in sessionStorage, localStorage AND cookies
+    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
+    utmKeys.forEach(k => {
+      const resolved = tiktokToUtm[k];
+      // Only persist non-empty values that aren't TikTok placeholders like __CAMPAIGN_NAME__
+      if (resolved && !resolved.startsWith('__')) {
+        sessionStorage.setItem(k, resolved);
+        localStorage.setItem(k, resolved);
+        setCookie(k, resolved);
+      }
+    });
+
+    const getUtm = (k: string) => {
+      const val = sessionStorage.getItem(k) || localStorage.getItem(k) || getCookie(k) || '';
+      // Filter out TikTok placeholder macros that weren't replaced
+      return val.startsWith('__') ? '' : val;
+    };
 
     setAttribution({
       ttclid: storedTtclid,
@@ -92,18 +121,39 @@ export function getTikTokAttribution(): TikTokAttribution {
     localStorage.getItem('ttclid') ||
     getCookie('ttclid');
 
-  const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
-  utmKeys.forEach(k => {
+  // Map TikTok Ads params → standard UTMs
+  const tiktokToUtm: Record<string, string> = {
+    utm_source: urlParams.get('utm_source') || urlParams.get('placement') || urlParams.get('site') || (ttclidFromUrl ? 'tiktok' : ''),
+    utm_medium: urlParams.get('utm_medium') || urlParams.get('type') || (ttclidFromUrl ? 'paid' : ''),
+    utm_campaign: urlParams.get('utm_campaign') || urlParams.get('cname') || '',
+    utm_term: urlParams.get('utm_term') || urlParams.get('adset') || urlParams.get('adid') || urlParams.get('cck') || '',
+    utm_content: urlParams.get('utm_content') || urlParams.get('adname') || urlParams.get('search') || '',
+  };
+
+  const extraKeys = ['adid', 'adname', 'adset', 'cname', 'domain', 'placement', 'search', 'site', 'type', 'cck', 'tiktok_clid', 'xgo'] as const;
+  extraKeys.forEach(k => {
     const v = urlParams.get(k);
-    if (v) {
-      sessionStorage.setItem(k, v);
-      localStorage.setItem(k, v);
-      setCookie(k, v);
+    if (v && v !== `__${k.toUpperCase()}__` && !v.startsWith('__')) {
+      sessionStorage.setItem(`tt_${k}`, v);
+      localStorage.setItem(`tt_${k}`, v);
+      setCookie(`tt_${k}`, v);
     }
   });
 
-  const getUtm = (k: string) =>
-    sessionStorage.getItem(k) || localStorage.getItem(k) || getCookie(k) || '';
+  const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
+  utmKeys.forEach(k => {
+    const resolved = tiktokToUtm[k];
+    if (resolved && !resolved.startsWith('__')) {
+      sessionStorage.setItem(k, resolved);
+      localStorage.setItem(k, resolved);
+      setCookie(k, resolved);
+    }
+  });
+
+  const getUtm = (k: string) => {
+    const val = sessionStorage.getItem(k) || localStorage.getItem(k) || getCookie(k) || '';
+    return val.startsWith('__') ? '' : val;
+  };
 
   return {
     ttclid: storedTtclid,
