@@ -114,10 +114,15 @@ async function generateWithSigma(params: {
   if (params.clientIp) sigmaHeaders['X-Forwarded-For'] = params.clientIp
   if (params.userAgent) sigmaHeaders['User-Agent'] = params.userAgent
 
+  // Formata CPF com pontos e traço para exibição no dashboard
+  const fmtCpf = lead.cleanCpf.length === 11
+    ? `${lead.cleanCpf.slice(0,3)}.${lead.cleanCpf.slice(3,6)}.${lead.cleanCpf.slice(6,9)}-${lead.cleanCpf.slice(9)}`
+    : lead.cleanCpf
+
   // Monta customer apenas com campos que existem de verdade
   const customer: Record<string, string> = {
-    document: lead.cleanCpf,
-    cpf: lead.cleanCpf,
+    document: fmtCpf,
+    cpf: fmtCpf,
     country: 'br',
   }
   if (lead.name) customer.name = lead.name
