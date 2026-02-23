@@ -83,6 +83,7 @@ async function generateWithSigma(params: {
   amountCentavos: number; cleanCpf: string; name: string; email: string;
   phone: string; paymentType: string; ttclid: string; apiToken: string; webhookUrl: string;
   timeoutMs?: number; zipCode: string; street: string; number: string; neighborhood: string; city: string; state: string;
+  utmSource?: string; utmMedium?: string; utmCampaign?: string; utmTerm?: string; utmContent?: string;
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
   const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl, timeoutMs = CB_SIGMA_TIMEOUT_MS } = params
 
@@ -118,11 +119,11 @@ async function generateWithSigma(params: {
       transaction_origin: 'checkout',
       tracking: {
         src: ttclid || '',
-        utm_source: ttclid ? 'tiktok' : 'organic',
-        utm_medium: ttclid ? 'paid' : 'direct',
-        utm_campaign: ttclid ? 'recompensas' : '',
-        utm_term: '',
-        utm_content: ttclid ? 'video' : '',
+        utm_source: params.utmSource || (ttclid ? 'tiktok' : 'organic'),
+        utm_medium: params.utmMedium || (ttclid ? 'paid' : 'direct'),
+        utm_campaign: params.utmCampaign || (ttclid ? 'recompensas' : ''),
+        utm_term: params.utmTerm || '',
+        utm_content: params.utmContent || (ttclid ? 'video' : ''),
       },
     }),
     signal: AbortSignal.timeout(timeoutMs),
@@ -239,7 +240,7 @@ Deno.serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    const { amount, name, email, cpf, phone, payment_type, ab_variant, ttclid, page_url, page_referrer } = await req.json()
+    const { amount, name, email, cpf, phone, payment_type, ab_variant, ttclid, page_url, page_referrer, utm_source, utm_medium, utm_campaign, utm_term, utm_content } = await req.json()
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -495,6 +496,8 @@ Deno.serve(async (req) => {
             timeoutMs,
             zipCode: safeCep, street: safeStreet, number: safeNumber,
             neighborhood: safeNeighborhood, city: geoData.city, state: geoData.state,
+            utmSource: utm_source, utmMedium: utm_medium, utmCampaign: utm_campaign,
+            utmTerm: utm_term, utmContent: utm_content,
           })
           console.log(`[generate-pix] SigmaPay succeeded${isHalfOpen ? ' (half-open probe)' : ''}: ${result.transactionHash}`)
           // Success — reset circuit
