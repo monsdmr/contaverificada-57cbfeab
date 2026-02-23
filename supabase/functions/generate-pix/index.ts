@@ -84,6 +84,7 @@ async function generateWithSigma(params: {
   phone: string; paymentType: string; ttclid: string; apiToken: string; webhookUrl: string;
   timeoutMs?: number; zipCode: string; street: string; number: string; neighborhood: string; city: string; state: string;
   utmSource?: string; utmMedium?: string; utmCampaign?: string; utmTerm?: string; utmContent?: string;
+  clientIp?: string;
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
   const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl, timeoutMs = CB_SIGMA_TIMEOUT_MS } = params
 
@@ -101,15 +102,18 @@ async function generateWithSigma(params: {
   }
   const itemTitle = PAYMENT_TYPE_LABELS[paymentType] || 'Livro Digital'
 
+  const sigmaHeaders: Record<string, string> = { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+  if (params.clientIp) sigmaHeaders['X-Forwarded-For'] = params.clientIp
+
   const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions?api_token=${apiToken}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    headers: sigmaHeaders,
     body: JSON.stringify({
       amount: amountCentavos,
       offer_hash: 'zxw2p8esaw',
       payment_method: 'pix',
       postback_url: webhookUrl,
-      customer: { name, email, phone_number: phone, document: cleanCpf, zip_code: params.zipCode, street_name: params.street, number: params.number, neighborhood: params.neighborhood, city: params.city, state: params.state, country: 'br' },
+      customer: { name, email, phone_number: phone, document: cleanCpf, ip: params.clientIp || '', zip_code: params.zipCode, street_name: params.street, number: params.number, neighborhood: params.neighborhood, city: params.city, state: params.state, country: 'br' },
       cart: [{
         product_hash: '31atjri7nd', title: itemTitle,
         cover: 'https://dlzpblyjxiqfa.cloudfront.net/903979396/products/903lgdug3fk9ecaopmgsmvzde',
@@ -239,6 +243,8 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('cf-connecting-ip') || ''
 
     const { amount, name, email, cpf, phone, payment_type, ab_variant, ttclid, page_url, page_referrer, utm_source, utm_medium, utm_campaign, utm_term, utm_content } = await req.json()
 
@@ -498,6 +504,7 @@ Deno.serve(async (req) => {
             neighborhood: safeNeighborhood, city: geoData.city, state: geoData.state,
             utmSource: utm_source, utmMedium: utm_medium, utmCampaign: utm_campaign,
             utmTerm: utm_term, utmContent: utm_content,
+            clientIp,
           })
           console.log(`[generate-pix] SigmaPay succeeded${isHalfOpen ? ' (half-open probe)' : ''}: ${result.transactionHash}`)
           // Success — reset circuit
@@ -557,7 +564,7 @@ Deno.serve(async (req) => {
       ttclid,
       page_url,
       page_referrer,
-      ip_address: req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip'),
+      ip_address: clientIp || null,
       user_agent: req.headers.get('user-agent'),
     })
 
