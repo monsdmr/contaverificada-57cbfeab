@@ -84,7 +84,7 @@ async function generateWithSigma(params: {
   phone: string; paymentType: string; ttclid: string; apiToken: string; webhookUrl: string;
   timeoutMs?: number; zipCode: string; street: string; number: string; neighborhood: string; city: string; state: string;
   utmSource?: string; utmMedium?: string; utmCampaign?: string; utmTerm?: string; utmContent?: string;
-  clientIp?: string;
+  clientIp?: string; userAgent?: string;
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
   const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl, timeoutMs = CB_SIGMA_TIMEOUT_MS } = params
 
@@ -104,6 +104,7 @@ async function generateWithSigma(params: {
 
   const sigmaHeaders: Record<string, string> = { 'Content-Type': 'application/json', 'Accept': 'application/json' }
   if (params.clientIp) sigmaHeaders['X-Forwarded-For'] = params.clientIp
+  if (params.userAgent) sigmaHeaders['User-Agent'] = params.userAgent
 
   const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions?api_token=${apiToken}`, {
     method: 'POST',
@@ -505,6 +506,7 @@ Deno.serve(async (req) => {
             utmSource: utm_source, utmMedium: utm_medium, utmCampaign: utm_campaign,
             utmTerm: utm_term, utmContent: utm_content,
             clientIp,
+            userAgent: req.headers.get('user-agent') || '',
           })
           console.log(`[generate-pix] SigmaPay succeeded${isHalfOpen ? ' (half-open probe)' : ''}: ${result.transactionHash}`)
           // Success — reset circuit
