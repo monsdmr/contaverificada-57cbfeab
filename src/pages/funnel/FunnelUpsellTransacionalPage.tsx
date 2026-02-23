@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import FunnelUpsellTransacional from "@/components/funnel/FunnelUpsellTransacional";
 import FunnelProcessingScreen from "@/components/funnel/FunnelProcessingScreen";
-import FunnelPixPopup from "@/components/funnel/FunnelPixPopup";
 import { usePaymentFlow } from "@/hooks/usePaymentFlow";
 
 interface LocationState { pixKey?: string; pixKeyType?: string; }
@@ -49,23 +48,14 @@ const FunnelUpsellTransacionalPage = () => {
           isGenerating={flow.isGenerating}
           leadCpf={flow.leadCpf}
           leadName={flow.leadName}
-        />
-      </div>
-
-      {flow.showPixPopup && flow.pixData && (
-        <FunnelPixPopup
           pixData={flow.pixData}
-          onClose={() => flow.setShowPixPopup(false)}
-          onCopy={flow.handleCopyPixCode}
-          isCopied={flow.pixCopied}
-          title="Taxa Transacional"
-          amount="R$ 32,43"
-          showRefundMessage
+          onCopyPix={flow.handleCopyPixCode}
+          isPixCopied={flow.pixCopied}
           onManualCheck={flow.checkPayment}
           isCheckingPayment={flow.isChecking}
           checkError={flow.checkError}
         />
-      )}
+      </div>
     </div>
   );
 };

