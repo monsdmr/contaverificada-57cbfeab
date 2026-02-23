@@ -123,7 +123,9 @@ async function generateWithSigma(params: {
   if (lead.name) customer.name = lead.name
   if (lead.email) customer.email = lead.email
   if (lead.phone) {
-    customer.phone_number = lead.phone
+    // Formato +55XXXXXXXXXXX para exibição no dashboard
+    const cleanPhone = lead.phone.replace(/\D/g, '')
+    customer.phone_number = `+55${cleanPhone}`
     customer.phone_country_code = '55'
   }
   if (params.clientIp) customer.ip = params.clientIp
