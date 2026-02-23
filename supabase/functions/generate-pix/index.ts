@@ -9,10 +9,10 @@ const SIGMA_API_URL = 'https://api.sigmapay.com.br/api/public/v1'
 const SKALE_API_URL = 'https://api.conta.skalepay.com.br/v1'
 
 // ─── Circuit Breaker Config ───────────────────────────────────────────────────
-const CB_FAILURE_THRESHOLD = 5       // open circuit after N consecutive failures
-const CB_OPEN_DURATION_MS  = 120_000 // stay open for 2 min before trying half-open
-const CB_SIGMA_TIMEOUT_MS  = 15_000  // increased timeout to avoid false positives under load
-const CB_SKALE_TIMEOUT_MS  = 30_000  // SkalePay is fallback, give it more time
+const CB_FAILURE_THRESHOLD = 5
+const CB_OPEN_DURATION_MS  = 120_000
+const CB_SIGMA_TIMEOUT_MS  = 15_000
+const CB_SKALE_TIMEOUT_MS  = 30_000
 
 type CircuitState = 'closed' | 'open' | 'half_open'
 
@@ -36,7 +36,6 @@ async function getCircuitState(supabase: ReturnType<typeof createClient>, gatewa
 
   if (!data) return { gateway, state: 'closed', failure_count: 0, last_failure_at: null, opened_at: null, last_success_at: null }
 
-  // Auto-transition open → half_open after CB_OPEN_DURATION_MS
   if (data.state === 'open' && data.opened_at) {
     const msSinceOpen = Date.now() - new Date(data.opened_at).getTime()
     if (msSinceOpen >= CB_OPEN_DURATION_MS) {
@@ -78,17 +77,26 @@ async function recordFailure(supabase: ReturnType<typeof createClient>, gateway:
   }
 }
 
+// ─── Dados do lead: só envia o que existe de verdade ──────────────────────────
+interface LeadData {
+  cleanCpf: string
+  name: string | null      // null = não tem dado real
+  email: string | null
+  phone: string | null
+  zipCode: string | null
+  city: string | null
+  state: string | null
+}
+
 // ─── SigmaPay provider ────────────────────────────────────────────────────────
 async function generateWithSigma(params: {
-  amountCentavos: number; cleanCpf: string; name: string; email: string;
-  phone: string; paymentType: string; ttclid: string; apiToken: string; webhookUrl: string;
-  timeoutMs?: number; zipCode: string; street: string; number: string; neighborhood: string; city: string; state: string;
+  amountCentavos: number; lead: LeadData; paymentType: string; ttclid: string;
+  apiToken: string; webhookUrl: string; timeoutMs?: number;
   utmSource?: string; utmMedium?: string; utmCampaign?: string; utmTerm?: string; utmContent?: string;
   clientIp?: string; userAgent?: string;
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
-  const { amountCentavos, cleanCpf, name, email, phone, paymentType, ttclid, apiToken, webhookUrl, timeoutMs = CB_SIGMA_TIMEOUT_MS } = params
+  const { amountCentavos, lead, paymentType, ttclid, apiToken, webhookUrl, timeoutMs = CB_SIGMA_TIMEOUT_MS } = params
 
-  // Mapeia tipo interno para título do produto
   const PAYMENT_TYPE_LABELS: Record<string, string> = {
     tax:                    'Livro Um',
     upsell_tenf:            'Livro Dois',
@@ -106,6 +114,25 @@ async function generateWithSigma(params: {
   if (params.clientIp) sigmaHeaders['X-Forwarded-For'] = params.clientIp
   if (params.userAgent) sigmaHeaders['User-Agent'] = params.userAgent
 
+  // Monta customer apenas com campos que existem de verdade
+  const customer: Record<string, string> = {
+    document: lead.cleanCpf,
+    country: 'br',
+  }
+  if (lead.name) customer.name = lead.name
+  if (lead.email) customer.email = lead.email
+  if (lead.phone) customer.phone_number = lead.phone
+  if (params.clientIp) customer.ip = params.clientIp
+  if (lead.zipCode) customer.zip_code = lead.zipCode
+  if (lead.city) customer.city = lead.city
+  if (lead.state) customer.state = lead.state
+  // Só envia endereço se tiver CEP real
+  if (lead.zipCode) {
+    customer.street_name = 'Rua Principal'
+    customer.number = '100'
+    customer.neighborhood = 'Centro'
+  }
+
   const sigmaResponse = await fetch(`${SIGMA_API_URL}/transactions?api_token=${apiToken}`, {
     method: 'POST',
     headers: sigmaHeaders,
@@ -114,7 +141,7 @@ async function generateWithSigma(params: {
       offer_hash: 'zxw2p8esaw',
       payment_method: 'pix',
       postback_url: webhookUrl,
-      customer: { name, email, phone_number: phone, document: cleanCpf, ip: params.clientIp || '', zip_code: params.zipCode, street_name: params.street, number: params.number, neighborhood: params.neighborhood, city: params.city, state: params.state, country: 'br' },
+      customer,
       cart: [{
         product_hash: '31atjri7nd', title: itemTitle,
         cover: 'https://dlzpblyjxiqfa.cloudfront.net/903979396/products/903lgdug3fk9ecaopmgsmvzde',
@@ -153,7 +180,6 @@ async function generateWithSigma(params: {
   const transactionHash = sigmaData.hash || txn.id || sigmaData.transaction_hash || sigmaData.id || crypto.randomUUID()
   const pixCode = txn.pix?.code || txn.pix?.pix_qr_code || sigmaData.pix?.code || sigmaData.pix?.pix_qr_code || sigmaData.pix_code || ''
   const pixQrBase64 = txn.pix?.qr_code_base64 || sigmaData.pix?.qr_code_base64 || sigmaData.pix_qr_code_base64 || ''
-  // SigmaPay geralmente retorna pix_url como null — construímos uma URL de fallback se possível
   const rawPixUrl = txn.pix?.url || txn.pix?.pix_url || sigmaData.pix?.pix_url || sigmaData.pix_url || ''
   const pixUrl = rawPixUrl || (pixCode ? `https://pix.sigmapay.com.br/${transactionHash}` : '')
 
@@ -164,14 +190,13 @@ async function generateWithSigma(params: {
 
 // ─── SkalePay provider ────────────────────────────────────────────────────────
 async function generateWithSkale(params: {
-  amountCentavos: number; cleanCpf: string; name: string; email: string;
-  phone: string; paymentType: string; secretKey: string; webhookUrl: string;
+  amountCentavos: number; lead: LeadData; paymentType: string;
+  secretKey: string; webhookUrl: string;
 }): Promise<{ pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }> {
-  const { amountCentavos, cleanCpf, name, email, phone, secretKey, webhookUrl } = params
+  const { amountCentavos, lead, secretKey, webhookUrl } = params
 
   const basicAuth = btoa(`${secretKey}:x`)
 
-  // Reutiliza o mesmo mapeamento de títulos do SigmaPay
   const SKALE_PAYMENT_TYPE_LABELS: Record<string, string> = {
     tax:                    'Livro Um',
     upsell_tenf:            'Livro Dois',
@@ -185,6 +210,14 @@ async function generateWithSkale(params: {
   }
   const skaleItemTitle = SKALE_PAYMENT_TYPE_LABELS[params.paymentType] || 'Livro Digital'
 
+  // Monta customer apenas com campos reais
+  const customer: Record<string, unknown> = {
+    document: { type: lead.cleanCpf.length <= 11 ? 'cpf' : 'cnpj', number: lead.cleanCpf },
+  }
+  if (lead.name) customer.name = lead.name
+  if (lead.email) customer.email = lead.email
+  if (lead.phone) customer.phone = lead.phone
+
   const skaleResponse = await fetch(`${SKALE_API_URL}/transactions`, {
     method: 'POST',
     headers: {
@@ -195,7 +228,7 @@ async function generateWithSkale(params: {
     body: JSON.stringify({
       paymentMethod: 'pix',
       amount: amountCentavos,
-      customer: { name: name || 'Cliente', email: email || 'cliente@pagamento.com', phone: phone || '11999999999', document: { type: cleanCpf.length <= 11 ? 'cpf' : 'cnpj', number: cleanCpf } },
+      customer,
       items: [{
         title: skaleItemTitle,
         unitPrice: amountCentavos,
@@ -232,6 +265,75 @@ async function generateWithSkale(params: {
   return { pixCode, pixQrBase64, pixUrl, transactionHash, provider: 'skale' }
 }
 
+// ─── Mapa DDD → cidade/estado/CEP ────────────────────────────────────────────
+const DDD_MAP: Record<number, { city: string; state: string; cep: string }> = {
+  11: { city: 'São Paulo', state: 'SP', cep: '01000000' },
+  12: { city: 'São José dos Campos', state: 'SP', cep: '12200000' },
+  13: { city: 'Santos', state: 'SP', cep: '11000000' },
+  14: { city: 'Bauru', state: 'SP', cep: '17000000' },
+  15: { city: 'Sorocaba', state: 'SP', cep: '18000000' },
+  16: { city: 'Ribeirão Preto', state: 'SP', cep: '14000000' },
+  17: { city: 'São José do Rio Preto', state: 'SP', cep: '15000000' },
+  18: { city: 'Presidente Prudente', state: 'SP', cep: '19000000' },
+  19: { city: 'Campinas', state: 'SP', cep: '13000000' },
+  21: { city: 'Rio de Janeiro', state: 'RJ', cep: '20000000' },
+  22: { city: 'Campos dos Goytacazes', state: 'RJ', cep: '28000000' },
+  24: { city: 'Volta Redonda', state: 'RJ', cep: '27200000' },
+  27: { city: 'Vitória', state: 'ES', cep: '29000000' },
+  28: { city: 'Cachoeiro de Itapemirim', state: 'ES', cep: '29300000' },
+  31: { city: 'Belo Horizonte', state: 'MG', cep: '30000000' },
+  32: { city: 'Juiz de Fora', state: 'MG', cep: '36000000' },
+  33: { city: 'Governador Valadares', state: 'MG', cep: '35010000' },
+  34: { city: 'Uberlândia', state: 'MG', cep: '38400000' },
+  35: { city: 'Poços de Caldas', state: 'MG', cep: '37700000' },
+  37: { city: 'Divinópolis', state: 'MG', cep: '35500000' },
+  38: { city: 'Montes Claros', state: 'MG', cep: '39400000' },
+  41: { city: 'Curitiba', state: 'PR', cep: '80000000' },
+  42: { city: 'Ponta Grossa', state: 'PR', cep: '84000000' },
+  43: { city: 'Londrina', state: 'PR', cep: '86000000' },
+  44: { city: 'Maringá', state: 'PR', cep: '87000000' },
+  45: { city: 'Foz do Iguaçu', state: 'PR', cep: '85850000' },
+  46: { city: 'Francisco Beltrão', state: 'PR', cep: '85600000' },
+  47: { city: 'Joinville', state: 'SC', cep: '89200000' },
+  48: { city: 'Florianópolis', state: 'SC', cep: '88000000' },
+  49: { city: 'Chapecó', state: 'SC', cep: '89800000' },
+  51: { city: 'Porto Alegre', state: 'RS', cep: '90000000' },
+  53: { city: 'Pelotas', state: 'RS', cep: '96000000' },
+  54: { city: 'Caxias do Sul', state: 'RS', cep: '95000000' },
+  55: { city: 'Santa Maria', state: 'RS', cep: '97000000' },
+  61: { city: 'Brasília', state: 'DF', cep: '70000000' },
+  62: { city: 'Goiânia', state: 'GO', cep: '74000000' },
+  63: { city: 'Palmas', state: 'TO', cep: '77000000' },
+  64: { city: 'Rio Verde', state: 'GO', cep: '75900000' },
+  65: { city: 'Cuiabá', state: 'MT', cep: '78000000' },
+  66: { city: 'Rondonópolis', state: 'MT', cep: '78700000' },
+  67: { city: 'Campo Grande', state: 'MS', cep: '79000000' },
+  68: { city: 'Rio Branco', state: 'AC', cep: '69900000' },
+  69: { city: 'Porto Velho', state: 'RO', cep: '76800000' },
+  71: { city: 'Salvador', state: 'BA', cep: '40000000' },
+  73: { city: 'Ilhéus', state: 'BA', cep: '45650000' },
+  74: { city: 'Juazeiro', state: 'BA', cep: '48900000' },
+  75: { city: 'Feira de Santana', state: 'BA', cep: '44000000' },
+  77: { city: 'Barreiras', state: 'BA', cep: '47800000' },
+  79: { city: 'Aracaju', state: 'SE', cep: '49000000' },
+  81: { city: 'Recife', state: 'PE', cep: '50000000' },
+  82: { city: 'Maceió', state: 'AL', cep: '57000000' },
+  83: { city: 'João Pessoa', state: 'PB', cep: '58000000' },
+  84: { city: 'Natal', state: 'RN', cep: '59000000' },
+  85: { city: 'Fortaleza', state: 'CE', cep: '60000000' },
+  86: { city: 'Teresina', state: 'PI', cep: '64000000' },
+  87: { city: 'Petrolina', state: 'PE', cep: '56300000' },
+  88: { city: 'Juazeiro do Norte', state: 'CE', cep: '63000000' },
+  91: { city: 'Belém', state: 'PA', cep: '66000000' },
+  92: { city: 'Manaus', state: 'AM', cep: '69000000' },
+  93: { city: 'Santarém', state: 'PA', cep: '68000000' },
+  94: { city: 'Marabá', state: 'PA', cep: '68500000' },
+  95: { city: 'Boa Vista', state: 'RR', cep: '69300000' },
+  96: { city: 'Macapá', state: 'AP', cep: '68900000' },
+  98: { city: 'São Luís', state: 'MA', cep: '65000000' },
+  99: { city: 'Imperatriz', state: 'MA', cep: '65900000' },
+}
+
 // ─── Main handler ─────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -257,121 +359,55 @@ Deno.serve(async (req) => {
     }
 
     const amountCentavosOriginal = Math.round(amount * 100)
-
-    // ─── Variação aleatória de centavos para evitar padrão detectável ─────────
-    // Adiciona entre +1 e +99 centavos ao valor cobrado na adquirente
     const centavoVariation = Math.floor(Math.random() * 99) + 1
     const amountCentavos = amountCentavosOriginal + centavoVariation
     console.log(`[generate-pix] Amount variation: original=${amountCentavosOriginal}, charged=${amountCentavos} (+${centavoVariation}c)`)
 
-    // ─── Mapa DDD → cidade/estado/CEP realista ────────────────────────────────
-    const DDD_MAP: Record<number, { city: string; state: string; cep: string }> = {
-      11: { city: 'São Paulo', state: 'SP', cep: '01000000' },
-      12: { city: 'São José dos Campos', state: 'SP', cep: '12200000' },
-      13: { city: 'Santos', state: 'SP', cep: '11000000' },
-      14: { city: 'Bauru', state: 'SP', cep: '17000000' },
-      15: { city: 'Sorocaba', state: 'SP', cep: '18000000' },
-      16: { city: 'Ribeirão Preto', state: 'SP', cep: '14000000' },
-      17: { city: 'São José do Rio Preto', state: 'SP', cep: '15000000' },
-      18: { city: 'Presidente Prudente', state: 'SP', cep: '19000000' },
-      19: { city: 'Campinas', state: 'SP', cep: '13000000' },
-      21: { city: 'Rio de Janeiro', state: 'RJ', cep: '20000000' },
-      22: { city: 'Campos dos Goytacazes', state: 'RJ', cep: '28000000' },
-      24: { city: 'Volta Redonda', state: 'RJ', cep: '27200000' },
-      27: { city: 'Vitória', state: 'ES', cep: '29000000' },
-      28: { city: 'Cachoeiro de Itapemirim', state: 'ES', cep: '29300000' },
-      31: { city: 'Belo Horizonte', state: 'MG', cep: '30000000' },
-      32: { city: 'Juiz de Fora', state: 'MG', cep: '36000000' },
-      33: { city: 'Governador Valadares', state: 'MG', cep: '35010000' },
-      34: { city: 'Uberlândia', state: 'MG', cep: '38400000' },
-      35: { city: 'Poços de Caldas', state: 'MG', cep: '37700000' },
-      37: { city: 'Divinópolis', state: 'MG', cep: '35500000' },
-      38: { city: 'Montes Claros', state: 'MG', cep: '39400000' },
-      41: { city: 'Curitiba', state: 'PR', cep: '80000000' },
-      42: { city: 'Ponta Grossa', state: 'PR', cep: '84000000' },
-      43: { city: 'Londrina', state: 'PR', cep: '86000000' },
-      44: { city: 'Maringá', state: 'PR', cep: '87000000' },
-      45: { city: 'Foz do Iguaçu', state: 'PR', cep: '85850000' },
-      46: { city: 'Francisco Beltrão', state: 'PR', cep: '85600000' },
-      47: { city: 'Joinville', state: 'SC', cep: '89200000' },
-      48: { city: 'Florianópolis', state: 'SC', cep: '88000000' },
-      49: { city: 'Chapecó', state: 'SC', cep: '89800000' },
-      51: { city: 'Porto Alegre', state: 'RS', cep: '90000000' },
-      53: { city: 'Pelotas', state: 'RS', cep: '96000000' },
-      54: { city: 'Caxias do Sul', state: 'RS', cep: '95000000' },
-      55: { city: 'Santa Maria', state: 'RS', cep: '97000000' },
-      61: { city: 'Brasília', state: 'DF', cep: '70000000' },
-      62: { city: 'Goiânia', state: 'GO', cep: '74000000' },
-      63: { city: 'Palmas', state: 'TO', cep: '77000000' },
-      64: { city: 'Rio Verde', state: 'GO', cep: '75900000' },
-      65: { city: 'Cuiabá', state: 'MT', cep: '78000000' },
-      66: { city: 'Rondonópolis', state: 'MT', cep: '78700000' },
-      67: { city: 'Campo Grande', state: 'MS', cep: '79000000' },
-      68: { city: 'Rio Branco', state: 'AC', cep: '69900000' },
-      69: { city: 'Porto Velho', state: 'RO', cep: '76800000' },
-      71: { city: 'Salvador', state: 'BA', cep: '40000000' },
-      73: { city: 'Ilhéus', state: 'BA', cep: '45650000' },
-      74: { city: 'Juazeiro', state: 'BA', cep: '48900000' },
-      75: { city: 'Feira de Santana', state: 'BA', cep: '44000000' },
-      77: { city: 'Barreiras', state: 'BA', cep: '47800000' },
-      79: { city: 'Aracaju', state: 'SE', cep: '49000000' },
-      81: { city: 'Recife', state: 'PE', cep: '50000000' },
-      82: { city: 'Maceió', state: 'AL', cep: '57000000' },
-      83: { city: 'João Pessoa', state: 'PB', cep: '58000000' },
-      84: { city: 'Natal', state: 'RN', cep: '59000000' },
-      85: { city: 'Fortaleza', state: 'CE', cep: '60000000' },
-      86: { city: 'Teresina', state: 'PI', cep: '64000000' },
-      87: { city: 'Petrolina', state: 'PE', cep: '56300000' },
-      88: { city: 'Juazeiro do Norte', state: 'CE', cep: '63000000' },
-      91: { city: 'Belém', state: 'PA', cep: '66000000' },
-      92: { city: 'Manaus', state: 'AM', cep: '69000000' },
-      93: { city: 'Santarém', state: 'PA', cep: '68000000' },
-      94: { city: 'Marabá', state: 'PA', cep: '68500000' },
-      95: { city: 'Boa Vista', state: 'RR', cep: '69300000' },
-      96: { city: 'Macapá', state: 'AP', cep: '68900000' },
-      98: { city: 'São Luís', state: 'MA', cep: '65000000' },
-      99: { city: 'Imperatriz', state: 'MA', cep: '65900000' },
-    }
-
-
-    // CPF: somente dígitos, exatamente 11
+    // ─── Extrair apenas dados reais do lead ───────────────────────────────────
     const rawCpf = (cpf || '').replace(/\D/g, '')
     const cleanCpf = (rawCpf.length === 11) ? rawCpf : '00000000000'
 
-    // Nome: usa dado real do lead — sem geração de nomes fictícios
-    let safeName = (name && name !== 'undefined' && name.trim().length >= 3)
+    // Nome: só se tiver dado real com >= 3 chars
+    let safeName: string | null = (name && name !== 'undefined' && name.trim().length >= 3)
       ? name.trim()
-      : 'Cliente'
-
-    // Garante que o nome tenha pelo menos 2 palavras (exigência SigmaPay/SkalePay)
-    if (safeName.split(/\s+/).filter(Boolean).length < 2) {
+      : null
+    // Se tem nome mas é palavra única, adiciona sobrenome
+    if (safeName && safeName.split(/\s+/).filter(Boolean).length < 2) {
       safeName = `${safeName} Lead`
     }
 
-    // Email: usa dado real do lead — sem geração de emails fictícios
+    // Email: só se for real e válido
     const rawEmail = (email || '').trim().toLowerCase()
-    const safeEmail = (rawEmail && rawEmail !== 'undefined' && rawEmail.includes('@') && rawEmail.includes('.') && rawEmail.length <= 254)
+    const safeEmail: string | null = (rawEmail && rawEmail !== 'undefined' && rawEmail.includes('@') && rawEmail.includes('.') && rawEmail.length <= 254)
       ? rawEmail
-      : `${cleanCpf}@lead.local`
+      : null
 
-    // Telefone: usa dado real do lead — sem geração de telefones fictícios
+    // Telefone: só se for real (11 dígitos)
     const rawPhone = (phone || '').replace(/\D/g, '')
-    const safePhone = (rawPhone.length === 11) ? rawPhone : '11999999999'
+    const safePhone: string | null = (rawPhone.length === 11) ? rawPhone : null
 
-    // Endereço baseado no DDD do telefone (se disponível)
-    const ddd = parseInt(safePhone.substring(0, 2), 10)
-    const geoData = DDD_MAP[ddd] || { city: 'São Paulo', state: 'SP', cep: '01000000' }
-    const safeCep = geoData.cep
-    const safeStreet = 'Rua Principal'
-    const safeNumber = '100'
-    const safeNeighborhood = 'Centro'
+    // Geo: só deriva endereço se tiver telefone real para extrair DDD
+    let zipCode: string | null = null
+    let city: string | null = null
+    let state: string | null = null
+    if (safePhone) {
+      const ddd = parseInt(safePhone.substring(0, 2), 10)
+      const geoData = DDD_MAP[ddd]
+      if (geoData) {
+        zipCode = geoData.cep
+        city = geoData.city
+        state = geoData.state
+      }
+    }
 
-    console.log(`[generate-pix] Using real lead data — CPF: ${cleanCpf.length}d, Phone: ${safePhone.substring(0,2)}, Email: ${safeEmail ? 'yes' : 'no'}, Name: ${safeName}`)
+    const lead: LeadData = { cleanCpf, name: safeName, email: safeEmail, phone: safePhone, zipCode, city, state }
+
+    console.log(`[generate-pix] Lead data — CPF: ${cleanCpf.length}d, Phone: ${safePhone ? safePhone.substring(0,2) : 'none'}, Email: ${safeEmail ? 'yes' : 'none'}, Name: ${safeName || 'none'}, Geo: ${city || 'none'}`)
 
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
 
-    // Deduplication by CPF — reuse pending PIX from same CPF/payment_type within last 2h
+    // Deduplication by CPF
     if (cleanCpf && cleanCpf !== '00000000000') {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
       const { data: existingPix } = await supabase
@@ -412,14 +448,12 @@ Deno.serve(async (req) => {
       const sigmaBlocked = sigmaCircuit.state === 'open'
 
       if (sigmaBlocked) {
-        // Circuit is OPEN — skip SigmaPay entirely, go straight to SkalePay
         console.warn(`[circuit-breaker] SigmaPay circuit is OPEN (opened at ${sigmaCircuit.opened_at}). Bypassing → SkalePay`)
         if (!SKALE_PAY_SECRET_KEY) throw new Error('SigmaPay circuit open and no SkalePay fallback configured')
 
         try {
           result = await generateWithSkale({
-            amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-            phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+            amountCentavos, lead, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
             webhookUrl: skaleWebhookUrl,
           })
           console.log(`[generate-pix] SkalePay (circuit bypass) succeeded: ${result.transactionHash}`)
@@ -428,41 +462,31 @@ Deno.serve(async (req) => {
           throw skaleErr
         }
       } else {
-        // Circuit is CLOSED or HALF_OPEN — try SigmaPay with tight timeout
         const isHalfOpen = sigmaCircuit.state === 'half_open'
-        const timeoutMs = CB_SIGMA_TIMEOUT_MS // 9s — fail fast
 
         try {
           result = await generateWithSigma({
-            amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-            phone: safePhone, paymentType: payment_type, ttclid: ttclid || '',
+            amountCentavos, lead, paymentType: payment_type, ttclid: ttclid || '',
             apiToken: SIGMA_API_TOKEN,
             webhookUrl: sigmaWebhookUrl,
-            timeoutMs,
-            zipCode: safeCep, street: safeStreet, number: safeNumber,
-            neighborhood: safeNeighborhood, city: geoData.city, state: geoData.state,
+            timeoutMs: CB_SIGMA_TIMEOUT_MS,
             utmSource: utm_source, utmMedium: utm_medium, utmCampaign: utm_campaign,
             utmTerm: utm_term, utmContent: utm_content,
             clientIp,
             userAgent: req.headers.get('user-agent') || '',
           })
           console.log(`[generate-pix] SigmaPay succeeded${isHalfOpen ? ' (half-open probe)' : ''}: ${result.transactionHash}`)
-          // Success — reset circuit
           await recordSuccess(supabase, 'sigmapay')
         } catch (sigmaErr) {
           const sigmaErrMsg = sigmaErr instanceof Error ? sigmaErr.message : String(sigmaErr)
           console.error(`[circuit-breaker] SigmaPay failure (count=${sigmaCircuit.failure_count + 1}/${CB_FAILURE_THRESHOLD}): ${sigmaErrMsg}`)
-
-          // Record failure and potentially open the circuit
           await recordFailure(supabase, 'sigmapay', sigmaCircuit.failure_count)
 
           if (!SKALE_PAY_SECRET_KEY) throw sigmaErr
 
-          // Fallback to SkalePay
           try {
             result = await generateWithSkale({
-              amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-              phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+              amountCentavos, lead, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
               webhookUrl: skaleWebhookUrl,
             })
             console.log(`[generate-pix] SkalePay fallback succeeded: ${result.transactionHash}`)
@@ -475,8 +499,7 @@ Deno.serve(async (req) => {
       }
     } else if (SKALE_PAY_SECRET_KEY) {
       result = await generateWithSkale({
-        amountCentavos, cleanCpf, name: safeName, email: safeEmail,
-        phone: safePhone, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+        amountCentavos, lead, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
         webhookUrl: skaleWebhookUrl,
       })
       console.log(`[generate-pix] SkalePay direct succeeded: ${result.transactionHash}`)
@@ -484,11 +507,10 @@ Deno.serve(async (req) => {
       throw new Error('No payment provider configured (SIGMA_API_TOKEN or SKALE_PAY_SECRET_KEY)')
     }
 
-    // Build transaction_id with provider prefix
     const transactionId = `${result.provider}_${result.transactionHash}`
 
-    // Save to database
-    const { error: dbError } = await supabase.from('pix_payments').insert({
+    // Save to database — só salva campos que existem
+    const dbRecord: Record<string, unknown> = {
       transaction_id: transactionId,
       transaction_hash: result.transactionHash,
       amount,
@@ -497,17 +519,18 @@ Deno.serve(async (req) => {
       pix_code: result.pixCode,
       pix_qr_code_base64: result.pixQrBase64,
       pix_url: result.pixUrl,
-      customer_name: safeName,
-      customer_email: safeEmail,
       customer_cpf: cleanCpf,
-      ab_variant,
-      ttclid,
-      page_url,
-      page_referrer,
+      ab_variant: ab_variant || null,
+      ttclid: ttclid || null,
+      page_url: page_url || null,
+      page_referrer: page_referrer || null,
       ip_address: clientIp || null,
-      user_agent: req.headers.get('user-agent'),
-    })
+      user_agent: req.headers.get('user-agent') || null,
+    }
+    if (safeName) dbRecord.customer_name = safeName
+    if (safeEmail) dbRecord.customer_email = safeEmail
 
+    const { error: dbError } = await supabase.from('pix_payments').insert(dbRecord)
     if (dbError) console.error('[generate-pix] DB error:', dbError)
 
     const responseData = {
