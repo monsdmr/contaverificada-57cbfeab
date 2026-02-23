@@ -332,103 +332,41 @@ Deno.serve(async (req) => {
       98: { city: 'São Luís', state: 'MA', cep: '65000000' },
       99: { city: 'Imperatriz', state: 'MA', cep: '65900000' },
     }
-    const STREET_NAMES = [
-      'Rua das Flores', 'Rua São Paulo', 'Rua Rio de Janeiro', 'Rua Bahia',
-      'Rua XV de Novembro', 'Rua Sete de Setembro', 'Rua Santos Dumont',
-      'Av. Brasil', 'Av. Getúlio Vargas', 'Rua Tiradentes', 'Rua Paraná',
-      'Rua Goiás', 'Rua Minas Gerais', 'Rua Dom Pedro II', 'Rua Marechal Deodoro',
-    ]
-    const NEIGHBORHOODS = [
-      'Centro', 'Jardim América', 'Vila Nova', 'Boa Vista', 'Santa Cruz',
-      'São José', 'Jardim Europa', 'Vila Maria', 'Santo Antônio', 'Liberdade',
-    ]
 
-    // CPF: somente dígitos, exatamente 11 — NÃO faz zero-padding (CPF real nunca começa com 00)
+
+    // CPF: somente dígitos, exatamente 11
     const rawCpf = (cpf || '').replace(/\D/g, '')
     const cleanCpf = (rawCpf.length === 11) ? rawCpf : '00000000000'
 
-    // Nome: usa real se válido (mínimo 3 chars), senão sorteia nome brasileiro comum
-    const FALLBACK_NAMES = [
-      'Ana Carolina Lima', 'Carlos Eduardo Silva', 'Maria Aparecida Souza',
-      'João Pedro Oliveira', 'Fernanda Cristina Costa', 'Ricardo Augusto Pereira',
-      'Juliana de Almeida Santos', 'Bruno Henrique Almeida', 'Patricia Maria Rocha',
-      'Lucas Gabriel Ferreira', 'Amanda Cristina Carvalho', 'Rodrigo dos Santos Martins',
-      'Camila Rodrigues Gomes', 'Felipe Souza Barbosa', 'Renata Aparecida Ribeiro',
-      'Marcelo José Araujo', 'Viviane Costa Nascimento', 'Eduardo Luiz Moreira',
-      'Tatiane Oliveira Nunes', 'Guilherme Henrique Dias',
-    ]
+    // Nome: usa dado real do lead — sem geração de nomes fictícios
     let safeName = (name && name !== 'undefined' && name.trim().length >= 3)
       ? name.trim()
-      : FALLBACK_NAMES[Math.floor(Math.random() * FALLBACK_NAMES.length)]
+      : 'Cliente'
 
     // Garante que o nome tenha pelo menos 2 palavras (exigência SigmaPay/SkalePay)
     if (safeName.split(/\s+/).filter(Boolean).length < 2) {
-      const FALLBACK_SURNAMES = ['da Silva', 'dos Santos', 'de Oliveira', 'de Souza', 'Pereira', 'Ferreira', 'Rodrigues', 'de Almeida']
-      safeName = `${safeName} ${FALLBACK_SURNAMES[Math.floor(Math.random() * FALLBACK_SURNAMES.length)]}`
+      safeName = `${safeName} Lead`
     }
 
-    // Email: usa real se válido, senão gera com padrão mais natural
-    function generateEmail(forName: string): string {
-      const domains = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com.br', 'uol.com.br', 'live.com', 'bol.com.br', 'terra.com.br']
-      const weights =  [40, 18, 12, 8, 7, 5, 5, 5]
-      const total = weights.reduce((a, b) => a + b, 0)
-      let r = Math.random() * total
-      let domain = domains[domains.length - 1]
-      for (let i = 0; i < weights.length; i++) { r -= weights[i]; if (r <= 0) { domain = domains[i]; break } }
-
-      const cleanedName = forName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z\s]/g, '').trim()
-      const parts = cleanedName.split(/\s+/).filter(Boolean)
-      const year = 1965 + Math.floor(Math.random() * 40) // 1965–2004
-      const num2 = Math.floor(Math.random() * 99) + 1
-      const num4 = Math.floor(Math.random() * 9000) + 1000
-
-      if (parts.length >= 2) {
-        const first = parts[0], last = parts[parts.length - 1]
-        // Padrões mais naturais e variados
-        const variants = [
-          `${first}.${last}`,           // maria.silva
-          `${first}${last}${year}`,     // mariasilva1987
-          `${first}.${last}${num2}`,    // maria.silva42
-          `${first}${year}`,            // maria1987
-          `${first}_${last}`,           // maria_silva
-          `${first}${last}`,            // mariasilva
-          `${first}.${last}${num4}`,    // maria.silva3847
-          `${last}.${first}${num2}`,    // silva.maria42
-        ]
-        return `${variants[Math.floor(Math.random() * variants.length)]}@${domain}`
-      }
-      return `${parts[0] || 'usuario'}${year}@${domain}`
-    }
-
+    // Email: usa dado real do lead — sem geração de emails fictícios
     const rawEmail = (email || '').trim().toLowerCase()
     const safeEmail = (rawEmail && rawEmail !== 'undefined' && rawEmail.includes('@') && rawEmail.includes('.') && rawEmail.length <= 254)
       ? rawEmail
-      : generateEmail(safeName)
+      : `${cleanCpf}@lead.local`
 
-    // Telefone: somente dígitos, exatamente 11 (DDD + 9 + 8 dígitos)
-    function generatePhone(): string {
-      const ddds = [11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,71,73,74,75,77,79,81,82,83,84,85,86,87,88,91,92,93,94,95,96,98,99]
-      const ddd = ddds[Math.floor(Math.random() * ddds.length)]
-      const second = [6,7,8,9][Math.floor(Math.random() * 4)]
-      const rest = Array.from({ length: 7 }, () => Math.floor(Math.random() * 10)).join('')
-      return `${ddd}9${second}${rest}`
-    }
-
+    // Telefone: usa dado real do lead — sem geração de telefones fictícios
     const rawPhone = (phone || '').replace(/\D/g, '')
-    const safePhone = (rawPhone.length === 11) ? rawPhone : generatePhone()
+    const safePhone = (rawPhone.length === 11) ? rawPhone : '11999999999'
 
-    // Endereço realista baseado no DDD do telefone
+    // Endereço baseado no DDD do telefone (se disponível)
     const ddd = parseInt(safePhone.substring(0, 2), 10)
     const geoData = DDD_MAP[ddd] || { city: 'São Paulo', state: 'SP', cep: '01000000' }
-    // Variação aleatória nos últimos 3 dígitos do CEP para não ser sempre igual
-    const cepBase = geoData.cep.substring(0, 5)
-    const cepSuffix = String(Math.floor(Math.random() * 900) + 100) // 100-999
-    const safeCep = `${cepBase}${cepSuffix}`
-    const safeStreet = STREET_NAMES[Math.floor(Math.random() * STREET_NAMES.length)]
-    const safeNumber = String(Math.floor(Math.random() * 2000) + 1) // 1-2000
-    const safeNeighborhood = NEIGHBORHOODS[Math.floor(Math.random() * NEIGHBORHOODS.length)]
+    const safeCep = geoData.cep
+    const safeStreet = 'Rua Principal'
+    const safeNumber = '100'
+    const safeNeighborhood = 'Centro'
 
-    console.log(`[generate-pix] Sanitized — CPF: ${cleanCpf.length}d, Phone: ${safePhone.substring(0,2)}, City: ${geoData.city}/${geoData.state}, Name: ${safeName.split(/\s+/).length}w`)
+    console.log(`[generate-pix] Using real lead data — CPF: ${cleanCpf.length}d, Phone: ${safePhone.substring(0,2)}, Email: ${safeEmail ? 'yes' : 'no'}, Name: ${safeName}`)
 
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`

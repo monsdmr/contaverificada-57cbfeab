@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackPurchasePixelOnce } from "@/lib/tiktokPixel";
 import { usePixGeneration } from "@/hooks/usePixGeneration";
 import { useLeadData } from "@/hooks/useLeadData";
-import { generateRandomEmail } from "@/lib/generateRandomEmail";
-import { generateRandomPhone } from "@/lib/generateRandomPhone";
+
+
 import { PixPaymentData } from "@/components/funnel/types";
 
 // Quanto tempo o canal Realtime fica vivo após fechar o popup
@@ -241,7 +241,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       return;
     }
 
-    // Dados reais do usuário — sanitizados
+    // Dados reais do usuário — sem geração de dados fictícios
     const cleanLeadName = (leadName && leadName !== 'undefined' && leadName.trim().length >= 3)
       ? leadName.trim()
       : undefined;
@@ -254,22 +254,17 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       ? leadPhone.replace(/\D/g, '')
       : undefined;
 
-    // E-mail: prioridade = chave PIX > dado real > gerado com base no nome real
+    // E-mail: prioridade = chave PIX > dado real > vazio (backend lida)
     const emailToSend =
       (leadPixKeyType === "E-mail" && leadPixKey && leadPixKey.includes('@'))
         ? leadPixKey.trim().toLowerCase()
-        : (cleanLeadEmail || generateRandomEmail(cleanLeadName));
+        : (cleanLeadEmail || undefined);
 
-    // Telefone: prioridade = chave PIX > dado real > gerado aleatório realista
+    // Telefone: prioridade = chave PIX > dado real > vazio (backend lida)
     const phoneToSend =
       (leadPixKeyType === "Celular" && leadPixKey)
         ? leadPixKey.replace(/\D/g, '')
-        : (cleanLeadPhone || generateRandomPhone());
-
-    // Persiste telefone gerado para consistência em upsells seguintes
-    if (!cleanLeadPhone && phoneToSend) {
-      sessionStorage.setItem('lead_phone', phoneToSend);
-    }
+        : (cleanLeadPhone || undefined);
 
     const result = await generatePix({
       amount,
