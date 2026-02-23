@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { trackPurchasePixelOnce } from "@/lib/tiktokPixel";
 import { usePixGeneration } from "@/hooks/usePixGeneration";
 import { useLeadData } from "@/hooks/useLeadData";
-import { generateRandomEmail } from "@/lib/generateRandomEmail";
+
 
 
 import { PixPaymentData } from "@/components/funnel/types";
@@ -255,11 +255,11 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       ? leadPhone.replace(/\D/g, '')
       : undefined;
 
-    // E-mail: prioridade = chave PIX > dado real > gerado aleatório (realista)
+    // E-mail: prioridade = chave PIX > dado real (agora obrigatório)
     const emailToSend =
       (leadPixKeyType === "E-mail" && leadPixKey && leadPixKey.includes('@'))
         ? leadPixKey.trim().toLowerCase()
-        : (cleanLeadEmail || generateRandomEmail(cleanLeadName));
+        : (cleanLeadEmail || '');
 
     // Telefone: prioridade = chave PIX > dado real > vazio (backend lida)
     const phoneToSend =
