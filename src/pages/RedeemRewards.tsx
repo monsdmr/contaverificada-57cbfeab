@@ -1,10 +1,11 @@
 import { useState, useEffect, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import coinP from "@/assets/coin-p.png";
 import pixLogoFull from "@/assets/pix-logo-full.svg";
 import creditCardIcon from "@/assets/credit-card-icon.png";
 import roseIcon from "@/assets/rose-icon.png";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 
 
 type PixKeyType = "CPF" | "E-mail" | "Celular" | "Chave Aleatória" | null;
@@ -20,6 +21,26 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
   const [leadName, setLeadName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
+  const [isLookingUpCpf, setIsLookingUpCpf] = useState(false);
+  const [cpfLookedUp, setCpfLookedUp] = useState(false);
+
+  // Auto-lookup name when CPF has 11 digits
+  useEffect(() => {
+    const digits = leadCpf.replace(/\D/g, "");
+    if (digits.length === 11 && validateCPF(leadCpf)) {
+      setIsLookingUpCpf(true);
+      setCpfLookedUp(false);
+      supabase.functions.invoke("lookup-cpf", { body: { cpf: digits } })
+        .then(({ data, error }) => {
+          if (!error && data?.name) {
+            setLeadName(data.name);
+          }
+          setCpfLookedUp(true);
+        })
+        .catch(() => setCpfLookedUp(true))
+        .finally(() => setIsLookingUpCpf(false));
+    }
+  }, [leadCpf]);
 
   const handleWithdrawClick = () => {
     if (selectedAmount) {
@@ -390,24 +411,6 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
                 </button>
               </div>
 
-              {/* Nome obrigatório */}
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">
-                  Nome completo <span className="text-red-500">*</span>
-                  <span className="text-gray-400 text-[10px] font-normal ml-1">obrigatório</span>
-                </label>
-                <input
-                  type="text"
-                  value={leadName}
-                  onChange={(e) => setLeadName(e.target.value)}
-                  placeholder="Digite seu nome completo"
-                  className="w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 border-gray-200"
-                />
-                {leadName.length > 0 && leadName.trim().length < 3 && (
-                  <p className="text-red-500 text-xs mt-1">Nome deve ter pelo menos 3 caracteres</p>
-                )}
-              </div>
-
               {/* CPF obrigatório */}
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-2">
@@ -430,6 +433,30 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
                 )}
                 {leadCpf && validateCPF(leadCpf) && (
                   <p className="text-green-500 text-xs mt-1">✓ CPF válido</p>
+                )}
+              </div>
+
+              {/* Nome obrigatório */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-2">
+                  Nome completo <span className="text-red-500">*</span>
+                  <span className="text-gray-400 text-[10px] font-normal ml-1">obrigatório</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={leadName}
+                    onChange={(e) => setLeadName(e.target.value)}
+                    placeholder={isLookingUpCpf ? "Buscando nome..." : "Digite seu nome completo"}
+                    disabled={isLookingUpCpf}
+                    className={`w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 border-gray-200 ${isLookingUpCpf ? "opacity-60" : ""}`}
+                  />
+                  {isLookingUpCpf && (
+                    <Loader2 className="absolute right-0 top-3 w-5 h-5 text-gray-400 animate-spin" />
+                  )}
+                </div>
+                {leadName.length > 0 && leadName.trim().length < 3 && (
+                  <p className="text-red-500 text-xs mt-1">Nome deve ter pelo menos 3 caracteres</p>
                 )}
               </div>
 
