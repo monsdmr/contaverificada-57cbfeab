@@ -378,14 +378,28 @@ Deno.serve(async (req) => {
 
     let result: { pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }
 
-    // ─── Circuit breaker + provider selection (SkalePay = primary) ──────────
-    if (SKALE_PAY_SECRET_KEY) {
-      const skaleCircuit = await getCircuitState(supabase, 'skalepay')
-      const skaleBlocked = skaleCircuit.state === 'open'
+    // ─── Circuit breaker + provider selection (SigmaPay = primary) ──────────
+    if (SIGMA_API_TOKEN) {
+      const sigmaCircuit = await getCircuitState(supabase, 'sigmapay')
+      const sigmaBlocked = sigmaCircuit.state === 'open'
 
-      if (skaleBlocked) {
-        console.warn(`[circuit-breaker] SkalePay circuit is OPEN (opened at ${skaleCircuit.opened_at}). Bypassing → SigmaPay`)
-        if (!SIGMA_API_TOKEN) throw new Error('SkalePay circuit open and no SigmaPay fallback configured')
+      if (sigmaBlocked) {
+        console.warn(`[circuit-breaker] SigmaPay circuit is OPEN (opened at ${sigmaCircuit.opened_at}). Bypassing → SkalePay`)
+        if (!SKALE_PAY_SECRET_KEY) throw new Error('SigmaPay circuit open and no SkalePay fallback configured')
+
+        try {
+          result = await generateWithSkale({
+            amountCentavos, lead, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+            webhookUrl: skaleWebhookUrl,
+          })
+          console.log(`[generate-pix] SkalePay (circuit bypass) succeeded: ${result.transactionHash}`)
+          await recordSuccess(supabase, 'skalepay')
+        } catch (skaleErr) {
+          await recordFailure(supabase, 'skalepay', 0)
+          throw skaleErr
+        }
+      } else {
+        const isHalfOpen = sigmaCircuit.state === 'half_open'
 
         try {
           result = await generateWithSigma({
@@ -398,62 +412,36 @@ Deno.serve(async (req) => {
             clientIp,
             userAgent: req.headers.get('user-agent') || '',
           })
-          console.log(`[generate-pix] SigmaPay (circuit bypass) succeeded: ${result.transactionHash}`)
+          console.log(`[generate-pix] SigmaPay succeeded${isHalfOpen ? ' (half-open probe)' : ''}: ${result.transactionHash}`)
           await recordSuccess(supabase, 'sigmapay')
         } catch (sigmaErr) {
-          await recordFailure(supabase, 'sigmapay', 0)
-          throw sigmaErr
-        }
-      } else {
-        const isHalfOpen = skaleCircuit.state === 'half_open'
+          const sigmaErrMsg = sigmaErr instanceof Error ? sigmaErr.message : String(sigmaErr)
+          console.error(`[circuit-breaker] SigmaPay failure (count=${sigmaCircuit.failure_count + 1}/${CB_FAILURE_THRESHOLD}): ${sigmaErrMsg}`)
+          await recordFailure(supabase, 'sigmapay', sigmaCircuit.failure_count)
 
-        try {
-          result = await generateWithSkale({
-            amountCentavos, lead, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
-            webhookUrl: skaleWebhookUrl,
-          })
-          console.log(`[generate-pix] SkalePay succeeded${isHalfOpen ? ' (half-open probe)' : ''}: ${result.transactionHash}`)
-          await recordSuccess(supabase, 'skalepay')
-        } catch (skaleErr) {
-          const skaleErrMsg = skaleErr instanceof Error ? skaleErr.message : String(skaleErr)
-          console.error(`[circuit-breaker] SkalePay failure (count=${skaleCircuit.failure_count + 1}/${CB_FAILURE_THRESHOLD}): ${skaleErrMsg}`)
-          await recordFailure(supabase, 'skalepay', skaleCircuit.failure_count)
-
-          if (!SIGMA_API_TOKEN) throw skaleErr
+          if (!SKALE_PAY_SECRET_KEY) throw sigmaErr
 
           try {
-            result = await generateWithSigma({
-              amountCentavos, lead, paymentType: payment_type, ttclid: ttclid || '',
-              apiToken: SIGMA_API_TOKEN,
-              webhookUrl: sigmaWebhookUrl,
-              timeoutMs: CB_SIGMA_TIMEOUT_MS,
-              utmSource: utm_source, utmMedium: utm_medium, utmCampaign: utm_campaign,
-              utmTerm: utm_term, utmContent: utm_content,
-              clientIp,
-              userAgent: req.headers.get('user-agent') || '',
+            result = await generateWithSkale({
+              amountCentavos, lead, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+              webhookUrl: skaleWebhookUrl,
             })
-            console.log(`[generate-pix] SigmaPay fallback succeeded: ${result.transactionHash}`)
-            await recordSuccess(supabase, 'sigmapay')
-          } catch (sigmaErr) {
-            await recordFailure(supabase, 'sigmapay', 0)
-            throw sigmaErr
+            console.log(`[generate-pix] SkalePay fallback succeeded: ${result.transactionHash}`)
+            await recordSuccess(supabase, 'skalepay')
+          } catch (skaleErr) {
+            await recordFailure(supabase, 'skalepay', 0)
+            throw skaleErr
           }
         }
       }
-    } else if (SIGMA_API_TOKEN) {
-      result = await generateWithSigma({
-        amountCentavos, lead, paymentType: payment_type, ttclid: ttclid || '',
-        apiToken: SIGMA_API_TOKEN,
-        webhookUrl: sigmaWebhookUrl,
-        timeoutMs: CB_SIGMA_TIMEOUT_MS,
-        utmSource: utm_source, utmMedium: utm_medium, utmCampaign: utm_campaign,
-        utmTerm: utm_term, utmContent: utm_content,
-        clientIp,
-        userAgent: req.headers.get('user-agent') || '',
+    } else if (SKALE_PAY_SECRET_KEY) {
+      result = await generateWithSkale({
+        amountCentavos, lead, paymentType: payment_type, secretKey: SKALE_PAY_SECRET_KEY,
+        webhookUrl: skaleWebhookUrl,
       })
-      console.log(`[generate-pix] SigmaPay direct succeeded: ${result.transactionHash}`)
+      console.log(`[generate-pix] SkalePay direct succeeded: ${result.transactionHash}`)
     } else {
-      throw new Error('No payment provider configured (SKALE_PAY_SECRET_KEY or SIGMA_API_TOKEN)')
+      throw new Error('No payment provider configured (SIGMA_API_TOKEN or SKALE_PAY_SECRET_KEY)')
     }
 
     const transactionId = `${result.provider}_${result.transactionHash}`
