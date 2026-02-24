@@ -8,7 +8,6 @@ interface GeneratePixParams {
   name?: string;
   email?: string;
   cpf?: string;
-  phone?: string;
   payment_type: string;
   ab_variant?: string;
 }
@@ -87,7 +86,6 @@ export const usePixGeneration = (options?: UsePixGenerationOptions) => {
               name: params.name,
               email: params.email,
               cpf: params.cpf,
-              phone: params.phone,
               payment_type: params.payment_type,
               ab_variant: params.ab_variant,
               ttclid: attribution.ttclid,
