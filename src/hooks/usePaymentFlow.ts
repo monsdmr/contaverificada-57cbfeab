@@ -48,12 +48,20 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     didConfirmRef.current = true;
 
     if (transactionId && pixAmount) {
-      trackPurchasePixelOnce({ transactionId, value: pixAmount, contentId });
+      trackPurchasePixelOnce({
+        transactionId,
+        value: pixAmount,
+        contentId,
+        email: leadEmail || undefined,
+        phone: leadPhone?.replace(/\D/g, '') || undefined,
+        name: leadName || undefined,
+        cpf: leadCpf?.replace(/\D/g, '') || undefined,
+      });
     }
 
     setShowPixPopup(false);
     setShowProcessing(true);
-  }, [contentId]);
+  }, [contentId, leadEmail, leadPhone, leadName, leadCpf]);
 
   // ─── Botão "Já paguei" ────────────────────────────────────────────────────
   const checkPayment = useCallback(async () => {

@@ -13,8 +13,12 @@ export function trackInitiateCheckoutPixel(input: {
   value: number;
   currency?: string;
   contentId?: string;
+  email?: string;
+  phone?: string;
+  name?: string;
+  cpf?: string;
 }): void {
-  const { value, currency = "BRL", contentId = "pix_payment" } = input;
+  const { value, currency = "BRL", contentId = "pix_payment", email, phone, name, cpf } = input;
   const eventId = `initcheckout_${contentId}_${Date.now()}`;
   const flagKey = `tt_initcheckout_${contentId}`;
   if (sessionStorage.getItem(flagKey)) return;
@@ -37,7 +41,7 @@ export function trackInitiateCheckoutPixel(input: {
   sessionStorage.setItem(flagKey, "1");
 
   // Server
-  trackServerEvent({ event: "InitiateCheckout", eventId, value, contentId });
+  trackServerEvent({ event: "InitiateCheckout", eventId, value, contentId, email, phone, name, cpf });
 }
 
 export function trackPurchasePixelOnce(input: {
@@ -46,6 +50,10 @@ export function trackPurchasePixelOnce(input: {
   currency?: string;
   contentId?: string;
   contentType?: string;
+  email?: string;
+  phone?: string;
+  name?: string;
+  cpf?: string;
 }): void {
   const {
     transactionId,
@@ -53,6 +61,10 @@ export function trackPurchasePixelOnce(input: {
     currency = "BRL",
     contentId = "pix_payment",
     contentType = "product",
+    email,
+    phone,
+    name,
+    cpf,
   } = input;
 
   const flagKey = `tt_purchase_sent_${transactionId}`;
@@ -89,5 +101,9 @@ export function trackPurchasePixelOnce(input: {
     value,
     contentId,
     transactionId,
+    email,
+    phone,
+    name,
+    cpf,
   });
 }
