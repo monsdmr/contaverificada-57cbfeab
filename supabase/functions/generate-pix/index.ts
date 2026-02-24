@@ -213,11 +213,14 @@ async function generateWithSkale(params: {
   }
   const skaleItemTitle = SKALE_PAYMENT_TYPE_LABELS[params.paymentType] || 'Livro Digital'
 
-  // Monta customer — SkalePay exige email, gera placeholder com CPF
-  const skaleEmail = `${lead.cleanCpf}@cliente.pix`
+  // Monta customer — SkalePay exige email e phone
+  const skaleEmail = `${lead.cleanCpf}@example.com`
+  const skalePhone = `+55${lead.cleanCpf.slice(-11).padStart(11, '9')}`
+
   const customer: Record<string, unknown> = {
     document: { type: lead.cleanCpf.length <= 11 ? 'cpf' : 'cnpj', number: lead.cleanCpf },
     email: skaleEmail,
+    phone: skalePhone,
   }
   if (lead.name) customer.name = lead.name
 
