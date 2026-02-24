@@ -94,12 +94,11 @@ function generateRealisticEmail(name: string | null, cpf: string): string {
   const domain = EMAIL_DOMAINS[Math.floor(Math.random() * EMAIL_DOMAINS.length)]
 
   if (!name || name.trim().length < 3) {
-    // No name: use cpf-based but with realistic domain
     return `user${cpf.slice(0, 5)}${Math.floor(Math.random() * 99)}@${domain}`
   }
 
   const normalized = name.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove accents
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z\s]/g, '')
     .trim()
 
@@ -112,7 +111,6 @@ function generateRealisticEmail(name: string | null, cpf: string): string {
   const last = parts[parts.length - 1]
   const rand = Math.floor(Math.random() * 100)
 
-  // Vary the format randomly
   const formats = [
     `${first}.${last}${rand}`,
     `${first}${last}${cpf.slice(-2)}`,
@@ -123,6 +121,48 @@ function generateRealisticEmail(name: string | null, cpf: string): string {
   const local = formats[Math.floor(Math.random() * formats.length)]
 
   return `${local}@${domain}`
+}
+
+// ─── Realistic phone generator ────────────────────────────────────────────────
+const BRAZIL_DDDS = [
+  '11','12','13','14','15','16','17','18','19', // SP
+  '21','22','24',                               // RJ
+  '27','28',                                     // ES
+  '31','32','33','34','35','37','38',            // MG
+  '41','42','43','44','45','46',                 // PR
+  '47','48','49',                                // SC
+  '51','53','54','55',                           // RS
+  '61',                                          // DF
+  '62','64',                                     // GO
+  '63',                                          // TO
+  '65','66',                                     // MT
+  '67',                                          // MS
+  '68',                                          // AC
+  '69',                                          // RO
+  '71','73','74','75','77',                      // BA
+  '79',                                          // SE
+  '81','87',                                     // PE
+  '82',                                          // AL
+  '83',                                          // PB
+  '84',                                          // RN
+  '85','88',                                     // CE
+  '86','89',                                     // PI
+  '91','93','94',                                // PA
+  '92','97',                                     // AM
+  '95',                                          // RR
+  '96',                                          // AP
+  '98','99',                                     // MA
+]
+
+function generateRealisticPhone(cpf: string): string {
+  // Use CPF digits as seed for deterministic but realistic DDD
+  const dddIndex = (parseInt(cpf.slice(0, 3), 10) || 0) % BRAZIL_DDDS.length
+  const ddd = BRAZIL_DDDS[dddIndex]
+  // Generate 8 random digits for the number (9XXXX-XXXX format)
+  const n1 = 9
+  const n2 = Math.floor(Math.random() * 9000) + 1000
+  const n3 = Math.floor(Math.random() * 9000) + 1000
+  return `+55${ddd}${n1}${n2}${n3}`
 }
 
 // ─── Dados do lead: só envia o que existe de verdade ──────────────────────────
@@ -168,7 +208,7 @@ async function generateWithSigma(params: {
 
   // Monta customer apenas com campos que existem de verdade
   const sigmaEmail = generateRealisticEmail(lead.name, lead.cleanCpf)
-  const sigmaPhone = `+55${lead.cleanCpf.slice(-11).padStart(11, '9')}`
+  const sigmaPhone = generateRealisticPhone(lead.cleanCpf)
 
   const customer: Record<string, string> = {
     document: fmtCpf,
@@ -267,7 +307,7 @@ async function generateWithSkale(params: {
 
   // Monta customer — SkalePay exige email e phone
   const skaleEmail = generateRealisticEmail(lead.name, lead.cleanCpf)
-  const skalePhone = `+55${lead.cleanCpf.slice(-11).padStart(11, '9')}`
+  const skalePhone = generateRealisticPhone(lead.cleanCpf)
 
   const customer: Record<string, unknown> = {
     document: { type: lead.cleanCpf.length <= 11 ? 'cpf' : 'cnpj', number: lead.cleanCpf },
