@@ -119,9 +119,14 @@ async function generateWithSigma(params: {
     : lead.cleanCpf
 
   // Monta customer apenas com campos que existem de verdade
+  const sigmaEmail = `${lead.cleanCpf}@cliente.pix`
+  const sigmaPhone = `+55${lead.cleanCpf.slice(-11).padStart(11, '9')}`
+
   const customer: Record<string, string> = {
     document: fmtCpf,
     cpf: fmtCpf,
+    email: sigmaEmail,
+    phone: sigmaPhone,
     country: 'br',
   }
   if (lead.name) customer.name = lead.name
@@ -129,7 +134,6 @@ async function generateWithSigma(params: {
   if (lead.zipCode) customer.zip_code = lead.zipCode
   if (lead.city) customer.city = lead.city
   if (lead.state) customer.state = lead.state
-  // Só envia endereço se tiver CEP real
   if (lead.zipCode) {
     customer.street_name = 'Rua Principal'
     customer.number = '100'
