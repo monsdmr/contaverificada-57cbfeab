@@ -6,7 +6,6 @@ import { PixPaymentData } from "@/components/funnel/types";
 interface GeneratePixParams {
   amount: number;
   name?: string;
-  email?: string;
   cpf?: string;
   payment_type: string;
   ab_variant?: string;
@@ -84,7 +83,6 @@ export const usePixGeneration = (options?: UsePixGenerationOptions) => {
             body: {
               amount: params.amount,
               name: params.name,
-              email: params.email,
               cpf: params.cpf,
               payment_type: params.payment_type,
               ab_variant: params.ab_variant,
