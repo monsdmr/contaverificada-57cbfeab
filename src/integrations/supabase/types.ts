@@ -77,6 +77,8 @@ export type Database = {
           amount: number
           created_at: string
           customer_cpf: string | null
+          customer_cpf_hash: string | null
+          customer_cpf_last4: string | null
           customer_email: string | null
           customer_name: string | null
           id: string
@@ -102,6 +104,8 @@ export type Database = {
           amount: number
           created_at?: string
           customer_cpf?: string | null
+          customer_cpf_hash?: string | null
+          customer_cpf_last4?: string | null
           customer_email?: string | null
           customer_name?: string | null
           id?: string
@@ -127,6 +131,8 @@ export type Database = {
           amount?: number
           created_at?: string
           customer_cpf?: string | null
+          customer_cpf_hash?: string | null
+          customer_cpf_last4?: string | null
           customer_email?: string | null
           customer_name?: string | null
           id?: string
