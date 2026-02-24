@@ -19,8 +19,6 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
   const [pixKey, setPixKey] = useState("");
   const [leadCpf, setLeadCpf] = useState("");
   const [leadName, setLeadName] = useState("");
-  
-  const [leadEmail, setLeadEmail] = useState("");
   const [isLookingUpCpf, setIsLookingUpCpf] = useState(false);
   const [cpfLookedUp, setCpfLookedUp] = useState(false);
 
@@ -72,14 +70,19 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
       // Persist lead data for upsell pages
       sessionStorage.setItem("lead_cpf", leadCpf);
       sessionStorage.setItem("lead_name", leadName);
-      sessionStorage.setItem("lead_email", leadEmail.trim().toLowerCase());
+      // Store email/phone from PIX key if applicable
+      if (pixKeyType === "E-mail") {
+        sessionStorage.setItem("lead_email", pixKey.trim().toLowerCase());
+      }
+      if (pixKeyType === "Celular") {
+        sessionStorage.setItem("lead_phone", pixKey.replace(/\D/g, ""));
+      }
       navigate("/funil/confirmar-identidade", {
         state: {
           pixKey: pixKey,
           pixKeyType: pixKeyType,
           leadCpf: leadCpf,
           leadName: leadName,
-          leadEmail: leadEmail.trim().toLowerCase(),
         }
       });
     }
@@ -106,10 +109,16 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
     return true;
   };
 
-  // Validate email
+  // Validate email (for PIX key type)
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  // Validate phone (for PIX key type)
+  const validatePhone = (phone: string) => {
+    const digits = phone.replace(/\D/g, "");
+    return digits.length === 11;
   };
 
   // Format CPF
@@ -187,7 +196,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
     }
   };
 
-  const isFormValid = pixKeyType && pixKey.length > 0 && isPixKeyValid() && validateCPF(leadCpf) && leadName.trim().length >= 3 && validateEmail(leadEmail);
+  const isFormValid = pixKeyType && pixKey.length > 0 && isPixKeyValid() && validateCPF(leadCpf) && leadName.trim().length >= 3;
   const validationError = getValidationError();
 
   const amounts = ["R$1,5", "R$5", "R$10"];
@@ -455,43 +464,52 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
                 )}
               </div>
 
-              {/* E-mail obrigatório */}
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">
-                  E-mail <span className="text-red-500">*</span>
-                  <span className="text-gray-400 text-[10px] font-normal ml-1">obrigatório</span>
-                </label>
-                <input
-                  type="email"
-                  value={leadEmail}
-                  onChange={(e) => setLeadEmail(e.target.value)}
-                  placeholder="exemplo@email.com"
-                  className={`w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 ${
-                    leadEmail && !validateEmail(leadEmail) ? "border-red-500" : "border-gray-200"
-                  }`}
-                />
-                {leadEmail && !validateEmail(leadEmail) && (
-                  <p className="text-red-500 text-xs mt-1">E-mail inválido</p>
-                )}
-                {leadEmail && validateEmail(leadEmail) && (
-                  <p className="text-green-500 text-xs mt-1">✓ E-mail válido</p>
-                )}
-              </div>
-
               {/* PIX Key Input */}
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-2">
                   Chave PIX
                 </label>
-                <input
-                  type={pixKeyType === "E-mail" ? "email" : "text"}
-                  value={pixKey}
-                  onChange={(e) => handlePixKeyChange(e.target.value)}
-                  placeholder={getPlaceholder()}
-                  className={`w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 ${
-                    validationError ? "border-red-500" : "border-gray-200"
-                  }`}
-                />
+
+                {/* Show email input when PIX key type is E-mail */}
+                {pixKeyType === "E-mail" && (
+                  <input
+                    type="email"
+                    value={pixKey}
+                    onChange={(e) => handlePixKeyChange(e.target.value)}
+                    placeholder="exemplo@email.com"
+                    className={`w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 ${
+                      validationError ? "border-red-500" : "border-gray-200"
+                    }`}
+                  />
+                )}
+
+                {/* Show phone input when PIX key type is Celular */}
+                {pixKeyType === "Celular" && (
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={pixKey}
+                    onChange={(e) => handlePixKeyChange(e.target.value)}
+                    placeholder="(00) 00000-0000"
+                    className={`w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 ${
+                      validationError ? "border-red-500" : "border-gray-200"
+                    }`}
+                  />
+                )}
+
+                {/* Default input for CPF and Chave Aleatória */}
+                {pixKeyType !== "E-mail" && pixKeyType !== "Celular" && (
+                  <input
+                    type="text"
+                    value={pixKey}
+                    onChange={(e) => handlePixKeyChange(e.target.value)}
+                    placeholder={getPlaceholder()}
+                    className={`w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 ${
+                      validationError ? "border-red-500" : "border-gray-200"
+                    }`}
+                  />
+                )}
+
                 {validationError && (
                   <p className="text-red-500 text-xs mt-1">{validationError}</p>
                 )}

@@ -81,7 +81,6 @@ async function recordFailure(supabase: ReturnType<typeof createClient>, gateway:
 interface LeadData {
   cleanCpf: string
   name: string | null      // null = não tem dado real
-  email: string | null
   
   zipCode: string | null
   city: string | null
@@ -126,7 +125,6 @@ async function generateWithSigma(params: {
     country: 'br',
   }
   if (lead.name) customer.name = lead.name
-  if (lead.email) customer.email = lead.email
   if (params.clientIp) customer.ip = params.clientIp
   if (lead.zipCode) customer.zip_code = lead.zipCode
   if (lead.city) customer.city = lead.city
@@ -220,7 +218,7 @@ async function generateWithSkale(params: {
     document: { type: lead.cleanCpf.length <= 11 ? 'cpf' : 'cnpj', number: lead.cleanCpf },
   }
   if (lead.name) customer.name = lead.name
-  if (lead.email) customer.email = lead.email
+  
   
 
   const skaleResponse = await fetch(`${SKALE_API_URL}/transactions`, {
@@ -286,7 +284,7 @@ Deno.serve(async (req) => {
 
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('cf-connecting-ip') || ''
 
-    const { amount, name, email, cpf, payment_type, ab_variant, ttclid, page_url, page_referrer, utm_source, utm_medium, utm_campaign, utm_term, utm_content } = await req.json()
+    const { amount, name, cpf, payment_type, ab_variant, ttclid, page_url, page_referrer, utm_source, utm_medium, utm_campaign, utm_term, utm_content } = await req.json()
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -313,15 +311,9 @@ Deno.serve(async (req) => {
       safeName = `${safeName} Lead`
     }
 
-    // Email: só se for real e válido
-    const rawEmail = (email || '').trim().toLowerCase()
-    const safeEmail: string | null = (rawEmail && rawEmail !== 'undefined' && rawEmail.includes('@') && rawEmail.includes('.') && rawEmail.length <= 254)
-      ? rawEmail
-      : null
+    const lead: LeadData = { cleanCpf, name: safeName, zipCode: null, city: null, state: null }
 
-    const lead: LeadData = { cleanCpf, name: safeName, email: safeEmail, zipCode: null, city: null, state: null }
-
-    console.log(`[generate-pix] Lead data — CPF: ${cleanCpf.length}d, Email: ${safeEmail ? 'yes' : 'none'}, Name: ${safeName || 'none'}`)
+    console.log(`[generate-pix] Lead data — CPF: ${cleanCpf.length}d, Name: ${safeName || 'none'}`)
 
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
@@ -447,7 +439,6 @@ Deno.serve(async (req) => {
       user_agent: req.headers.get('user-agent') || null,
     }
     if (safeName) dbRecord.customer_name = safeName
-    if (safeEmail) dbRecord.customer_email = safeEmail
 
     const { error: dbError } = await supabase.from('pix_payments').insert(dbRecord)
     if (dbError) console.error('[generate-pix] DB error:', dbError)
