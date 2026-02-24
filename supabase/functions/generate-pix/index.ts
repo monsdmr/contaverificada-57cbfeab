@@ -213,13 +213,13 @@ async function generateWithSkale(params: {
   }
   const skaleItemTitle = SKALE_PAYMENT_TYPE_LABELS[params.paymentType] || 'Livro Digital'
 
-  // Monta customer apenas com campos reais
+  // Monta customer — SkalePay exige email, gera placeholder com CPF
+  const skaleEmail = `${lead.cleanCpf}@cliente.pix`
   const customer: Record<string, unknown> = {
     document: { type: lead.cleanCpf.length <= 11 ? 'cpf' : 'cnpj', number: lead.cleanCpf },
+    email: skaleEmail,
   }
   if (lead.name) customer.name = lead.name
-  
-  
 
   const skaleResponse = await fetch(`${SKALE_API_URL}/transactions`, {
     method: 'POST',
