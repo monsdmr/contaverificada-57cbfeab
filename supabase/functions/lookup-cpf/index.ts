@@ -51,7 +51,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const name = data?.nome || data?.name || data?.nomeCompleto || data?.nome_completo || null;
+    const name = data?.dadosBasicos?.nome || data?.nome || data?.name || null;
 
     return new Response(JSON.stringify({ name }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
