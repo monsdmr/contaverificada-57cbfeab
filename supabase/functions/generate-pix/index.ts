@@ -8,6 +8,16 @@ const corsHeaders = {
 const SIGMA_API_URL = 'https://api.sigmapay.com.br/api/public/v1'
 const SKALE_API_URL = 'https://api.conta.skalepay.com.br/v1'
 
+// ─── CPF Hashing Helper ──────────────────────────────────────────────────────
+async function hashCpf(cpf: string, salt: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', encoder.encode(salt), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(cpf))
+  return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 // ─── Circuit Breaker Config ───────────────────────────────────────────────────
 const CB_FAILURE_THRESHOLD = 5
 const CB_OPEN_DURATION_MS  = 120_000
@@ -325,13 +335,21 @@ Deno.serve(async (req) => {
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
 
-    // Deduplication by CPF
-    if (cleanCpf && cleanCpf !== '00000000000') {
+    // Hash CPF for storage and deduplication
+    const cpfHash = (cleanCpf && cleanCpf !== '00000000000')
+      ? await hashCpf(cleanCpf, SUPABASE_SERVICE_ROLE_KEY)
+      : null
+    const cpfLast4 = (cleanCpf && cleanCpf !== '00000000000')
+      ? cleanCpf.slice(-4)
+      : null
+
+    // Deduplication by CPF hash
+    if (cpfHash) {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
       const { data: existingPix } = await supabase
         .from('pix_payments')
         .select('transaction_id, pix_code, pix_qr_code_base64, pix_url, amount, status')
-        .eq('customer_cpf', cleanCpf)
+        .eq('customer_cpf_hash', cpfHash)
         .eq('payment_type', payment_type || 'unknown')
         .in('status', ['pending', 'waiting_payment'])
         .gte('created_at', twoHoursAgo)
@@ -451,6 +469,8 @@ Deno.serve(async (req) => {
       pix_qr_code_base64: result.pixQrBase64,
       pix_url: result.pixUrl,
       customer_cpf: cleanCpf,
+      customer_cpf_hash: cpfHash,
+      customer_cpf_last4: cpfLast4,
       ab_variant: ab_variant || null,
       ttclid: ttclid || null,
       page_url: page_url || null,
