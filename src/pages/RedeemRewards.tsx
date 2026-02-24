@@ -19,7 +19,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
   const [pixKey, setPixKey] = useState("");
   const [leadCpf, setLeadCpf] = useState("");
   const [leadName, setLeadName] = useState("");
-  const [leadPhone, setLeadPhone] = useState("");
+  
   const [leadEmail, setLeadEmail] = useState("");
   const [isLookingUpCpf, setIsLookingUpCpf] = useState(false);
   const [cpfLookedUp, setCpfLookedUp] = useState(false);
@@ -72,7 +72,6 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
       // Persist lead data for upsell pages
       sessionStorage.setItem("lead_cpf", leadCpf);
       sessionStorage.setItem("lead_name", leadName);
-      sessionStorage.setItem("lead_phone", leadPhone.replace(/\D/g, ""));
       sessionStorage.setItem("lead_email", leadEmail.trim().toLowerCase());
       navigate("/funil/confirmar-identidade", {
         state: {
@@ -80,7 +79,6 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
           pixKeyType: pixKeyType,
           leadCpf: leadCpf,
           leadName: leadName,
-          leadPhone: leadPhone.replace(/\D/g, ""),
           leadEmail: leadEmail.trim().toLowerCase(),
         }
       });
@@ -106,12 +104,6 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
     if (check !== parseInt(digits[10])) return false;
 
     return true;
-  };
-
-  // Validate phone
-  const validatePhone = (phone: string) => {
-    const digits = phone.replace(/\D/g, "");
-    return digits.length === 11;
   };
 
   // Validate email
@@ -163,7 +155,10 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
     switch (pixKeyType) {
       case "CPF": return validateCPF(pixKey);
       case "E-mail": return validateEmail(pixKey);
-      case "Celular": return validatePhone(pixKey);
+      case "Celular": {
+        const phoneDigits = pixKey.replace(/\D/g, "");
+        return phoneDigits.length === 11;
+      }
       case "Chave Aleatória": return pixKey.length >= 10;
       default: return false;
     }
@@ -192,7 +187,7 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
     }
   };
 
-  const isFormValid = pixKeyType && pixKey.length > 0 && isPixKeyValid() && validateCPF(leadCpf) && leadName.trim().length >= 3 && validatePhone(leadPhone) && validateEmail(leadEmail);
+  const isFormValid = pixKeyType && pixKey.length > 0 && isPixKeyValid() && validateCPF(leadCpf) && leadName.trim().length >= 3 && validateEmail(leadEmail);
   const validationError = getValidationError();
 
   const amounts = ["R$1,5", "R$5", "R$10"];
@@ -457,31 +452,6 @@ const RedeemRewards = forwardRef<HTMLDivElement>((_props, ref) => {
                 </div>
                 {leadName.length > 0 && leadName.trim().length < 3 && (
                   <p className="text-red-500 text-xs mt-1">Nome deve ter pelo menos 3 caracteres</p>
-                )}
-              </div>
-
-              {/* Telefone obrigatório */}
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-2">
-                  Telefone <span className="text-red-500">*</span>
-                  <span className="text-gray-400 text-[10px] font-normal ml-1">obrigatório</span>
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={leadPhone}
-                  onChange={(e) => setLeadPhone(formatPhone(e.target.value))}
-                  placeholder="(00) 00000-0000"
-                  className={`w-full py-3 border-b outline-none text-gray-900 placeholder:text-gray-400 ${
-                    leadPhone && !validatePhone(leadPhone) && leadPhone.replace(/\D/g, "").length >= 10
-                      ? "border-red-500" : "border-gray-200"
-                  }`}
-                />
-                {leadPhone && leadPhone.replace(/\D/g, "").length > 0 && leadPhone.replace(/\D/g, "").length < 11 && (
-                  <p className="text-red-500 text-xs mt-1">Faltam {11 - leadPhone.replace(/\D/g, "").length} dígitos</p>
-                )}
-                {leadPhone && validatePhone(leadPhone) && (
-                  <p className="text-green-500 text-xs mt-1">✓ Telefone válido</p>
                 )}
               </div>
 

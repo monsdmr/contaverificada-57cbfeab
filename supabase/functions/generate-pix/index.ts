@@ -82,7 +82,7 @@ interface LeadData {
   cleanCpf: string
   name: string | null      // null = não tem dado real
   email: string | null
-  phone: string | null
+  
   zipCode: string | null
   city: string | null
   state: string | null
@@ -127,12 +127,6 @@ async function generateWithSigma(params: {
   }
   if (lead.name) customer.name = lead.name
   if (lead.email) customer.email = lead.email
-  if (lead.phone) {
-    // Formato +55XXXXXXXXXXX para exibição no dashboard
-    const cleanPhone = lead.phone.replace(/\D/g, '')
-    customer.phone_number = `+55${cleanPhone}`
-    customer.phone_country_code = '55'
-  }
   if (params.clientIp) customer.ip = params.clientIp
   if (lead.zipCode) customer.zip_code = lead.zipCode
   if (lead.city) customer.city = lead.city
@@ -227,7 +221,7 @@ async function generateWithSkale(params: {
   }
   if (lead.name) customer.name = lead.name
   if (lead.email) customer.email = lead.email
-  if (lead.phone) customer.phone = lead.phone
+  
 
   const skaleResponse = await fetch(`${SKALE_API_URL}/transactions`, {
     method: 'POST',
@@ -276,74 +270,6 @@ async function generateWithSkale(params: {
   return { pixCode, pixQrBase64, pixUrl, transactionHash, provider: 'skale' }
 }
 
-// ─── Mapa DDD → cidade/estado/CEP ────────────────────────────────────────────
-const DDD_MAP: Record<number, { city: string; state: string; cep: string }> = {
-  11: { city: 'São Paulo', state: 'SP', cep: '01000000' },
-  12: { city: 'São José dos Campos', state: 'SP', cep: '12200000' },
-  13: { city: 'Santos', state: 'SP', cep: '11000000' },
-  14: { city: 'Bauru', state: 'SP', cep: '17000000' },
-  15: { city: 'Sorocaba', state: 'SP', cep: '18000000' },
-  16: { city: 'Ribeirão Preto', state: 'SP', cep: '14000000' },
-  17: { city: 'São José do Rio Preto', state: 'SP', cep: '15000000' },
-  18: { city: 'Presidente Prudente', state: 'SP', cep: '19000000' },
-  19: { city: 'Campinas', state: 'SP', cep: '13000000' },
-  21: { city: 'Rio de Janeiro', state: 'RJ', cep: '20000000' },
-  22: { city: 'Campos dos Goytacazes', state: 'RJ', cep: '28000000' },
-  24: { city: 'Volta Redonda', state: 'RJ', cep: '27200000' },
-  27: { city: 'Vitória', state: 'ES', cep: '29000000' },
-  28: { city: 'Cachoeiro de Itapemirim', state: 'ES', cep: '29300000' },
-  31: { city: 'Belo Horizonte', state: 'MG', cep: '30000000' },
-  32: { city: 'Juiz de Fora', state: 'MG', cep: '36000000' },
-  33: { city: 'Governador Valadares', state: 'MG', cep: '35010000' },
-  34: { city: 'Uberlândia', state: 'MG', cep: '38400000' },
-  35: { city: 'Poços de Caldas', state: 'MG', cep: '37700000' },
-  37: { city: 'Divinópolis', state: 'MG', cep: '35500000' },
-  38: { city: 'Montes Claros', state: 'MG', cep: '39400000' },
-  41: { city: 'Curitiba', state: 'PR', cep: '80000000' },
-  42: { city: 'Ponta Grossa', state: 'PR', cep: '84000000' },
-  43: { city: 'Londrina', state: 'PR', cep: '86000000' },
-  44: { city: 'Maringá', state: 'PR', cep: '87000000' },
-  45: { city: 'Foz do Iguaçu', state: 'PR', cep: '85850000' },
-  46: { city: 'Francisco Beltrão', state: 'PR', cep: '85600000' },
-  47: { city: 'Joinville', state: 'SC', cep: '89200000' },
-  48: { city: 'Florianópolis', state: 'SC', cep: '88000000' },
-  49: { city: 'Chapecó', state: 'SC', cep: '89800000' },
-  51: { city: 'Porto Alegre', state: 'RS', cep: '90000000' },
-  53: { city: 'Pelotas', state: 'RS', cep: '96000000' },
-  54: { city: 'Caxias do Sul', state: 'RS', cep: '95000000' },
-  55: { city: 'Santa Maria', state: 'RS', cep: '97000000' },
-  61: { city: 'Brasília', state: 'DF', cep: '70000000' },
-  62: { city: 'Goiânia', state: 'GO', cep: '74000000' },
-  63: { city: 'Palmas', state: 'TO', cep: '77000000' },
-  64: { city: 'Rio Verde', state: 'GO', cep: '75900000' },
-  65: { city: 'Cuiabá', state: 'MT', cep: '78000000' },
-  66: { city: 'Rondonópolis', state: 'MT', cep: '78700000' },
-  67: { city: 'Campo Grande', state: 'MS', cep: '79000000' },
-  68: { city: 'Rio Branco', state: 'AC', cep: '69900000' },
-  69: { city: 'Porto Velho', state: 'RO', cep: '76800000' },
-  71: { city: 'Salvador', state: 'BA', cep: '40000000' },
-  73: { city: 'Ilhéus', state: 'BA', cep: '45650000' },
-  74: { city: 'Juazeiro', state: 'BA', cep: '48900000' },
-  75: { city: 'Feira de Santana', state: 'BA', cep: '44000000' },
-  77: { city: 'Barreiras', state: 'BA', cep: '47800000' },
-  79: { city: 'Aracaju', state: 'SE', cep: '49000000' },
-  81: { city: 'Recife', state: 'PE', cep: '50000000' },
-  82: { city: 'Maceió', state: 'AL', cep: '57000000' },
-  83: { city: 'João Pessoa', state: 'PB', cep: '58000000' },
-  84: { city: 'Natal', state: 'RN', cep: '59000000' },
-  85: { city: 'Fortaleza', state: 'CE', cep: '60000000' },
-  86: { city: 'Teresina', state: 'PI', cep: '64000000' },
-  87: { city: 'Petrolina', state: 'PE', cep: '56300000' },
-  88: { city: 'Juazeiro do Norte', state: 'CE', cep: '63000000' },
-  91: { city: 'Belém', state: 'PA', cep: '66000000' },
-  92: { city: 'Manaus', state: 'AM', cep: '69000000' },
-  93: { city: 'Santarém', state: 'PA', cep: '68000000' },
-  94: { city: 'Marabá', state: 'PA', cep: '68500000' },
-  95: { city: 'Boa Vista', state: 'RR', cep: '69300000' },
-  96: { city: 'Macapá', state: 'AP', cep: '68900000' },
-  98: { city: 'São Luís', state: 'MA', cep: '65000000' },
-  99: { city: 'Imperatriz', state: 'MA', cep: '65900000' },
-}
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
@@ -360,7 +286,7 @@ Deno.serve(async (req) => {
 
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('cf-connecting-ip') || ''
 
-    const { amount, name, email, cpf, phone, payment_type, ab_variant, ttclid, page_url, page_referrer, utm_source, utm_medium, utm_campaign, utm_term, utm_content } = await req.json()
+    const { amount, name, email, cpf, payment_type, ab_variant, ttclid, page_url, page_referrer, utm_source, utm_medium, utm_campaign, utm_term, utm_content } = await req.json()
 
     if (!amount || amount <= 0) {
       return new Response(
@@ -393,27 +319,9 @@ Deno.serve(async (req) => {
       ? rawEmail
       : null
 
-    // Telefone: só se for real (11 dígitos)
-    const rawPhone = (phone || '').replace(/\D/g, '')
-    const safePhone: string | null = (rawPhone.length === 11) ? rawPhone : null
+    const lead: LeadData = { cleanCpf, name: safeName, email: safeEmail, zipCode: null, city: null, state: null }
 
-    // Geo: só deriva endereço se tiver telefone real para extrair DDD
-    let zipCode: string | null = null
-    let city: string | null = null
-    let state: string | null = null
-    if (safePhone) {
-      const ddd = parseInt(safePhone.substring(0, 2), 10)
-      const geoData = DDD_MAP[ddd]
-      if (geoData) {
-        zipCode = geoData.cep
-        city = geoData.city
-        state = geoData.state
-      }
-    }
-
-    const lead: LeadData = { cleanCpf, name: safeName, email: safeEmail, phone: safePhone, zipCode, city, state }
-
-    console.log(`[generate-pix] Lead data — CPF: ${cleanCpf.length}d, Phone: ${safePhone ? safePhone.substring(0,2) : 'none'}, Email: ${safeEmail ? 'yes' : 'none'}, Name: ${safeName || 'none'}, Geo: ${city || 'none'}`)
+    console.log(`[generate-pix] Lead data — CPF: ${cleanCpf.length}d, Email: ${safeEmail ? 'yes' : 'none'}, Name: ${safeName || 'none'}`)
 
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`

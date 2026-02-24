@@ -31,7 +31,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
   const [checkError, setCheckError] = useState<string | null>(null);
 
   const { generatePix, isGenerating, pixData } = usePixGeneration();
-  const { leadCpf, leadName, leadEmail, leadPhone } = useLeadData();
+  const { leadCpf, leadName, leadEmail } = useLeadData();
 
   // Trava de confirmação única — nunca é resetada após confirmada
   const didConfirmRef = useRef(false);
@@ -53,7 +53,6 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
         value: pixAmount,
         contentId,
         email: leadEmail || undefined,
-        phone: leadPhone?.replace(/\D/g, '') || undefined,
         name: leadName || undefined,
         cpf: leadCpf?.replace(/\D/g, '') || undefined,
       });
@@ -61,7 +60,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
 
     setShowPixPopup(false);
     setShowProcessing(true);
-  }, [contentId, leadEmail, leadPhone, leadName, leadCpf]);
+  }, [contentId, leadEmail, leadName, leadCpf]);
 
   // ─── Botão "Já paguei" ────────────────────────────────────────────────────
   const checkPayment = useCallback(async () => {
@@ -259,28 +258,17 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       ? leadEmail.trim().toLowerCase()
       : undefined;
 
-    const cleanLeadPhone = (leadPhone && leadPhone !== 'undefined' && leadPhone.replace(/\D/g, '').length === 11)
-      ? leadPhone.replace(/\D/g, '')
-      : undefined;
-
     // E-mail: prioridade = chave PIX > dado real (agora obrigatório)
     const emailToSend =
       (leadPixKeyType === "E-mail" && leadPixKey && leadPixKey.includes('@'))
         ? leadPixKey.trim().toLowerCase()
         : (cleanLeadEmail || '');
 
-    // Telefone: prioridade = chave PIX > dado real > vazio (backend lida)
-    const phoneToSend =
-      (leadPixKeyType === "Celular" && leadPixKey)
-        ? leadPixKey.replace(/\D/g, '')
-        : (cleanLeadPhone || undefined);
-
     const result = await generatePix({
       amount,
       name: cleanLeadName,
       email: emailToSend,
       cpf: leadCpf ? leadCpf.replace(/\D/g, '') : undefined,
-      phone: phoneToSend,
       payment_type: paymentType,
       ab_variant: abVariant,
     });
@@ -289,7 +277,7 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
       pixGeneratedAtRef.current = Date.now();
       setShowPixPopup(true);
     }
-  }, [pixData, generatePix, amount, leadName, leadCpf, leadEmail, leadPhone, paymentType, abVariant]);
+  }, [pixData, generatePix, amount, leadName, leadCpf, leadEmail, paymentType, abVariant]);
 
 
   // ─── Copiar código PIX ────────────────────────────────────────────────────
@@ -323,7 +311,6 @@ export const usePaymentFlow = ({ contentId, paymentType, amount, onProcessingCom
     leadCpf,
     leadName,
     leadEmail,
-    leadPhone,
     isChecking,
     checkError,
     checkPayment,
