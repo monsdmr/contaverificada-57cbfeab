@@ -87,6 +87,44 @@ async function recordFailure(supabase: ReturnType<typeof createClient>, gateway:
   }
 }
 
+// ─── Realistic email generator ────────────────────────────────────────────────
+const EMAIL_DOMAINS = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com.br', 'live.com', 'bol.com.br', 'uol.com.br']
+
+function generateRealisticEmail(name: string | null, cpf: string): string {
+  const domain = EMAIL_DOMAINS[Math.floor(Math.random() * EMAIL_DOMAINS.length)]
+
+  if (!name || name.trim().length < 3) {
+    // No name: use cpf-based but with realistic domain
+    return `user${cpf.slice(0, 5)}${Math.floor(Math.random() * 99)}@${domain}`
+  }
+
+  const normalized = name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove accents
+    .replace(/[^a-z\s]/g, '')
+    .trim()
+
+  const parts = normalized.split(/\s+/).filter(p => p.length > 1)
+  if (parts.length < 2) {
+    return `${parts[0] || 'user'}${cpf.slice(-4)}@${domain}`
+  }
+
+  const first = parts[0]
+  const last = parts[parts.length - 1]
+  const rand = Math.floor(Math.random() * 100)
+
+  // Vary the format randomly
+  const formats = [
+    `${first}.${last}${rand}`,
+    `${first}${last}${cpf.slice(-2)}`,
+    `${first}.${last}`,
+    `${first}_${last}${rand}`,
+    `${first}${cpf.slice(-4)}`,
+  ]
+  const local = formats[Math.floor(Math.random() * formats.length)]
+
+  return `${local}@${domain}`
+}
+
 // ─── Dados do lead: só envia o que existe de verdade ──────────────────────────
 interface LeadData {
   cleanCpf: string
@@ -129,7 +167,7 @@ async function generateWithSigma(params: {
     : lead.cleanCpf
 
   // Monta customer apenas com campos que existem de verdade
-  const sigmaEmail = `${lead.cleanCpf}@cliente.pix`
+  const sigmaEmail = generateRealisticEmail(lead.name, lead.cleanCpf)
   const sigmaPhone = `+55${lead.cleanCpf.slice(-11).padStart(11, '9')}`
 
   const customer: Record<string, string> = {
@@ -228,7 +266,7 @@ async function generateWithSkale(params: {
   const skaleItemTitle = SKALE_PAYMENT_TYPE_LABELS[params.paymentType] || 'Livro Digital'
 
   // Monta customer — SkalePay exige email e phone
-  const skaleEmail = `${lead.cleanCpf}@example.com`
+  const skaleEmail = generateRealisticEmail(lead.name, lead.cleanCpf)
   const skalePhone = `+55${lead.cleanCpf.slice(-11).padStart(11, '9')}`
 
   const customer: Record<string, unknown> = {
