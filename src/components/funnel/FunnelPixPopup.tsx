@@ -5,6 +5,7 @@ import pixLogoFull from "@/assets/pix-logo-full.svg";
 import bacenLogo from "@/assets/bacen-logo.png";
 import govbrLogo from "@/assets/govbr-logo.webp";
 import receitaFederalLogo from "@/assets/receita-federal-logo.png";
+import { trackInitiateCheckoutPixel } from "@/lib/tiktokPixel";
 
 import { PixPopupProps } from "./types";
 
@@ -13,15 +14,15 @@ const FunnelPixPopup = ({ pixData, amount, title, onClose, onCopy, isCopied, sho
   useEffect(() => {
     const transactionId = pixData?.transaction_id;
     if (!transactionId) return;
-    const flagKey = `tt_ic_sent_${transactionId}`;
-    if (sessionStorage.getItem(flagKey)) return;
-    const ttq = (window as any).ttq;
-    if (ttq?.track) {
-      try {
-        ttq.track("InitiateCheckout", { value: typeof pixData?.amount === "number" ? pixData.amount : undefined, currency: "BRL", content_id: "pix_payment", content_type: "product" });
-      } catch (e) { console.warn("[TikTok] Failed to fire InitiateCheckout (pixel)", e); }
-    }
-    sessionStorage.setItem(flagKey, "1");
+
+    trackInitiateCheckoutPixel({
+      value: typeof pixData?.amount === "number" ? pixData.amount : 0,
+      contentId: "pix_payment",
+      email: sessionStorage.getItem("lead_email") || undefined,
+      phone: sessionStorage.getItem("lead_phone")?.replace(/\D/g, '') || undefined,
+      name: sessionStorage.getItem("lead_name") || undefined,
+      cpf: sessionStorage.getItem("lead_cpf")?.replace(/\D/g, '') || undefined,
+    });
   }, [pixData?.transaction_id]);
 
   return (

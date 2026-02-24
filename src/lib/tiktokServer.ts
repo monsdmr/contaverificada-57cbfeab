@@ -16,8 +16,12 @@ export async function trackServerEvent(input: {
   value?: number;
   contentId?: string;
   transactionId?: string;
+  email?: string;
+  phone?: string;
+  name?: string;
+  cpf?: string;
 }): Promise<void> {
-  const { event, eventId, value, contentId, transactionId } = input;
+  const { event, eventId, value, contentId, transactionId, email, phone, name, cpf } = input;
 
   const flagKey = `tt_srv_${event}_${eventId}`;
   if (sessionStorage.getItem(flagKey)) return;
@@ -42,6 +46,10 @@ export async function trackServerEvent(input: {
         page_url: attribution.pageUrl,
         page_referrer: attribution.pageReferrer,
         user_agent: navigator.userAgent,
+        email,
+        phone_number: phone,
+        name,
+        external_id: cpf,
       },
     });
 

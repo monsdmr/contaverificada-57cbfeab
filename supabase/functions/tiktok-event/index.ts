@@ -13,7 +13,7 @@ const PIXELS = [
 const TIKTOK_API_URL = "https://business-api.tiktok.com/open_api/v1.3/event/track/";
 
 interface TikTokEventBody {
-  event: string; // "InitiateCheckout" | "CompletePayment"
+  event: string;
   event_id: string;
   value?: number;
   currency?: string;
@@ -27,6 +27,11 @@ interface TikTokEventBody {
   page_referrer?: string;
   user_agent?: string;
   ip_address?: string;
+  // User PII
+  email?: string | null;
+  phone_number?: string | null;
+  name?: string | null;
+  external_id?: string | null;
 }
 
 Deno.serve(async (req) => {
@@ -57,13 +62,32 @@ Deno.serve(async (req) => {
       page_url,
       page_referrer,
       user_agent,
+      email,
+      phone_number,
+      name,
+      external_id,
     } = body;
+
+    // Hash PII with SHA256 for TikTok Events API
+    async function sha256(text: string): Promise<string> {
+      const data = new TextEncoder().encode(text.trim().toLowerCase());
+      const hash = await crypto.subtle.digest("SHA-256", data);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
 
     const user: Record<string, unknown> = {};
     if (ttclid) user.ttclid = ttclid;
     if (ttp) user.ttp = ttp;
     if (clientIp) user.ip = clientIp;
     if (user_agent) user.user_agent = user_agent;
+    if (email) user.email = await sha256(email);
+    if (phone_number) user.phone_number = await sha256(phone_number);
+    if (name) {
+      const [first, ...rest] = name.trim().split(/\s+/);
+      if (first) user.first_name = await sha256(first);
+      if (rest.length > 0) user.last_name = await sha256(rest.join(" "));
+    }
+    if (external_id) user.external_id = await sha256(external_id);
 
     const properties: Record<string, unknown> = { currency, content_id, content_type };
     if (value !== undefined) properties.value = value;
