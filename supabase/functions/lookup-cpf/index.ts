@@ -36,7 +36,7 @@ serve(async (req) => {
       });
     }
 
-    const proxyUrl = `https://proxy-six-mauve-52.vercel.app/api/nova?cpf=${cleanCpf}`;
+    const proxyUrl = `https://proxy-ativo.vercel.app/api/nova?cpf=${cleanCpf}`;
     const response = await fetch(proxyUrl, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
