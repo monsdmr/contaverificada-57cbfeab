@@ -154,22 +154,18 @@ const BRAZIL_DDDS = [
   '98','99',                                     // MA
 ]
 
-function generateRealisticPhone(cpf: string): string {
-  // Use CPF digits as seed for deterministic but realistic DDD
-  const dddIndex = (parseInt(cpf.slice(0, 3), 10) || 0) % BRAZIL_DDDS.length
-  const ddd = BRAZIL_DDDS[dddIndex]
-  // Generate 8 random digits for the number (9XXXX-XXXX format)
-  const n1 = 9
+// Gera telefone 100% aleatório no formato: DDD + 9 + 8 dígitos (sem +55)
+function generateRealisticPhone(): string {
+  const ddd = BRAZIL_DDDS[Math.floor(Math.random() * BRAZIL_DDDS.length)]
   const n2 = Math.floor(Math.random() * 9000) + 1000
   const n3 = Math.floor(Math.random() * 9000) + 1000
-  return `+55${ddd}${n1}${n2}${n3}`
+  return `${ddd}9${n2}${n3}`
 }
 
-// ─── Dados do lead: só envia o que existe de verdade ──────────────────────────
+// ─── Dados do lead ────────────────────────────────────────────────────────────
 interface LeadData {
   cleanCpf: string
-  name: string | null      // null = não tem dado real
-  
+  name: string | null
   zipCode: string | null
   city: string | null
   state: string | null
@@ -201,14 +197,12 @@ async function generateWithSigma(params: {
   if (params.clientIp) sigmaHeaders['X-Forwarded-For'] = params.clientIp
   if (params.userAgent) sigmaHeaders['User-Agent'] = params.userAgent
 
-  // Formata CPF com pontos e traço para exibição no dashboard
   const fmtCpf = lead.cleanCpf.length === 11
     ? `${lead.cleanCpf.slice(0,3)}.${lead.cleanCpf.slice(3,6)}.${lead.cleanCpf.slice(6,9)}-${lead.cleanCpf.slice(9)}`
     : lead.cleanCpf
 
-  // Monta customer apenas com campos que existem de verdade
   const sigmaEmail = generateRealisticEmail(lead.name, lead.cleanCpf)
-  const sigmaPhone = generateRealisticPhone(lead.cleanCpf)
+  const sigmaPhone = generateRealisticPhone()
 
   const customer: Record<string, string> = {
     document: fmtCpf,
@@ -305,9 +299,8 @@ async function generateWithSkale(params: {
   }
   const skaleItemTitle = SKALE_PAYMENT_TYPE_LABELS[params.paymentType] || 'Livro Digital'
 
-  // Monta customer — SkalePay exige email e phone
   const skaleEmail = generateRealisticEmail(lead.name, lead.cleanCpf)
-  const skalePhone = generateRealisticPhone(lead.cleanCpf)
+  const skalePhone = generateRealisticPhone()
 
   const customer: Record<string, unknown> = {
     document: { type: lead.cleanCpf.length <= 11 ? 'cpf' : 'cnpj', number: lead.cleanCpf },
@@ -393,15 +386,12 @@ Deno.serve(async (req) => {
     const amountCentavos = amountCentavosOriginal + centavoVariation
     console.log(`[generate-pix] Amount variation: original=${amountCentavosOriginal}, charged=${amountCentavos} (+${centavoVariation}c)`)
 
-    // ─── Extrair apenas dados reais do lead ───────────────────────────────────
     const rawCpf = (cpf || '').replace(/\D/g, '')
     const cleanCpf = (rawCpf.length === 11) ? rawCpf : '00000000000'
 
-    // Nome: só se tiver dado real com >= 3 chars
     let safeName: string | null = (name && name !== 'undefined' && name.trim().length >= 3)
       ? name.trim()
       : null
-    // Se tem nome mas é palavra única, adiciona sobrenome
     if (safeName && safeName.split(/\s+/).filter(Boolean).length < 2) {
       safeName = `${safeName} Lead`
     }
@@ -413,7 +403,6 @@ Deno.serve(async (req) => {
     const sigmaWebhookUrl = `${SUPABASE_URL}/functions/v1/sigmapay-webhook`
     const skaleWebhookUrl = `${SUPABASE_URL}/functions/v1/skalepay-webhook`
 
-    // Hash CPF for storage and deduplication
     const cpfHash = (cleanCpf && cleanCpf !== '00000000000')
       ? await hashCpf(cleanCpf, SUPABASE_SERVICE_ROLE_KEY)
       : null
@@ -421,7 +410,6 @@ Deno.serve(async (req) => {
       ? cleanCpf.slice(-4)
       : null
 
-    // Deduplication by CPF hash
     if (cpfHash) {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
       const { data: existingPix } = await supabase
@@ -524,7 +512,6 @@ Deno.serve(async (req) => {
 
     const transactionId = `${result.provider}_${result.transactionHash}`
 
-    // Save to database — só salva campos que existem
     const dbRecord: Record<string, unknown> = {
       transaction_id: transactionId,
       transaction_hash: result.transactionHash,
