@@ -8,7 +8,6 @@ const corsHeaders = {
 const SIGMA_API_URL = 'https://api.sigmapay.com.br/api/public/v1'
 const SKALE_API_URL = 'https://api.conta.skalepay.com.br/v1'
 
-// ─── CPF Hashing Helper ──────────────────────────────────────────────────────
 async function hashCpf(cpf: string, salt: string): Promise<string> {
   const encoder = new TextEncoder()
   const key = await crypto.subtle.importKey(
@@ -18,7 +17,6 @@ async function hashCpf(cpf: string, salt: string): Promise<string> {
   return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-// ─── Circuit Breaker Config ───────────────────────────────────────────────────
 const CB_FAILURE_THRESHOLD = 5
 const CB_OPEN_DURATION_MS  = 120_000
 const CB_SIGMA_TIMEOUT_MS  = 15_000
@@ -34,8 +32,6 @@ interface CircuitBreaker {
   opened_at: string | null
   last_success_at: string | null
 }
-
-// ─── Circuit Breaker Helpers ──────────────────────────────────────────────────
 
 async function getCircuitState(supabase: ReturnType<typeof createClient>, gateway: string): Promise<CircuitBreaker> {
   const { data } = await supabase
@@ -87,7 +83,6 @@ async function recordFailure(supabase: ReturnType<typeof createClient>, gateway:
   }
 }
 
-// ─── Realistic email generator ────────────────────────────────────────────────
 const EMAIL_DOMAINS = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com.br', 'live.com', 'bol.com.br', 'uol.com.br']
 
 function generateRealisticEmail(name: string | null, cpf: string): string {
@@ -123,38 +118,37 @@ function generateRealisticEmail(name: string | null, cpf: string): string {
   return `${local}@${domain}`
 }
 
-// ─── Realistic phone generator ────────────────────────────────────────────────
 const BRAZIL_DDDS = [
-  '11','12','13','14','15','16','17','18','19', // SP
-  '21','22','24',                               // RJ
-  '27','28',                                     // ES
-  '31','32','33','34','35','37','38',            // MG
-  '41','42','43','44','45','46',                 // PR
-  '47','48','49',                                // SC
-  '51','53','54','55',                           // RS
-  '61',                                          // DF
-  '62','64',                                     // GO
-  '63',                                          // TO
-  '65','66',                                     // MT
-  '67',                                          // MS
-  '68',                                          // AC
-  '69',                                          // RO
-  '71','73','74','75','77',                      // BA
-  '79',                                          // SE
-  '81','87',                                     // PE
-  '82',                                          // AL
-  '83',                                          // PB
-  '84',                                          // RN
-  '85','88',                                     // CE
-  '86','89',                                     // PI
-  '91','93','94',                                // PA
-  '92','97',                                     // AM
-  '95',                                          // RR
-  '96',                                          // AP
-  '98','99',                                     // MA
+  '11','12','13','14','15','16','17','18','19',
+  '21','22','24',
+  '27','28',
+  '31','32','33','34','35','37','38',
+  '41','42','43','44','45','46',
+  '47','48','49',
+  '51','53','54','55',
+  '61',
+  '62','64',
+  '63',
+  '65','66',
+  '67',
+  '68',
+  '69',
+  '71','73','74','75','77',
+  '79',
+  '81','87',
+  '82',
+  '83',
+  '84',
+  '85','88',
+  '86','89',
+  '91','93','94',
+  '92','97',
+  '95',
+  '96',
+  '98','99',
 ]
 
-// Gera telefone 100% aleatório no formato: DDD + 9 + 8 dígitos (sem +55)
+// 100% aleatório, sem +55, formato: DDD + 9 + 8 dígitos
 function generateRealisticPhone(): string {
   const ddd = BRAZIL_DDDS[Math.floor(Math.random() * BRAZIL_DDDS.length)]
   const n2 = Math.floor(Math.random() * 9000) + 1000
@@ -162,7 +156,6 @@ function generateRealisticPhone(): string {
   return `${ddd}9${n2}${n3}`
 }
 
-// ─── Dados do lead ────────────────────────────────────────────────────────────
 interface LeadData {
   cleanCpf: string
   name: string | null
@@ -171,7 +164,6 @@ interface LeadData {
   state: string | null
 }
 
-// ─── SigmaPay provider ────────────────────────────────────────────────────────
 async function generateWithSigma(params: {
   amountCentavos: number; lead: LeadData; paymentType: string; ttclid: string;
   apiToken: string; webhookUrl: string; timeoutMs?: number;
@@ -204,11 +196,12 @@ async function generateWithSigma(params: {
   const sigmaEmail = generateRealisticEmail(lead.name, lead.cleanCpf)
   const sigmaPhone = generateRealisticPhone()
 
+  // ✅ CORRIGIDO: campo phone_number (era "phone")
   const customer: Record<string, string> = {
     document: fmtCpf,
     cpf: fmtCpf,
     email: sigmaEmail,
-    phone: sigmaPhone,
+    phone_number: sigmaPhone,
     country: 'br',
   }
   if (lead.name) customer.name = lead.name
@@ -277,7 +270,6 @@ async function generateWithSigma(params: {
   return { pixCode, pixQrBase64, pixUrl, transactionHash, provider: 'sigma' }
 }
 
-// ─── SkalePay provider ────────────────────────────────────────────────────────
 async function generateWithSkale(params: {
   amountCentavos: number; lead: LeadData; paymentType: string;
   secretKey: string; webhookUrl: string;
@@ -356,8 +348,6 @@ async function generateWithSkale(params: {
   return { pixCode, pixQrBase64, pixUrl, transactionHash, provider: 'skale' }
 }
 
-
-// ─── Main handler ─────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -444,7 +434,6 @@ Deno.serve(async (req) => {
 
     let result: { pixCode: string; pixQrBase64: string; pixUrl: string; transactionHash: string; provider: string }
 
-    // ─── Circuit breaker + provider selection (SigmaPay = primary) ──────────
     if (SIGMA_API_TOKEN) {
       const sigmaCircuit = await getCircuitState(supabase, 'sigmapay')
       const sigmaBlocked = sigmaCircuit.state === 'open'
@@ -536,19 +525,17 @@ Deno.serve(async (req) => {
     const { error: dbError } = await supabase.from('pix_payments').insert(dbRecord)
     if (dbError) console.error('[generate-pix] DB error:', dbError)
 
-    const responseData = {
-      transaction_id: transactionId,
-      pix_code: result.pixCode,
-      pix_qr_code_base64: result.pixQrBase64,
-      pix_url: result.pixUrl,
-      amount,
-      status: 'pending',
-    }
-
     console.log('[generate-pix] Success:', transactionId)
 
     return new Response(
-      JSON.stringify(responseData),
+      JSON.stringify({
+        transaction_id: transactionId,
+        pix_code: result.pixCode,
+        pix_qr_code_base64: result.pixQrBase64,
+        pix_url: result.pixUrl,
+        amount,
+        status: 'pending',
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
